@@ -1,0 +1,107 @@
+[
+  {
+    "s": "static",
+    "t": "dates-awards",
+    "q": [
+      ["National Youth Day in India is celebrated on:", ["12 January", "15 January", "5 September", "28 February"], 0, "12 January marks the birth anniversary of Swami Vivekananda.", 1, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["International Yoga Day is observed on:", ["21 June", "21 May", "5 June", "1 December"], 0, "The United Nations declared 21 June as the International Day of Yoga in 2014.", 1, "P"],
+      ["World Environment Day is observed on:", ["5 June", "22 April", "21 March", "16 September"], 0, "World Environment Day on 5 June raises awareness about environmental protection.", 2, "P"],
+      ["Human Rights Day is celebrated on:", ["10 December", "10 November", "1 December", "24 October"], 0, "10 December marks the adoption of the Universal Declaration of Human Rights in 1948.", 2, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 1"}],
+      ["The highest civilian award of India is:", ["Bharat Ratna", "Padma Vibhushan", "Padma Bhushan", "Param Vir Chakra"], 0, "Bharat Ratna is India's highest civilian honour, instituted in 1954.", 1, "P"],
+      ["Padma Vibhushan is which category of civilian award?", ["Second-highest", "Highest", "Third-highest", "Fourth-highest"], 0, "The order is Bharat Ratna, Padma Vibhushan, Padma Bhushan and Padma Shri.", 2, "P"],
+      ["The highest wartime gallantry award in India is:", ["Param Vir Chakra", "Ashoka Chakra", "Vir Chakra", "Shaurya Chakra"], 0, "Param Vir Chakra is the highest wartime gallantry award; Ashoka Chakra is the highest peacetime award.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["The Jnanpith Award is given for:", ["Literature", "Science", "Sports", "Cinema"], 0, "The Jnanpith is India's highest literary honour for outstanding contribution to literature.", 2, "P"],
+      ["The Dronacharya Award is given to:", ["Sports coaches", "Athletes", "Writers", "Scientists"], 0, "Dronacharya honours outstanding coaches; the Dronacharya Lifetime award is for lifetime achievement.", 2, "P"],
+      ["The Arjuna Award is given for:", ["Outstanding sporting performance", "Bravery", "Literature", "Cinema"], 0, "Arjuna Award recognises consistent outstanding performance in sports.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 2"}],
+      ["The Nobel Prize is awarded in how many categories?", ["6", "5", "7", "4"], 0, "Nobel Prizes are awarded in Physics, Chemistry, Medicine, Literature, Peace and Economics.", 2, "P"],
+      ["National Science Day in India is celebrated on 28 February to mark the discovery of:", ["The Raman Effect", "X-rays", "Penicillin", "Radioactivity"], 0, "C. V. Raman announced the Raman Effect on 28 February 1928.", 3, "P"],
+      ["Teachers' Day in India is celebrated on:", ["5 September", "5 October", "14 November", "2 October"], 0, "5 September marks the birth anniversary of Dr Sarvepalli Radhakrishnan.", 1, "P"],
+      ["Gandhi Jayanti is observed on:", ["2 October", "26 January", "15 August", "14 November"], 0, "2 October marks Mahatma Gandhi's birth anniversary and is also the International Day of Non-Violence.", 1, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 2"}],
+      ["The Right to Information is celebrated in India as RTI Day on:", ["28 September", "12 October", "1 July", "15 June"], 0, "RTI Day commemorates the enactment of the Right to Information Act in 2005.", 3, "P"]
+    ]
+  },
+  {
+    "s": "static",
+    "t": "sports",
+    "q": [
+      ["India won the ICC Men's T20 World Cup in 2024 by defeating:", ["South Africa", "Australia", "England", "New Zealand"], 0, "India beat South Africa in the final at Barbados in June 2024 to win the T20 World Cup.", 2, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 1"}],
+      ["The 2023 ICC Cricket World Cup was won by:", ["Australia", "India", "England", "New Zealand"], 0, "Australia defeated India in the final at Ahmedabad in November 2023.", 2, "P"],
+      ["India won the 2025 ICC Champions Trophy by defeating:", ["New Zealand", "Australia", "Pakistan", "South Africa"], 0, "India beat New Zealand in the final in Dubai on 9 March 2025 to win the Champions Trophy.", 2, "C", {"month": 3, "caYear": 2025, "category": "Sports", "eventDate": "2025-03-09"}],
+      ["The 2024 Summer Olympics were held in:", ["Paris", "Tokyo", "Los Angeles", "Rome"], 0, "Paris hosted the 2024 Olympics. India won six medals, including one silver and five bronze.", 2, "P"],
+      ["Neeraj Chopra won the Olympic gold medal in which event?", ["Javelin throw", "Shot put", "Discus throw", "Long jump"], 0, "Neeraj Chopra won javelin gold at Tokyo 2020 and silver at Paris 2024.", 1, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 2"}],
+      ["The 2022 FIFA World Cup was won by:", ["Argentina", "France", "Brazil", "Germany"], 0, "Argentina beat France on penalties in the 2022 final in Qatar.", 2, "P"],
+      ["Royal Challengers Bengaluru won their first IPL title in:", ["2025", "2023", "2024", "2022"], 0, "RCB won the 2025 IPL final, beating Punjab Kings in Ahmedabad in June 2025.", 2, "C", {"month": 6, "caYear": 2025, "category": "Sports", "eventDate": "2025-06-03"}],
+      ["The 2025 Wimbledon men's singles title was won by:", ["Carlos Alcaraz", "Jannik Sinner", "Novak Djokovic", "Daniil Medvedev"], 0, "Carlos Alcaraz beat Jannik Sinner in the 2025 Wimbledon final.", 3, "C", {"month": 7, "caYear": 2025, "category": "Sports", "eventDate": "2025-07-13"}],
+      ["The 2025 Wimbledon women's singles title was won by:", ["Iga Swiatek", "Aryna Sabalenka", "Coco Gauff", "Amanda Anisimova"], 0, "Iga Swiatek won her first Wimbledon title in 2025, defeating Amanda Anisimova.", 4, "C", {"month": 7, "caYear": 2025, "category": "Sports", "eventDate": "2025-07-12"}],
+      ["The 2024 World Chess Championship was won by:", ["D. Gukesh", "Ding Liren", "Magnus Carlsen", "Ian Nepomniachtchi"], 0, "D. Gukesh beat Ding Liren in December 2024 to become the youngest world chess champion.", 2, "C", {"month": 12, "caYear": 2024, "category": "Sports", "eventDate": "2024-12-12"}],
+      ["The Thomas Cup is associated with:", ["Badminton", "Table tennis", "Tennis", "Hockey"], 0, "The Thomas Cup is the men's world team badminton championship.", 2, "P"],
+      ["The Ranji Trophy is a domestic championship in:", ["Cricket", "Football", "Hockey", "Kabaddi"], 0, "The Ranji Trophy is India's premier domestic first-class cricket tournament.", 1, "P"],
+      ["The Santosh Trophy is associated with:", ["Football", "Cricket", "Badminton", "Wrestling"], 0, "The Santosh Trophy is a national football championship for state teams.", 2, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 1"}],
+      ["The Durand Cup is a prestigious tournament in:", ["Football", "Cricket", "Hockey", "Tennis"], 0, "The Durand Cup is one of Asia's oldest football tournaments, held in India.", 3, "P"],
+      ["The Khel Ratna Award was renamed after:", ["Major Dhyan Chand", "Milkha Singh", "Neeraj Chopra", "Sachin Tendulkar"], 0, "The Rajiv Gandhi Khel Ratna was renamed the Major Dhyan Chand Khel Ratna Award in 2021.", 3, "P"]
+    ]
+  },
+  {
+    "s": "static",
+    "t": "books-authors",
+    "q": [
+      ["Who wrote The Discovery of India?", ["Jawaharlal Nehru", "Mahatma Gandhi", "S. Radhakrishnan", "B. R. Ambedkar"], 0, "Nehru wrote The Discovery of India while imprisoned at Ahmednagar Fort during 1942-46.", 2, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 1"}],
+      ["Wings of Fire is the autobiography of:", ["A. P. J. Abdul Kalam", "Vikram Sarabhai", "Homi Bhabha", "C. V. Raman"], 0, "Wings of Fire was written by A. P. J. Abdul Kalam with Arun Tiwari.", 2, "P"],
+      ["Gitanjali was written by:", ["Rabindranath Tagore", "Bankim Chandra Chatterjee", "Sarojini Naidu", "Premchand"], 0, "Tagore's Gitanjali earned him the Nobel Prize in Literature in 1913.", 1, "P"],
+      ["Godan is a famous novel by:", ["Premchand", "R. K. Narayan", "Mulk Raj Anand", "Khushwant Singh"], 0, "Godan by Premchand depicts the struggles of Indian peasants.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 2"}],
+      ["Anandamath was written by:", ["Bankim Chandra Chatterjee", "Rabindranath Tagore", "Saratchandra Chattopadhyay", "Premchand"], 0, "Bankim Chandra wrote Anandamath, which includes the song Vande Mataram.", 3, "P"],
+      ["Train to Pakistan was written by:", ["Khushwant Singh", "Salman Rushdie", "Amitav Ghosh", "R. K. Narayan"], 0, "Khushwant Singh's novel is set during the Partition of India.", 3, "P"],
+      ["The Guide is a novel by:", ["R. K. Narayan", "Mulk Raj Anand", "Raja Rao", "Anita Desai"], 0, "R. K. Narayan's The Guide is set in the fictional town of Malgudi.", 2, "P"],
+      ["Midnight's Children won the Booker Prize in 1981 for:", ["Salman Rushdie", "Vikram Seth", "Arundhati Roy", "Amitav Ghosh"], 0, "Salman Rushdie won the Booker Prize for Midnight's Children.", 3, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["Interpreter of Maladies is by:", ["Jhumpa Lahiri", "Anita Desai", "Kiran Desai", "Arundhati Roy"], 0, "Jhumpa Lahiri's debut collection won the Pulitzer Prize for Fiction in 2000.", 4, "P"],
+      ["Ponniyin Selvan was written by:", ["Kalki Krishnamurthy", "Kannadasan", "Bharathiar", "Subramania Bharati"], 0, "Kalki's Tamil historical novel is set in the Chola period.", 4, "P"],
+      ["The Arthashastra was written by:", ["Kautilya", "Megasthenes", "Kalidasa", "Panini"], 0, "Kautilya's Arthashastra is a classic treatise on statecraft and economics.", 2, "P"],
+      ["Indica was written by:", ["Megasthenes", "Fa-Hien", "Hiuen Tsang", "Al-Biruni"], 0, "Megasthenes, a Greek ambassador, described India in Indica.", 3, "P"],
+      ["Ain-i-Akbari was written by:", ["Abul Fazl", "Badauni", "Amir Khusrau", "Ziauddin Barani"], 0, "Abul Fazl wrote Akbarnama and Ain-i-Akbari during Akbar's reign.", 3, "P"],
+      ["Panchatantra is attributed to:", ["Vishnu Sharma", "Kalidasa", "Valmiki", "Chanakya"], 0, "Vishnu Sharma is traditionally credited with the Panchatantra animal fables.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 1"}],
+      ["Ramcharitmanas was composed by:", ["Tulsidas", "Surdas", "Kabir", "Mirabai"], 0, "Tulsidas wrote the Ramcharitmanas in Awadhi, retelling the Ramayana.", 2, "P"]
+    ]
+  },
+  {
+    "s": "static",
+    "t": "international-bodies",
+    "q": [
+      ["The United Nations was founded in:", ["1945", "1919", "1950", "1939"], 0, "The UN was founded on 24 October 1945 after World War II. Its headquarters is in New York.", 1, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["The headquarters of the WHO is in:", ["Geneva", "New York", "Paris", "Vienna"], 0, "The World Health Organization is headquartered in Geneva, Switzerland.", 2, "P"],
+      ["The headquarters of the IMF is in:", ["Washington, D.C.", "Geneva", "New York", "London"], 0, "The International Monetary Fund is based in Washington, D.C.", 2, "P"],
+      ["The headquarters of the WTO is in:", ["Geneva", "Paris", "Rome", "New York"], 0, "The World Trade Organization is headquartered in Geneva.", 2, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 1"}],
+      ["UNESCO is headquartered in:", ["Paris", "Geneva", "New York", "Nairobi"], 0, "UNESCO, the UN cultural and educational body, is based in Paris.", 2, "P"],
+      ["UNICEF is headquartered in:", ["New York", "Geneva", "Paris", "Vienna"], 0, "UNICEF, the UN children's agency, is headquartered in New York.", 3, "P"],
+      ["The International Labour Organization is based in:", ["Geneva", "Washington", "Rome", "Brussels"], 0, "The ILO is headquartered in Geneva and focuses on labour rights and standards.", 3, "P"],
+      ["The International Court of Justice is located in:", ["The Hague", "Geneva", "New York", "Paris"], 0, "The ICJ, the principal judicial organ of the UN, sits at The Hague.", 3, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 1"}],
+      ["The International Criminal Court is based in:", ["The Hague", "Geneva", "Rome", "New York"], 0, "The ICC is based in The Hague and tries individuals for genocide, war crimes and crimes against humanity.", 3, "P"],
+      ["NATO is headquartered in:", ["Brussels", "Geneva", "Paris", "Washington"], 0, "The North Atlantic Treaty Organization has its headquarters in Brussels, Belgium.", 2, "P"],
+      ["SAARC is headquartered in:", ["Kathmandu", "New Delhi", "Dhaka", "Colombo"], 0, "The South Asian Association for Regional Cooperation is based in Kathmandu, Nepal.", 2, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 2"}],
+      ["ASEAN is headquartered in:", ["Jakarta", "Bangkok", "Manila", "Singapore"], 0, "The Association of Southeast Asian Nations is based in Jakarta, Indonesia.", 3, "P"],
+      ["The G20 2024 summit was held in:", ["Rio de Janeiro", "New Delhi", "Bali", "Johannesburg"], 0, "Brazil hosted the G20 summit in Rio de Janeiro in November 2024. India hosted it in 2023.", 3, "C", {"month": 11, "caYear": 2024, "category": "International", "eventDate": "2024-11-18"}],
+      ["OPEC is headquartered in:", ["Vienna", "Geneva", "Riyadh", "Abu Dhabi"], 0, "The Organization of the Petroleum Exporting Countries is based in Vienna, Austria.", 4, "P"],
+      ["The IAEA is headquartered in:", ["Vienna", "Geneva", "New York", "Paris"], 0, "The International Atomic Energy Agency is based in Vienna and reports to the UN General Assembly and Security Council.", 4, "P"]
+    ]
+  },
+  {
+    "s": "static",
+    "t": "recent-news",
+    "q": [
+      ["Who won the 2024 United States presidential election?", ["Donald Trump", "Kamala Harris", "Joe Biden", "Ron DeSantis"], 0, "Donald Trump defeated Kamala Harris in the November 2024 election and returned to the presidency in January 2025.", 2, "C", {"month": 11, "caYear": 2024, "category": "International", "eventDate": "2024-11-05", "fact": "Donald Trump won the 2024 US presidential election, defeating Kamala Harris."}],
+      ["COP29, the 2024 UN climate conference, was held in:", ["Baku", "Dubai", "Glasgow", "Sharm el-Sheikh"], 0, "Azerbaijan hosted COP29 in Baku in November 2024. COP28 was in Dubai.", 3, "C", {"month": 11, "caYear": 2024, "category": "International", "eventDate": "2024-11-11", "fact": "COP29 was held in Baku, Azerbaijan, in November 2024."}],
+      ["Who became the youngest world chess champion in December 2024?", ["D. Gukesh", "R. Praggnanandhaa", "Arjun Erigaisi", "Nihal Sarin"], 0, "D. Gukesh defeated Ding Liren in Singapore to win the 2024 World Chess Championship at age 18.", 2, "C", {"month": 12, "caYear": 2024, "category": "Sports", "eventDate": "2024-12-12", "fact": "D. Gukesh became the youngest world chess champion in December 2024."}],
+      ["ISRO launched the SpaDeX docking experiment in December 2024 using which launch vehicle?", ["PSLV-C60", "GSLV-F15", "LVM3-M4", "PSLV-C54"], 0, "PSLV-C60 carried SpaDeX, India's space docking experiment, launched on 30 December 2024.", 4, "C", {"month": 12, "caYear": 2024, "category": "Science", "eventDate": "2024-12-30", "fact": "ISRO launched SpaDeX on PSLV-C60 in December 2024 to demonstrate space docking."}],
+      ["The Maha Kumbh Mela 2025 was held in:", ["Prayagraj", "Haridwar", "Ujjain", "Nashik"], 0, "The 2025 Maha Kumbh was held at Prayagraj from 13 January to 26 February 2025.", 2, "C", {"month": 1, "caYear": 2025, "category": "National", "eventDate": "2025-01-13", "fact": "The 2025 Maha Kumbh was held at Prayagraj from 13 January to 26 February."}],
+      ["ISRO's 100th launch from Sriharikota carried which satellite?", ["NVS-02", "RISAT-1A", "EOS-08", "Aditya-L1"], 0, "GSLV-F15 launched NVS-02 on 29 January 2025, marking ISRO's 100th launch from Sriharikota.", 4, "C", {"month": 1, "caYear": 2025, "category": "Science", "eventDate": "2025-01-29", "fact": "ISRO's 100th launch from Sriharikota was GSLV-F15 carrying NVS-02 in January 2025."}],
+      ["Which party won the Delhi Assembly election in February 2025?", ["Bharatiya Janata Party", "Aam Aadmi Party", "Indian National Congress", "Shiv Sena"], 0, "The BJP won the February 2025 Delhi Assembly election, ending AAP's tenure in the capital.", 2, "C", {"month": 2, "caYear": 2025, "category": "National", "eventDate": "2025-02-08", "fact": "The BJP won the 2025 Delhi Assembly election."}],
+      ["India won the 2025 ICC Champions Trophy by beating which team in the final?", ["New Zealand", "Australia", "South Africa", "Pakistan"], 0, "India defeated New Zealand in Dubai on 9 March 2025 to win the Champions Trophy.", 2, "C", {"month": 3, "caYear": 2025, "category": "Sports", "eventDate": "2025-03-09", "fact": "India beat New Zealand in Dubai to win the 2025 ICC Champions Trophy."}],
+      ["The RBI reduced the repo rate to 6.00% in April 2025. What was it before the cut?", ["6.25%", "6.50%", "5.50%", "5.75%"], 0, "The RBI cut the repo rate by 25 basis points to 6.00% in April 2025, the second cut of the year.", 4, "C", {"month": 4, "caYear": 2025, "category": "Economy", "eventDate": "2025-04-09", "fact": "The RBI cut the repo rate to 6.00% in April 2025."}],
+      ["The Pahalgam terror attack, which killed tourists in Jammu and Kashmir, took place in:", ["April 2025", "May 2025", "March 2025", "June 2025"], 0, "The attack at Baisaran meadow near Pahalgam occurred on 22 April 2025.", 3, "C", {"month": 4, "caYear": 2025, "category": "National", "eventDate": "2025-04-22", "fact": "The Pahalgam terror attack took place on 22 April 2025."}],
+      ["Operation Sindoor was launched by India in May 2025 against:", ["Terror infrastructure in Pakistan and PoK", "Rebels in Myanmar", "Pirates near Somalia", "Drug cartels in Punjab"], 0, "India launched Operation Sindoor on 7 May 2025 targeting terror infrastructure after the Pahalgam attack.", 3, "C", {"month": 5, "caYear": 2025, "category": "National", "eventDate": "2025-05-07", "fact": "India launched Operation Sindoor on 7 May 2025 against terror infrastructure."}],
+      ["The RBI cut the repo rate to 5.50% in June 2025. This was the repo rate after how many cuts in 2025?", ["Third", "First", "Second", "Fourth"], 0, "The RBI cut the repo rate in February, April and June 2025, taking it to 5.50%.", 4, "C", {"month": 6, "caYear": 2025, "category": "Economy", "eventDate": "2025-06-06", "fact": "The RBI's June 2025 repo rate cut to 5.50% was its third cut of the year."}],
+      ["India signed a Free Trade Agreement with which country in July 2025?", ["United Kingdom", "United States", "Australia", "Canada"], 0, "India and the UK signed the Comprehensive Economic and Trade Agreement in July 2025.", 3, "C", {"month": 7, "caYear": 2025, "category": "Economy", "eventDate": "2025-07-24", "fact": "India and the UK signed a free trade agreement in July 2025."}],
+      ["NISAR, launched in July 2025, is a joint mission of ISRO and:", ["NASA", "ESA", "JAXA", "Roscosmos"], 0, "NISAR is a NASA-ISRO Earth-observation radar satellite launched on 30 July 2025.", 3, "C", {"month": 7, "caYear": 2025, "category": "Science", "eventDate": "2025-07-30", "fact": "NISAR, launched in July 2025, is a joint NASA-ISRO radar satellite."}],
+      ["The United States imposed a 50% tariff on many Indian goods in August 2025. The higher tariff was linked to India's purchases of:", ["Russian oil", "Iranian gas", "Chinese steel", "Brazilian soybeans"], 0, "The US raised tariffs on Indian imports to 50% in August 2025, citing India's continued purchases of Russian crude oil.", 4, "C", {"month": 8, "caYear": 2025, "category": "International", "eventDate": "2025-08-27", "fact": "The US raised tariffs on many Indian goods to 50% in August 2025."}]
+    ]
+  }
+]

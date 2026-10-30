@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 680" role="img" aria-label="Marked state">
+  <rect width="600" height="680" fill="#eef5ef"/>
+  <g stroke="#d7e5db" stroke-width="1">
+    <line x1="0" y1="0" x2="0" y2="680"/><line x1="60" y1="0" x2="60" y2="680"/><line x1="120" y1="0" x2="120" y2="680"/><line x1="180" y1="0" x2="180" y2="680"/><line x1="240" y1="0" x2="240" y2="680"/><line x1="300" y1="0" x2="300" y2="680"/><line x1="360" y1="0" x2="360" y2="680"/><line x1="420" y1="0" x2="420" y2="680"/><line x1="480" y1="0" x2="480" y2="680"/><line x1="540" y1="0" x2="540" y2="680"/>
+    <line x1="0" y1="0" x2="600" y2="0"/><line x1="0" y1="60" x2="600" y2="60"/><line x1="0" y1="120" x2="600" y2="120"/><line x1="0" y1="180" x2="600" y2="180"/><line x1="0" y1="240" x2="600" y2="240"/><line x1="0" y1="300" x2="600" y2="300"/><line x1="0" y1="360" x2="600" y2="360"/><line x1="0" y1="420" x2="600" y2="420"/><line x1="0" y1="480" x2="600" y2="480"/><line x1="0" y1="540" x2="600" y2="540"/><line x1="0" y1="600" x2="600" y2="600"/><line x1="0" y1="660" x2="600" y2="660"/>
+  </g>
+  
+  <path d="M200 50 L250 80 L300 105 L350 100 L390 120 L430 110 L470 140 L490 170 L480 200 L455 225 L440 240 L410 250 L400 230 L380 250 L365 275 L350 300 L335 340 L320 380 L300 430 L285 480 L270 530 L255 580 L245 615 L230 580 L215 530 L195 480 L180 430 L170 380 L155 340 L140 310 L120 300 L105 275 L115 250 L125 220 L135 185 L145 150 L155 115 L170 85 L180 65 Z" fill="#cfe4d3" stroke="#4c7a5c" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="220" cy="535" r="16" fill="#dc2626" opacity=".18"/>
+  <circle cx="220" cy="535" r="8" fill="#dc2626" stroke="#fff" stroke-width="3"/>
+  
+  <g font-family="system-ui, sans-serif" fill="#48604f">
+    <text x="24" y="40" font-size="20" font-weight="700">Marked state</text>
+    <text x="24" y="650" font-size="14">Schematic map · not to scale</text>
+  </g>
+  <g transform="translate(550,610)" stroke="#48604f" fill="#48604f" font-family="system-ui" font-size="13">
+    <path d="M0 20 L0 -18" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="-4" y="-24" font-weight="700">N</text>
+  </g>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#48604f"/></marker></defs>
+</svg>

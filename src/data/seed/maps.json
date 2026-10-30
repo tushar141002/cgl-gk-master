@@ -1,0 +1,21 @@
+[
+  {
+    "s": "geography",
+    "t": "map-static",
+    "q": [
+      ["Which river is marked on the map?", ["Ganga", "Yamuna", "Narmada", "Kaveri"], 0, "The marker lies on the Ganga, which flows from the Gangotri glacier across the northern plains to the Bay of Bengal.", 1, "P", {"image": "/maps/river-ganga.svg", "tags": ["map", "river"]}],
+      ["Which river is marked on the map?", ["Godavari", "Krishna", "Kaveri", "Mahanadi"], 0, "The Godavari rises in the Western Ghats near Nashik and flows east across the Deccan to the Bay of Bengal.", 2, "P", {"image": "/maps/river-godavari.svg", "tags": ["map", "river"]}],
+      ["Which river is marked on the map?", ["Narmada", "Tapi", "Mahi", "Sabarmati"], 0, "The Narmada flows west between the Vindhya and Satpura ranges into the Arabian Sea. It is one of India's west-flowing peninsular rivers.", 3, "P", {"image": "/maps/river-narmada.svg", "tags": ["map", "river"]}],
+      ["Which river is marked on the map?", ["Brahmaputra", "Ganga", "Teesta", "Mahanadi"], 0, "The Brahmaputra enters India in Arunachal Pradesh and flows through Assam before joining the Ganga in Bangladesh.", 2, "P", {"image": "/maps/river-brahmaputra.svg", "tags": ["map", "river"]}],
+      ["Which mountain range is marked on the map?", ["Himalayas", "Aravalli", "Vindhya", "Western Ghats"], 0, "The Himalayas form India's northern mountain wall and include the Greater, Lesser and Outer Himalayas.", 1, "P", {"image": "/maps/mountains-himalaya.svg", "tags": ["map", "mountain"]}],
+      ["Which mountain range is marked on the map?", ["Western Ghats", "Eastern Ghats", "Aravalli", "Satpura"], 0, "The Western Ghats run along India's west coast and are a global biodiversity hotspot.", 2, "P", {"image": "/maps/mountains-western-ghats.svg", "tags": ["map", "mountain"]}],
+      ["Which national park is marked on the map?", ["Kaziranga", "Gir", "Sundarbans", "Ranthambore"], 0, "Kaziranga in Assam is famous for the one-horned rhinoceros and lies in the Brahmaputra floodplain.", 2, "P", {"image": "/maps/park-kaziranga.svg", "tags": ["map", "park"]}],
+      ["Which national park is marked on the map?", ["Sundarbans", "Kaziranga", "Periyar", "Gir"], 0, "The Sundarbans in the Ganga-Brahmaputra delta is known for mangroves and the Royal Bengal tiger.", 3, "P", {"image": "/maps/park-sundarbans.svg", "tags": ["map", "park"]}],
+      ["Which state is marked on the map?", ["Rajasthan", "Gujarat", "Madhya Pradesh", "Haryana"], 0, "The marker lies in Rajasthan, India's largest state by area, home to the Thar Desert and Aravalli hills.", 2, "P", {"image": "/maps/state-rajasthan.svg", "tags": ["map", "state"]}],
+      ["Which state is marked on the map?", ["Kerala", "Karnataka", "Tamil Nadu", "Goa"], 0, "The marker lies on Kerala, the south-western coastal state known for backwaters and the Western Ghats.", 3, "P", {"image": "/maps/state-kerala.svg", "tags": ["map", "state"]}],
+      ["Which country is marked on the map?", ["Japan", "South Korea", "Philippines", "Vietnam"], 0, "Japan is an island country in East Asia, lying east of the Korean peninsula across the Sea of Japan.", 1, "P", {"image": "/maps/world-japan.svg", "tags": ["map", "country", "world"]}],
+      ["Which country is marked on the map?", ["Brazil", "Argentina", "Peru", "Colombia"], 0, "Brazil is the largest country in South America, home to most of the Amazon rainforest.", 2, "P", {"image": "/maps/world-brazil.svg", "tags": ["map", "country", "world"]}],
+      ["Which country is marked on the map?", ["Australia", "New Zealand", "Indonesia", "South Africa"], 0, "Australia is both a country and a continent, located between the Indian and Pacific Oceans.", 1, "P", {"image": "/maps/world-australia.svg", "tags": ["map", "country", "world"]}]
+    ]
+  }
+]

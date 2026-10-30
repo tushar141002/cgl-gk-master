@@ -1,0 +1,86 @@
+[
+  {
+    "s": "science",
+    "t": "physics-chemistry",
+    "q": [
+      ["The SI unit of force is:", ["Newton", "Joule", "Watt", "Pascal"], 0, "Force is measured in newtons. One newton accelerates a 1 kg mass at 1 m/s².", 1, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["The speed of light in vacuum is approximately:", ["3 × 10⁸ m/s", "3 × 10⁶ m/s", "3 × 10¹⁰ m/s", "3 × 10⁵ m/s"], 0, "Light travels at about 299,792,458 m/s, commonly rounded to 3 × 10⁸ m/s.", 2, "P"],
+      ["At sea level, pure water boils at:", ["100°C", "90°C", "110°C", "80°C"], 0, "At standard atmospheric pressure, water boils at 100°C. At higher altitudes it boils at a lower temperature.", 1, "P"],
+      ["The chemical symbol Na stands for:", ["Sodium", "Nitrogen", "Nickel", "Neon"], 0, "Na comes from natrium, the Latin name for sodium. Its atomic number is 11.", 2, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 1"}],
+      ["A solution with pH less than 7 is:", ["Acidic", "Basic", "Neutral", "Saline"], 0, "pH below 7 is acidic, 7 is neutral and above 7 is basic.", 1, "P"],
+      ["Newton's third law states that:", ["Every action has an equal and opposite reaction", "Force equals mass times acceleration", "Objects resist change in motion", "Energy is conserved"], 0, "For every action there is an equal and opposite reaction. This explains rocket propulsion.", 2, "P"],
+      ["Ohm's law relates voltage, current and:", ["Resistance", "Power", "Charge", "Capacitance"], 0, "V = IR, where V is voltage, I is current and R is resistance.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["The hardest naturally occurring substance is:", ["Diamond", "Quartz", "Granite", "Steel"], 0, "Diamond is a form of carbon with a very strong tetrahedral lattice, making it the hardest natural material.", 2, "P"],
+      ["The gas that gives fizzy drinks their bubbles is:", ["Carbon dioxide", "Oxygen", "Nitrogen", "Hydrogen"], 0, "Carbon dioxide dissolves under pressure and forms bubbles when the pressure is released.", 2, "P"],
+      ["Rusting of iron requires:", ["Oxygen and moisture", "Only sunlight", "Carbon dioxide only", "Nitrogen and heat"], 0, "Iron rusts when exposed to oxygen and water, forming hydrated iron oxide.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["The atomic number of an element equals the number of:", ["Protons", "Neutrons", "Electrons plus neutrons", "Nucleons only"], 0, "Atomic number is the number of protons. In a neutral atom, it also equals the number of electrons.", 3, "P"],
+      ["Sound cannot travel through:", ["Vacuum", "Steel", "Water", "Air"], 0, "Sound needs a medium. In a vacuum there are no particles to carry the vibrations.", 1, "P"],
+      ["Myopia (nearsightedness) is corrected using:", ["A concave lens", "A convex lens", "A cylindrical lens", "A prism"], 0, "A concave lens diverges light so the image forms on the retina instead of in front of it.", 3, "P"],
+      ["Which form of carbon conducts electricity?", ["Graphite", "Diamond", "Fullerene", "Charcoal"], 0, "Graphite has delocalised electrons in layers, so it conducts electricity. Diamond does not.", 3, "P"],
+      ["Which gas is most abundant in Earth's atmosphere?", ["Nitrogen", "Oxygen", "Carbon dioxide", "Argon"], 0, "Nitrogen makes up about 78% of the atmosphere; oxygen is about 21%.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 2"}]
+    ]
+  },
+  {
+    "s": "science",
+    "t": "biology-health",
+    "q": [
+      ["The largest organ of the human body is:", ["Skin", "Liver", "Brain", "Lungs"], 0, "Skin is the largest organ by surface area and protects the body from infection and injury.", 1, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 1"}],
+      ["Red blood cells carry oxygen using:", ["Haemoglobin", "Insulin", "Collagen", "Keratin"], 0, "Haemoglobin, an iron-containing protein, binds oxygen in the lungs and carries it to tissues.", 2, "P"],
+      ["Insulin is produced by which organ?", ["Pancreas", "Liver", "Kidney", "Heart"], 0, "Insulin is produced by beta cells of the pancreas and regulates blood sugar.", 2, "P"],
+      ["Deficiency of vitamin C causes:", ["Scurvy", "Rickets", "Night blindness", "Beri-beri"], 0, "Scurvy causes bleeding gums and poor wound healing. Citrus fruits are rich in vitamin C.", 2, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 1"}],
+      ["Vitamin D is synthesised in the skin with the help of:", ["Sunlight", "Vitamin C", "Iron", "Protein"], 0, "Ultraviolet light helps the skin make vitamin D, which is needed for calcium absorption.", 2, "P"],
+      ["Malaria is caused by:", ["Plasmodium", "Dengue virus", "Salmonella", "Mycobacterium"], 0, "Malaria is caused by Plasmodium parasites, spread by female Anopheles mosquitoes.", 2, "P"],
+      ["Tuberculosis is caused by:", ["Bacteria", "Virus", "Fungus", "Protozoa"], 0, "Tuberculosis is caused by Mycobacterium tuberculosis and usually affects the lungs.", 3, "P"],
+      ["Which blood group is called the universal donor?", ["O negative", "AB positive", "A positive", "B negative"], 0, "O negative red cells lack A, B and Rh antigens, so they can be given to most patients in emergencies.", 3, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 2"}],
+      ["The human heart has how many chambers?", ["4", "2", "3", "6"], 0, "The heart has two atria and two ventricles. The left ventricle pumps blood to the body.", 1, "P"],
+      ["Photosynthesis in plants takes place mainly in:", ["Chloroplasts", "Mitochondria", "Nucleus", "Ribosomes"], 0, "Chloroplasts contain chlorophyll, which captures light energy for photosynthesis.", 2, "P"],
+      ["DNA has a:", ["Double-helix structure", "Single-strand structure", "Triple-helix structure", "Circular only structure"], 0, "Watson and Crick described DNA as a double helix held together by base pairs.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 2"}],
+      ["The largest gland in the human body is the:", ["Liver", "Pancreas", "Thyroid", "Adrenal gland"], 0, "The liver is the largest gland; it produces bile and performs many metabolic functions.", 2, "P"],
+      ["Vaccines work by:", ["Stimulating the immune system to produce antibodies", "Killing all bacteria in the body", "Replacing red blood cells", "Lowering body temperature"], 0, "Vaccines expose the immune system to a harmless antigen so it can remember and fight the real pathogen.", 3, "P"],
+      ["The kidneys primarily help in:", ["Removing waste and balancing fluids", "Digesting food", "Producing insulin", "Pumping blood"], 0, "Kidneys filter blood, remove waste and regulate water, salt and acid balance.", 2, "P"],
+      ["Normal human body temperature is about:", ["37°C", "40°C", "30°C", "42°C"], 0, "Normal core body temperature is around 37°C (98.6°F), though it varies slightly.", 1, "P"]
+    ]
+  },
+  {
+    "s": "science",
+    "t": "inventions",
+    "q": [
+      ["The telephone was invented by:", ["Alexander Graham Bell", "Thomas Edison", "Nikola Tesla", "Guglielmo Marconi"], 0, "Alexander Graham Bell is credited with inventing the telephone in 1876.", 1, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["The practical electric light bulb is associated with:", ["Thomas Edison", "James Watt", "Michael Faraday", "Isaac Newton"], 0, "Thomas Edison developed a commercially practical incandescent bulb in 1879.", 2, "P"],
+      ["Penicillin was discovered by:", ["Alexander Fleming", "Louis Pasteur", "Robert Koch", "Edward Jenner"], 0, "Alexander Fleming discovered penicillin in 1928; it became the first widely used antibiotic.", 2, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 2"}],
+      ["The polio vaccine was developed by:", ["Jonas Salk", "Alexander Fleming", "Edward Jenner", "Robert Koch"], 0, "Jonas Salk developed the first effective polio vaccine in the 1950s.", 3, "P"],
+      ["The radio was pioneered by:", ["Guglielmo Marconi", "Alexander Bell", "Thomas Edison", "Wright brothers"], 0, "Marconi is credited with practical wireless telegraphy and radio communication.", 2, "P"],
+      ["The telescope was used by Galileo to study the heavens; it was invented in:", ["The Netherlands", "Italy", "England", "Germany"], 0, "The telescope was invented in the Netherlands around 1608; Galileo improved it and made astronomical observations.", 4, "P"],
+      ["The printing press with movable type was developed by:", ["Johannes Gutenberg", "Leonardo da Vinci", "Galileo Galilei", "Isaac Newton"], 0, "Gutenberg's printing press in the 15th century revolutionised the spread of knowledge.", 2, "P"],
+      ["The steam engine was significantly improved by:", ["James Watt", "Thomas Newcomen", "George Stephenson", "Richard Trevithick"], 0, "James Watt improved the Newcomen engine's efficiency, a key step in the Industrial Revolution.", 3, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 2"}],
+      ["X-rays were discovered by:", ["Wilhelm Roentgen", "Marie Curie", "Niels Bohr", "Ernest Rutherford"], 0, "Wilhelm Roentgen discovered X-rays in 1895 and received the first Nobel Prize in Physics.", 3, "P"],
+      ["The theory of relativity is associated with:", ["Albert Einstein", "Isaac Newton", "Max Planck", "Galileo"], 0, "Einstein's special and general relativity transformed our understanding of space, time and gravity.", 2, "P"],
+      ["The periodic table was first published by:", ["Dmitri Mendeleev", "John Dalton", "Antoine Lavoisier", "Robert Boyle"], 0, "Mendeleev arranged elements by atomic weight and predicted undiscovered elements.", 3, "P"],
+      ["The structure of DNA was described by:", ["Watson and Crick", "Mendel and Darwin", "Pasteur and Koch", "Curie and Rutherford"], 0, "James Watson and Francis Crick published the double-helix model in 1953, using Rosalind Franklin's data.", 3, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 2"}],
+      ["The electron was discovered by:", ["J. J. Thomson", "Niels Bohr", "James Chadwick", "Ernest Rutherford"], 0, "J. J. Thomson discovered the electron in 1897 through cathode ray experiments.", 4, "P"],
+      ["The first powered aeroplane flight was made by:", ["The Wright brothers", "Amelia Earhart", "Charles Lindbergh", "Otto Lilienthal"], 0, "Orville and Wilbur Wright made the first sustained powered flight in 1903.", 2, "P"],
+      ["The smallpox vaccine was developed by:", ["Edward Jenner", "Louis Pasteur", "Alexander Fleming", "Jonas Salk"], 0, "Edward Jenner used cowpox material in 1796 to protect against smallpox.", 3, "P"]
+    ]
+  },
+  {
+    "s": "science",
+    "t": "recent-science",
+    "q": [
+      ["Chandrayaan-3 made a soft landing near the Moon's:", ["South Pole", "North Pole", "Equator", "Far side"], 0, "India's Chandrayaan-3 landed near the lunar south pole in August 2023, a first for any country.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 1"}],
+      ["Aditya-L1 is India's mission to study:", ["The Sun", "Mars", "The Moon", "Venus"], 0, "Aditya-L1 studies the Sun from the L1 Lagrange point, about 1.5 million km from Earth.", 2, "P"],
+      ["Gaganyaan is India's:", ["Human spaceflight programme", "Mars orbiter", "Lunar rover", "Navigation satellite"], 0, "Gaganyaan aims to send Indian astronauts to low Earth orbit aboard an Indian launch vehicle.", 2, "P"],
+      ["India's Mars Orbiter Mission, Mangalyaan, was launched in:", ["2013", "2015", "2011", "2018"], 0, "Mangalyaan launched in November 2013 and entered Mars orbit in September 2014.", 3, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 1"}],
+      ["NISAR is a joint Earth-observation satellite of India and:", ["United States", "Russia", "Japan", "France"], 0, "NISAR is a NASA-ISRO synthetic aperture radar mission to monitor Earth's surface changes.", 3, "P"],
+      ["CRISPR-Cas9 is a technology used for:", ["Gene editing", "Nuclear fusion", "Satellite navigation", "Battery storage"], 0, "CRISPR-Cas9 allows precise editing of DNA sequences, with applications in medicine and agriculture.", 4, "P"],
+      ["5G refers to:", ["Fifth-generation mobile networks", "Five-gigabyte storage", "A satellite series", "A type of processor"], 0, "5G offers faster data speeds, lower latency and more connected devices than 4G.", 1, "P"],
+      ["The James Webb Space Telescope observes mainly in:", ["Infrared light", "X-rays", "Radio waves", "Ultraviolet only"], 0, "Webb's infrared instruments can see through dust and study the early universe.", 3, "P"],
+      ["NASA's Artemis programme aims to return humans to:", ["The Moon", "Mars", "Venus", "Jupiter"], 0, "Artemis aims to land astronauts on the Moon and build toward future Mars missions.", 2, "P"],
+      ["Quantum computing uses:", ["Qubits", "Transistors only", "Optical discs", "Steam turbines"], 0, "Quantum computers use qubits, which can exist in superpositions of 0 and 1.", 4, "P"],
+      ["mRNA vaccines work by instructing cells to produce:", ["A viral protein that triggers immunity", "Antibiotics", "Red blood cells", "New DNA"], 0, "mRNA vaccines deliver genetic instructions for a spike protein, training the immune system.", 4, "P"],
+      ["India's semiconductor mission aims to:", ["Build domestic chip manufacturing", "Ban electronics imports", "Launch satellites", "Mine rare earths only"], 0, "The India Semiconductor Mission supports fabrication and packaging plants to strengthen the electronics supply chain.", 3, "P"],
+      ["Green hydrogen is produced using:", ["Renewable electricity and water electrolysis", "Coal gasification", "Petroleum refining", "Natural gas only"], 0, "Green hydrogen is made by splitting water with renewable electricity, producing no direct carbon emissions.", 3, "P"],
+      ["NavIC is India's:", ["Regional navigation satellite system", "Weather satellite", "Space telescope", "Reusable rocket"], 0, "NavIC provides positioning and timing services over India and the surrounding region.", 2, "P"],
+      ["India's first solar mission is:", ["Aditya-L1", "Chandrayaan-1", "Mangalyaan", "AstroSat"], 0, "Aditya-L1, launched in 2023, is India's first dedicated solar observatory mission.", 2, "P"]
+    ]
+  }
+]

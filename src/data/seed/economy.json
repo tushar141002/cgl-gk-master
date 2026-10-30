@@ -1,0 +1,86 @@
+[
+  {
+    "s": "economy",
+    "t": "macro-micro",
+    "q": [
+      ["GDP stands for:", ["Gross Domestic Product", "Gross Development Product", "General Domestic Price", "Gross Domestic Price"], 0, "GDP is the market value of all final goods and services produced within a country in a given period.", 1, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["Inflation in India is most commonly measured using the:", ["Consumer Price Index", "Wholesale Price Index only", "Index of Industrial Production", "Sensex"], 0, "The CPI measures retail price changes and is the RBI's main inflation target measure.", 2, "P"],
+      ["Fiscal deficit is the gap between:", ["Government expenditure and total receipts excluding borrowings", "Exports and imports", "Savings and investment", "Revenue and capital expenditure"], 0, "Fiscal deficit shows how much the government needs to borrow to meet its spending.", 3, "P"],
+      ["A sustained fall in the general price level is called:", ["Deflation", "Inflation", "Stagflation", "Disinflation"], 0, "Deflation is a persistent fall in prices. Disinflation is a slowdown in the rate of inflation.", 3, "P"],
+      ["Microeconomics primarily studies:", ["Individual households and firms", "National income", "Inflation", "Balance of payments"], 0, "Microeconomics focuses on individual decision-makers, prices in specific markets and resource allocation.", 2, "P"],
+      ["According to the law of demand, other things being equal, when price rises:", ["Quantity demanded falls", "Quantity demanded rises", "Demand is unchanged", "Supply falls"], 0, "Price and quantity demanded move in opposite directions, giving a downward-sloping demand curve.", 1, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 2"}],
+      ["Real GDP differs from nominal GDP because real GDP is adjusted for:", ["Inflation", "Population", "Exports", "Taxes"], 0, "Real GDP uses constant prices to remove the effect of price changes, making growth comparisons meaningful.", 3, "P"],
+      ["Per capita income is calculated as:", ["National income divided by population", "Total tax divided by GDP", "Exports minus imports", "GDP plus inflation"], 0, "Per capita income is a rough measure of average income per person.", 2, "P"],
+      ["A situation of high inflation with stagnant growth is called:", ["Stagflation", "Deflation", "Hyperinflation", "Recession"], 0, "Stagflation combines slow growth and high unemployment with rising prices.", 4, "P"],
+      ["Which is a primary sector activity?", ["Agriculture", "Banking", "Software services", "Manufacturing"], 0, "The primary sector extracts natural resources through farming, mining, fishing and forestry.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["The primary deficit is:", ["Fiscal deficit minus interest payments", "Revenue deficit plus subsidies", "Total expenditure minus taxes", "Current account deficit"], 0, "Primary deficit shows borrowing needs excluding past interest obligations.", 4, "P"],
+      ["A recession is generally defined as:", ["Two consecutive quarters of negative GDP growth", "A rise in exports", "A fall in unemployment", "A budget surplus"], 0, "Two successive quarters of contracting GDP is a common technical definition of recession.", 3, "P"],
+      ["Which organisation publishes India's National Accounts Statistics?", ["Ministry of Statistics and Programme Implementation", "Reserve Bank of India", "NITI Aayog", "SEBI"], 0, "MoSPI compiles national accounts, including GDP estimates.", 4, "P"],
+      ["The base year currently used for India's GDP series is:", ["2011-12", "2004-05", "2015-16", "2020-21"], 0, "India's national accounts use 2011-12 as the base year for the current series.", 4, "P"],
+      ["Which of these is a macroeconomics variable?", ["National income", "Price of one brand of soap", "A firm's profit", "Individual demand"], 0, "Macroeconomics studies aggregates such as national income, inflation, unemployment and trade.", 2, "P"]
+    ]
+  },
+  {
+    "s": "economy",
+    "t": "budget-taxation",
+    "q": [
+      ["The Union Budget is presented in Parliament under which Article?", ["Article 112", "Article 110", "Article 123", "Article 280"], 0, "Article 112 requires the President to lay the Annual Financial Statement before Parliament.", 3, "P"],
+      ["The Union Budget is normally presented on:", ["1 February", "1 April", "31 March", "15 March"], 0, "Since 2017, the Union Budget has been presented on 1 February, ahead of the new financial year.", 2, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 1"}],
+      ["Who presents the Union Budget in Parliament?", ["Finance Minister", "President", "RBI Governor", "Speaker"], 0, "The Finance Minister presents the Union Budget, usually on 1 February.", 1, "P"],
+      ["Which is a direct tax?", ["Income tax", "GST", "Customs duty", "Excise duty"], 0, "Direct taxes are paid directly by the taxpayer, such as income tax. GST and customs are indirect taxes.", 2, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 2"}],
+      ["GST was implemented in India on:", ["1 July 2017", "1 April 2016", "1 January 2018", "15 August 2017"], 0, "GST came into effect on 1 July 2017 through the 101st Constitutional Amendment.", 2, "P"],
+      ["Who chairs the GST Council?", ["Union Finance Minister", "President", "RBI Governor", "NITI Aayog CEO"], 0, "The Union Finance Minister chairs the GST Council, with state finance ministers as members.", 3, "P"],
+      ["India's financial year runs from:", ["1 April to 31 March", "1 January to 31 December", "1 July to 30 June", "1 October to 30 September"], 0, "The Indian financial year is April to March; the Budget is prepared for this period.", 1, "P"],
+      ["Revenue deficit occurs when:", ["Revenue expenditure exceeds revenue receipts", "Capital expenditure exceeds capital receipts", "Exports exceed imports", "Taxes exceed spending"], 0, "Revenue deficit measures the shortfall in revenue receipts compared with revenue expenditure.", 4, "P"],
+      ["Which expenditure is capital expenditure?", ["Building a new highway", "Paying salaries", "Interest payments", "Subsidies"], 0, "Capital expenditure creates assets or reduces liabilities, such as roads, bridges and machinery.", 2, "P"],
+      ["A Vote on Account is used to:", ["Meet expenses until the Budget is passed", "Increase taxes", "Amend the Constitution", "Approve a new state"], 0, "A Vote on Account lets the government withdraw money for a few months until the full Budget is approved.", 4, "P"],
+      ["GST is a:", ["Destination-based indirect tax", "Direct tax on income", "Tax only on imports", "Tax on agricultural income"], 0, "GST is a destination-based, multi-stage indirect tax on consumption.", 3, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 2"}],
+      ["A cess is a tax that is:", ["Levied for a specific purpose", "Paid only by companies", "Collected by states only", "Optional for citizens"], 0, "Cess is earmarked for a specific purpose, such as education or health, and is not shared with states in the usual way.", 5, "P"],
+      ["Fiscal policy is managed mainly by:", ["The government", "The RBI", "Commercial banks", "SEBI"], 0, "Fiscal policy covers government taxation and spending; monetary policy is managed by the RBI.", 2, "P"],
+      ["Which tax is levied on the manufacture and sale of goods within a state before GST?", ["Excise duty", "Income tax", "Capital gains tax", "Securities transaction tax"], 0, "Excise duty was a central tax on manufacture, largely subsumed into GST in 2017.", 4, "P"],
+      ["Zero-based budgeting requires every expenditure to be:", ["Justified afresh each year", "Increased every year", "Approved by the RBI", "Funded by borrowing"], 0, "Zero-based budgeting starts from a zero base rather than last year's allocation, requiring fresh justification.", 5, "P"]
+    ]
+  },
+  {
+    "s": "economy",
+    "t": "banking-rbi",
+    "q": [
+      ["The Reserve Bank of India was established in:", ["1935", "1949", "1950", "1921"], 0, "The RBI was established on 1 April 1935 and nationalised in 1949.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 2"}],
+      ["The headquarters of the RBI is in:", ["Mumbai", "New Delhi", "Kolkata", "Chennai"], 0, "The RBI's central office is in Mumbai. It was initially in Kolkata.", 1, "P"],
+      ["The repo rate is the rate at which:", ["The RBI lends short-term funds to banks", "Banks lend to customers", "The government borrows from the IMF", "Banks borrow from each other"], 0, "Repo is the RBI's short-term lending rate to banks against government securities.", 3, "P"],
+      ["CRR stands for:", ["Cash Reserve Ratio", "Credit Reserve Rate", "Current Repo Rate", "Capital Resource Ratio"], 0, "CRR is the share of deposits banks must keep with the RBI as cash reserves.", 2, "P"],
+      ["SLR stands for:", ["Statutory Liquidity Ratio", "Standard Lending Rate", "Secured Loan Ratio", "Savings Liquidity Rate"], 0, "SLR is the minimum share of deposits banks must hold in liquid assets such as government securities.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 1"}],
+      ["The Monetary Policy Committee of India has how many members?", ["6", "4", "8", "10"], 0, "The MPC has six members, including the RBI Governor as chairperson.", 3, "P"],
+      ["The RBI's inflation target is:", ["4% with a 2% band", "2% with a 1% band", "6% with a 2% band", "5% fixed"], 0, "India's flexible inflation targeting framework sets a 4% CPI target with a tolerance band of 2-6%.", 4, "P"],
+      ["Which is India's apex development bank for agriculture?", ["NABARD", "SIDBI", "EXIM Bank", "RBI"], 0, "NABARD supports agriculture and rural development. SIDBI focuses on small industries.", 2, "P"],
+      ["Nationalisation of 14 major commercial banks took place in:", ["1969", "1949", "1980", "1991"], 0, "Fourteen major banks were nationalised in 1969; six more were nationalised in 1980.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 2"}],
+      ["UPI is operated by:", ["NPCI", "RBI", "SEBI", "IRDAI"], 0, "The National Payments Corporation of India (NPCI) operates UPI, RuPay and other retail payment systems.", 3, "P"],
+      ["A scheduled bank is one that:", ["Is included in the Second Schedule of the RBI Act", "Has more than 100 branches", "Is owned by the government", "Only lends to farmers"], 0, "Scheduled banks are listed in the Second Schedule of the RBI Act and meet certain capital and operational conditions.", 4, "P"],
+      ["The RBI was nationalised in:", ["1949", "1935", "1969", "1955"], 0, "The RBI was nationalised on 1 January 1949.", 3, "P"],
+      ["Which instrument is used by the RBI to absorb liquidity from the banking system?", ["Reverse repo", "Repo", "CRR cut", "Open market purchase"], 0, "In reverse repo, banks park surplus funds with the RBI, absorbing liquidity.", 4, "P"],
+      ["Financial inclusion means:", ["Access to affordable financial services for all", "Only opening bank accounts for the rich", "Banning cash", "Nationalising all banks"], 0, "Financial inclusion aims to give everyone access to banking, credit, insurance and payments.", 2, "P"],
+      ["The RBI Governor is appointed by:", ["Government of India", "President alone", "Parliament", "Supreme Court"], 0, "The Central Government appoints the RBI Governor, usually for a three-year term.", 2, "P"]
+    ]
+  },
+  {
+    "s": "economy",
+    "t": "schemes-welfare",
+    "q": [
+      ["Pradhan Mantri Jan Dhan Yojana aims at:", ["Financial inclusion through bank accounts", "Crop insurance", "Rural roads", "Free laptops"], 0, "PMJDY, launched in 2014, provides basic savings accounts, insurance and overdraft facilities.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["Ayushman Bharat provides health cover of:", ["₹5 lakh per family per year", "₹1 lakh per family", "₹10 lakh per person", "₹50,000 per family"], 0, "Ayushman Bharat PM-JAY offers ₹5 lakh annual health cover for eligible families.", 2, "P"],
+      ["MGNREGA guarantees:", ["100 days of wage employment in rural areas", "Free food grains", "Housing loans", "Old-age pension"], 0, "The Mahatma Gandhi National Rural Employment Guarantee Act 2005 guarantees 100 days of unskilled wage work per rural household.", 2, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 1"}],
+      ["PM-KISAN provides:", ["Direct income support to farmers", "Free tractors", "Crop loans at 0%", "Subsidised fertiliser only"], 0, "PM-KISAN gives direct income support to eligible farmer families in instalments.", 2, "P"],
+      ["Pradhan Mantri Ujjwala Yojana provides:", ["LPG connections to poor households", "Solar panels", "Piped water", "Free bicycles"], 0, "Ujjwala provides LPG connections to women from below-poverty-line households to promote clean cooking fuel.", 2, "P"],
+      ["Swachh Bharat Mission was launched in:", ["2014", "2016", "2019", "2012"], 0, "Swachh Bharat Mission was launched on 2 October 2014 to improve sanitation and eliminate open defecation.", 2, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 1"}],
+      ["Pradhan Mantri Awas Yojana aims to provide:", ["Affordable housing", "Free education", "Health insurance", "Cooking gas"], 0, "PMAY supports affordable housing for urban and rural families.", 2, "P"],
+      ["Atal Pension Yojana mainly benefits:", ["Unorganised sector workers", "Government employees", "Only farmers", "Only students"], 0, "APY provides a guaranteed pension to subscribers from the unorganised sector after age 60.", 3, "P"],
+      ["Sukanya Samriddhi Yojana is aimed at:", ["Girl children", "Senior citizens", "Farmers", "Startups"], 0, "The scheme encourages savings for a girl child's education and marriage through a small savings account.", 2, "P"],
+      ["Startup India was launched in:", ["2016", "2014", "2018", "2020"], 0, "Startup India was launched in January 2016 to encourage entrepreneurship and simplify compliance.", 3, "P"],
+      ["Make in India was launched in:", ["2014", "2016", "2019", "2012"], 0, "Make in India was launched in September 2014 to boost manufacturing and investment.", 2, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 2"}],
+      ["Pradhan Mantri Fasal Bima Yojana provides:", ["Crop insurance", "Free seeds", "Minimum support prices", "Farm loans"], 0, "PMFBY insures farmers against crop loss from natural calamities, pests and diseases.", 2, "P"],
+      ["Skill India Mission was launched in:", ["2015", "2014", "2016", "2019"], 0, "Skill India was launched in July 2015 to provide skill training and improve employability.", 3, "P"],
+      ["Digital India aims to:", ["Provide digital infrastructure and services", "Build highways", "Provide LPG", "Increase farm subsidies"], 0, "Digital India, launched in 2015, promotes digital infrastructure, governance and literacy.", 2, "P"],
+      ["PM Vishwakarma scheme supports:", ["Traditional artisans and craftspeople", "IT engineers", "Doctors", "Bank employees"], 0, "PM Vishwakarma, launched in 2023, provides training, loans and support to traditional artisans and craftspeople.", 4, "P"]
+    ]
+  }
+]

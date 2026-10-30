@@ -1,0 +1,107 @@
+[
+  {
+    "s": "polity",
+    "t": "constitution-basics",
+    "q": [
+      ["Fundamental Rights are contained in which Part of the Constitution?", ["Part III", "Part IV", "Part II", "Part V"], 0, "Part III (Articles 12-35) contains Fundamental Rights. Part IV contains Directive Principles.", 1, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["Which words were added to the Preamble by the 42nd Amendment?", ["Socialist, secular and integrity", "Sovereign and democratic", "Justice and liberty", "Republic and equality"], 0, "The 42nd Amendment 1976 added socialist, secular and integrity to the Preamble.", 3, "P"],
+      ["Article 21 guarantees:",["Right to life and personal liberty","Right to equality","Right against exploitation","Right to property"],0,"Article 21 protects life and personal liberty. Courts have read privacy, health and education into it.",2,"Y",{"year":2023,"date":"13 Sept","shift":"Shift 1","hq":"अनुच्छेद 21 किस अधिकार की गारंटी देता है?","ho":["जीवन एवं व्यक्तिगत स्वतंत्रता का अधिकार","समानता का अधिकार","शोषण के विरुद्ध अधिकार","संपत्ति का अधिकार"],"he":"अनुच्छेद 21 जीवन और व्यक्तिगत स्वतंत्रता की रक्षा करता है। न्यायालयों ने इसमें निजता, स्वास्थ्य और शिक्षा को भी शामिल किया है।"}],
+      ["Dr B. R. Ambedkar called which Article the heart and soul of the Constitution?", ["Article 32", "Article 14", "Article 21", "Article 356"], 0, "Article 32 gives the right to move the Supreme Court for enforcement of Fundamental Rights.", 2, "P"],
+      ["Directive Principles of State Policy are contained in:", ["Part IV", "Part III", "Part IVA", "Part IX"], 0, "Part IV (Articles 36-51) contains DPSP. They are not directly enforceable in courts.", 1, "P"],
+      ["Fundamental Duties were added to the Constitution by which Amendment?", ["42nd Amendment", "44th Amendment", "52nd Amendment", "86th Amendment"], 0, "The 42nd Amendment 1976 added Fundamental Duties in Part IVA on the recommendation of the Swaran Singh Committee.", 3, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 2"}],
+      ["The Right to Education was made a Fundamental Right by the:", ["86th Amendment", "73rd Amendment", "42nd Amendment", "101st Amendment"], 0, "The 86th Amendment 2002 inserted Article 21A, making free education for children aged 6-14 a fundamental right.", 3, "P"],
+      ["Article 14 of the Constitution deals with:", ["Equality before law", "Right to life", "Freedom of speech", "Abolition of untouchability"], 0, "Article 14 guarantees equality before law and equal protection of laws.", 2, "P"],
+      ["Article 17 abolishes:", ["Untouchability", "Titles", "Child labour", "Forced labour"], 0, "Article 17 abolishes untouchability. Article 18 abolishes titles, except military and academic distinctions.", 2, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 2"}],
+      ["Which freedom is NOT part of Article 19?", ["Right to property", "Freedom of speech", "Freedom of assembly", "Freedom to form associations"], 0, "The right to property was removed as a Fundamental Right by the 44th Amendment and is now a legal right under Article 300A.", 4, "P"],
+      ["The parliamentary system of government in India is borrowed from:", ["United Kingdom", "United States", "France", "Canada"], 0, "India adopted the parliamentary system, rule of law and single citizenship from the UK.", 2, "P"],
+      ["Directive Principles were borrowed from the Constitution of:", ["Ireland", "USA", "Canada", "Australia"], 0, "DPSP was inspired by the Irish Constitution. Fundamental Rights came from the USA.", 3, "P"],
+      ["Fundamental Rights are borrowed from which country?", ["United States", "United Kingdom", "Ireland", "Japan"], 0, "The Bill of Rights in the US Constitution inspired India's Fundamental Rights.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 2"}],
+      ["The Constituent Assembly of India was constituted under the:", ["Cabinet Mission Plan", "Cripps Mission", "Mountbatten Plan", "Government of India Act 1935"], 0, "The Constituent Assembly was formed in 1946 under the Cabinet Mission Plan. It first met on 9 December 1946.", 4, "P"],
+      ["Which Article is described as the soul of the Constitution by some scholars?", ["Article 32", "Article 368", "Article 356", "Article 44"], 0, "Article 32, the right to constitutional remedies, is often called the soul of the Constitution because it protects other rights.", 3, "P"]
+    ]
+  },
+  {
+    "s": "polity",
+    "t": "parliament",
+    "q": [
+      ["Who is the supreme commander of the Indian Armed Forces?", ["President of India", "Prime Minister", "Defence Minister", "Chief of Defence Staff"], 0, "The President is the supreme commander of the armed forces, though actual command rests with the government.", 2, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 2"}],
+      ["A Money Bill can be introduced only in:", ["Lok Sabha", "Rajya Sabha", "Either House", "A joint sitting"], 0, "A Money Bill can be introduced only in the Lok Sabha, with the President's recommendation. The Rajya Sabha can only recommend changes.", 2, "P"],
+      ["What is the maximum strength of the Rajya Sabha?", ["250", "238", "245", "252"], 0, "The Rajya Sabha can have a maximum of 250 members: 238 representing states and UTs, and 12 nominated by the President.", 4, "P"],
+      ["The current strength of the Lok Sabha is:", ["543", "545", "552", "540"], 0, "The Lok Sabha currently has 543 elected members. The maximum strength is 552 under the Constitution.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 1"}],
+      ["The President of India is elected by:", ["An electoral college", "Direct popular vote", "The Supreme Court", "The Lok Sabha only"], 0, "Elected members of Parliament and state legislative assemblies form the electoral college for the President.", 2, "P"],
+      ["Who is the ex-officio Chairman of the Rajya Sabha?", ["Vice President", "President", "Speaker", "Deputy Chairman"], 0, "The Vice President of India is the ex-officio Chairman of the Rajya Sabha.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["The Prime Minister of India is appointed by:", ["President", "Lok Sabha", "Chief Justice", "Election Commission"], 0, "The President appoints the leader of the majority party in the Lok Sabha as Prime Minister.", 1, "P"],
+      ["The Council of Ministers is collectively responsible to:", ["Lok Sabha", "Rajya Sabha", "President", "Supreme Court"], 0, "The Council of Ministers is collectively responsible to the Lok Sabha under Article 75.", 2, "P"],
+      ["Who presides over the Lok Sabha?", ["Speaker", "Vice President", "Chairman", "Deputy Prime Minister"], 0, "The Speaker presides over the Lok Sabha and decides matters such as Money Bill certification.", 1, "Y", {"year": 2023, "date": "16 Sept", "shift": "Shift 2"}],
+      ["Zero Hour in Parliament refers to:", ["The time immediately after Question Hour", "The first hour of the day", "The last hour of the day", "The time for the Budget"], 0, "Zero Hour is the period immediately after Question Hour when members raise urgent matters without prior notice.", 3, "P"],
+      ["Question Hour is a period when:", ["Members question ministers", "The Budget is passed", "The President addresses Parliament", "Bills are signed"], 0, "Question Hour lets members ask questions of ministers and hold the executive accountable.", 2, "P"],
+      ["How many members can the President nominate to the Rajya Sabha?", ["12", "2", "15", "20"], 0, "The President nominates 12 Rajya Sabha members for distinction in literature, science, art and social service.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["A no-confidence motion can be moved only in:", ["Lok Sabha", "Rajya Sabha", "Either House", "A joint sitting"], 0, "A no-confidence motion is moved in the Lok Sabha, and if passed, the Council of Ministers must resign.", 3, "P"],
+      ["The President's ordinance-making power is given by:", ["Article 123", "Article 143", "Article 356", "Article 111"], 0, "Article 123 allows the President to promulgate ordinances when Parliament is not in session. They must be approved later.", 4, "P"],
+      ["The minimum age to become President of India is:", ["35 years", "30 years", "25 years", "40 years"], 0, "A candidate for President must be at least 35 years old and qualified to be a Lok Sabha member.", 2, "P"]
+    ]
+  },
+  {
+    "s": "polity",
+    "t": "judiciary",
+    "q": [
+      ["The Supreme Court of India came into existence on:", ["28 January 1950", "26 January 1950", "26 November 1949", "15 August 1947"], 0, "The Supreme Court was inaugurated on 28 January 1950, two days after the Constitution came into force.", 3, "P"],
+      ["The Supreme Court is established under which Article?", ["Article 124", "Article 214", "Article 32", "Article 226"], 0, "Article 124 establishes the Supreme Court. Article 214 establishes High Courts.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["The Chief Justice of India is appointed by:", ["President", "Prime Minister", "Collegium of governors", "Parliament"], 0, "The President appoints the Chief Justice and other judges, traditionally following the collegium's recommendation.", 1, "P"],
+      ["The power of courts to review laws for constitutionality is called:", ["Judicial review", "Judicial activism", "Appellate jurisdiction", "Original jurisdiction"], 0, "Judicial review lets courts strike down laws or actions that violate the Constitution.", 2, "P"],
+      ["Which writ means 'to have the body'?", ["Habeas Corpus", "Mandamus", "Certiorari", "Quo Warranto"], 0, "Habeas Corpus orders a person detaining someone to produce them before the court.", 3, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 2"}],
+      ["The sanctioned strength of the Supreme Court is currently:", ["34 judges", "31 judges", "30 judges", "25 judges"], 0, "The Supreme Court has a sanctioned strength of 34 judges, including the Chief Justice, after the 2019 increase.", 4, "P"],
+      ["High Courts are established under which Article?", ["Article 214", "Article 124", "Article 131", "Article 143"], 0, "Article 214 provides for a High Court for each state. Parliament can establish a common High Court for two or more states.", 3, "P"],
+      ["Who was the first woman judge of the Supreme Court of India?", ["Fathima Beevi", "Leila Seth", "Indu Malhotra", "R. Banumathi"], 0, "Justice M. Fathima Beevi became the first woman Supreme Court judge in 1989.", 4, "P"],
+      ["Public Interest Litigation (PIL) allows:", ["Any person to approach court for public interest", "Only government to file cases", "Only victims to file cases", "Courts to make laws"], 0, "PIL allows individuals or organisations to approach courts for issues affecting the public or disadvantaged groups.", 2, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 1"}],
+      ["Under Article 141, law declared by the Supreme Court is:", ["Binding on all courts", "Binding only on High Courts", "Advisory only", "Applicable only to the Union"], 0, "Article 141 makes Supreme Court decisions binding on all courts in India.", 3, "P"],
+      ["Supreme Court judges retire at the age of:", ["65 years", "62 years", "60 years", "70 years"], 0, "Supreme Court judges retire at 65; High Court judges retire at 62.", 2, "P"],
+      ["The collegium system is associated with:", ["Appointment of judges", "Election of the President", "Passing Money Bills", "Reservation policy"], 0, "The collegium, led by the Chief Justice, recommends appointments and transfers of judges.", 3, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 1"}],
+      ["A common High Court can serve:", ["Two or more states", "Only one state", "Only union territories", "All states"], 0, "Parliament can establish a common High Court for two or more states or union territories.", 3, "P"],
+      ["The Supreme Court's original jurisdiction under Article 131 deals with:", ["Disputes between the Union and states", "Appeals from lower courts", "Writ petitions only", "Advisory opinions"], 0, "Article 131 gives the Supreme Court original jurisdiction in disputes between the Union and states or between states.", 4, "P"],
+      ["Advisory jurisdiction of the Supreme Court is under:", ["Article 143", "Article 136", "Article 141", "Article 32"], 0, "Under Article 143, the President can refer a question of law or fact to the Supreme Court for advice.", 4, "P"]
+    ]
+  },
+  {
+    "s": "polity",
+    "t": "panchayati-raj",
+    "q": [
+      ["Panchayati Raj institutions were given constitutional status by the:", ["73rd Amendment", "74th Amendment", "42nd Amendment", "61st Amendment"], 0, "The 73rd Amendment 1992 added Part IX and the Eleventh Schedule, giving constitutional status to rural local bodies.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 2"}],
+      ["The three-tier Panchayati Raj system consists of:", ["Gram Panchayat, Panchayat Samiti, Zilla Parishad", "Gram Sabha, Municipality, Corporation", "Village, Taluka, State", "Ward, Zone, District"], 0, "The three tiers are Gram Panchayat at village level, Panchayat Samiti at block level and Zilla Parishad at district level.", 2, "P"],
+      ["The Gram Sabha consists of:", ["All registered voters of the village", "Only elected members", "Only women", "Government officials"], 0, "The Gram Sabha comprises all registered voters in a village panchayat area and is the base of grassroots democracy.", 2, "P"],
+      ["What proportion of seats in Panchayats is reserved for women?", ["At least one-third", "One-half in all states", "One-fourth", "No reservation"], 0, "The Constitution requires at least one-third of seats for women; many states have raised this to 50%.", 2, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 1"}],
+      ["The normal term of a Panchayat is:", ["5 years", "3 years", "6 years", "4 years"], 0, "A Panchayat has a five-year term unless dissolved earlier. Elections must be held within six months of dissolution.", 2, "P"],
+      ["Who conducts Panchayat elections?", ["State Election Commission", "Election Commission of India", "District Collector", "Panchayat Secretary"], 0, "The State Election Commission conducts elections to Panchayats and municipalities.", 3, "P"],
+      ["State Finance Commission is constituted under which Article?", ["Article 243-I", "Article 243-K", "Article 243-E", "Article 243-Z"], 0, "Article 243-I provides for a State Finance Commission to review the financial position of Panchayats.", 4, "P"],
+      ["The 74th Amendment deals with:", ["Urban local bodies", "Rural panchayats", "Cooperative societies", "GST"], 0, "The 74th Amendment 1992 gave constitutional status to municipalities and nagar panchayats.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 2"}],
+      ["The Balwant Rai Mehta Committee recommended:", ["A three-tier Panchayati Raj system", "Urban local bodies", "Women's reservation", "Anti-defection law"], 0, "The 1957 Balwant Rai Mehta Committee recommended democratic decentralisation through a three-tier panchayat system.", 3, "P"],
+      ["The Ashok Mehta Committee was appointed in:", ["1977", "1957", "1992", "1985"], 0, "The Ashok Mehta Committee (1977) reviewed Panchayati Raj and recommended a two-tier system.", 4, "P"],
+      ["Which state first implemented Panchayati Raj in 1959?", ["Rajasthan", "Kerala", "West Bengal", "Maharashtra"], 0, "Rajasthan first implemented Panchayati Raj at Nagaur on 2 October 1959, followed by Andhra Pradesh.", 3, "P"],
+      ["The minimum age to contest a Panchayat election is:", ["21 years", "18 years", "25 years", "30 years"], 0, "A person must be at least 21 years old to contest a Panchayat election.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["Reservation of seats in Panchayats for SC and ST is:", ["In proportion to their population", "Fixed at 10%", "Only for chairpersons", "Not required"], 0, "Seats are reserved for Scheduled Castes and Scheduled Tribes in proportion to their population in the area.", 3, "P"],
+      ["The district-level Panchayati Raj body is called:", ["Zilla Parishad", "Panchayat Samiti", "Gram Panchayat", "Nagar Panchayat"], 0, "Zilla Parishad is the district-level body; Panchayat Samiti is at block level and Gram Panchayat at village level.", 2, "P"],
+      ["PESA, 1996 extends Panchayati Raj to:", ["Scheduled areas", "Urban areas", "Union territories", "Cantonment boards"], 0, "The Panchayats (Extension to Scheduled Areas) Act, 1996 extends the system to Fifth Schedule areas with special powers.", 5, "P"]
+    ]
+  },
+  {
+    "s": "polity",
+    "t": "amendments-acts",
+    "q": [
+      ["The First Constitutional Amendment was passed in:", ["1951", "1950", "1952", "1956"], 0, "The First Amendment 1951 added the Ninth Schedule and imposed reasonable restrictions on free speech.", 3, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 2"}],
+      ["Which amendment is known as the Mini Constitution?", ["42nd Amendment", "44th Amendment", "52nd Amendment", "42nd and 44th together"], 0, "The 42nd Amendment 1976 made sweeping changes to the Constitution and is called the Mini Constitution.", 2, "P"],
+      ["The right to property was removed as a Fundamental Right by the:", ["44th Amendment", "42nd Amendment", "25th Amendment", "1st Amendment"], 0, "The 44th Amendment 1978 deleted Article 31 and made property a legal right under Article 300A.", 3, "P"],
+      ["The anti-defection law was introduced by which amendment?", ["52nd Amendment", "42nd Amendment", "61st Amendment", "73rd Amendment"], 0, "The 52nd Amendment 1985 added the Tenth Schedule to curb defections.", 3, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 2"}],
+      ["The voting age was reduced from 21 to 18 by the:", ["61st Amendment", "42nd Amendment", "44th Amendment", "86th Amendment"], 0, "The 61st Amendment 1988 lowered the voting age to 18.", 2, "P"],
+      ["The 73rd and 74th Amendments deal with:", ["Local self-government", "Fundamental rights", "GST", "Anti-defection"], 0, "They gave constitutional status to rural and urban local bodies respectively.", 2, "P"],
+      ["The Right to Education was inserted by the:", ["86th Amendment", "61st Amendment", "73rd Amendment", "101st Amendment"], 0, "The 86th Amendment 2002 added Article 21A and amended Article 45 and Fundamental Duties.", 2, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 2"}],
+      ["The Goods and Services Tax was introduced by the:", ["101st Amendment", "100th Amendment", "102nd Amendment", "103rd Amendment"], 0, "The 101st Amendment 2016 introduced GST and created the GST Council.", 2, "P"],
+      ["Reservation for Economically Weaker Sections (EWS) was provided by the:", ["103rd Amendment", "102nd Amendment", "104th Amendment", "101st Amendment"], 0, "The 103rd Amendment 2019 provided 10% reservation for EWS in education and public employment.", 3, "P"],
+      ["The 104th Amendment dealt with:", ["Extending SC/ST reservation and ending Anglo-Indian nominated seats", "GST", "Women's reservation", "Local bodies"], 0, "The 104th Amendment extended SC/ST reservation in legislatures and ended Anglo-Indian nominated seats.", 4, "P"],
+      ["The 106th Amendment provides for:", ["Reservation for women in legislatures", "EWS reservation", "GST", "Anti-defection"], 0, "The 106th Amendment 2023, the Nari Shakti Vandan Adhiniyam, provides 33% reservation for women in the Lok Sabha and state assemblies.", 4, "P"],
+      ["Which amendment made it mandatory for the President to accept the advice of the Council of Ministers?", ["42nd Amendment", "44th Amendment", "52nd Amendment", "61st Amendment"], 0, "The 42nd Amendment made ministerial advice binding on the President; the 44th allowed one reconsideration.", 4, "P"],
+      ["The Government of India Act 1935 introduced:", ["Provincial autonomy", "Dyarchy in provinces", "Separate electorates", "Fundamental rights"], 0, "The 1935 Act introduced provincial autonomy and divided powers into federal, provincial and concurrent lists.", 4, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["The 39th Amendment was passed during the Emergency to:", ["Protect the Prime Minister's election from judicial review", "Lower the voting age", "Introduce GST", "Create panchayats"], 0, "The 39th Amendment 1975 placed election disputes involving the President, Vice President, PM and Speaker beyond court scrutiny.", 5, "P"],
+      ["Which amendment added the words 'socialist' and 'secular' to the Preamble?", ["42nd Amendment", "44th Amendment", "52nd Amendment", "86th Amendment"], 0, "The 42nd Amendment 1976 added socialist, secular and integrity to the Preamble.", 2, "P"]
+    ]
+  }
+]

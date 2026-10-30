@@ -1,0 +1,107 @@
+[
+  {
+    "s": "geography",
+    "t": "physical-features",
+    "q": [
+      ["The highest mountain peak located entirely within India is:", ["Kanchenjunga", "Mount Everest", "Nanda Devi", "K2"], 0, "Kanchenjunga (8,586 m) lies on the India-Nepal border and is the highest peak in India. Everest is in Nepal.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["The longest river of India is:", ["Ganga", "Godavari", "Brahmaputra", "Narmada"], 0, "The Ganga is India's longest river, flowing about 2,525 km from Gangotri to the Bay of Bengal.", 1, "P"],
+      ["The Thar Desert is mainly located in:", ["Rajasthan", "Madhya Pradesh", "Gujarat", "Haryana"], 0, "The Thar Desert lies mostly in western Rajasthan and extends into Pakistan and Gujarat.", 1, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 1"}],
+      ["Which mountain range is the oldest fold mountain system in India?", ["Aravalli", "Himalaya", "Western Ghats", "Vindhya"], 0, "The Aravalli is one of the oldest fold mountain ranges in the world, running through Rajasthan.", 3, "P"],
+      ["The Deccan Plateau is mainly composed of:", ["Basaltic lava", "Limestone", "Sandstone", "Granite only"], 0, "The Deccan Trap is formed from ancient basaltic lava, which weathers into fertile black soil.", 3, "P"],
+      ["The Tropic of Cancer passes through how many Indian states?", ["8", "6", "7", "9"], 0, "It passes through Gujarat, Rajasthan, Madhya Pradesh, Chhattisgarh, Jharkhand, West Bengal, Tripura and Mizoram.", 4, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 2"}],
+      ["The Sundarbans delta is formed by which rivers?", ["Ganga and Brahmaputra", "Indus and Jhelum", "Godavari and Krishna", "Narmada and Tapi"], 0, "The Ganga-Brahmaputra delta is the world's largest delta and contains the Sundarbans mangroves.", 2, "P"],
+      ["The Palghat Gap connects Kerala with:", ["Tamil Nadu", "Karnataka", "Andhra Pradesh", "Telangana"], 0, "The Palghat Gap is a low pass in the Western Ghats between the Nilgiri and Anaimalai hills.", 3, "P"],
+      ["The Brahmaputra is known as Tsangpo in:", ["Tibet", "Nepal", "Bhutan", "Myanmar"], 0, "The river is called Tsangpo in Tibet, Siang or Dihang in Arunachal, and Brahmaputra in Assam.", 3, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 2"}],
+      ["Which is the largest peninsular river of India?", ["Godavari", "Krishna", "Kaveri", "Tapi"], 0, "The Godavari is the largest peninsular river and is called Dakshin Ganga. It rises in Maharashtra.", 2, "P"],
+      ["Chilika Lake, India's largest coastal lagoon, is in:", ["Odisha", "Andhra Pradesh", "Tamil Nadu", "West Bengal"], 0, "Chilika Lake lies on the Odisha coast and is famous for its brackish-water ecosystem and dolphins.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 2"}],
+      ["The largest freshwater lake in India is:", ["Wular Lake", "Chilika Lake", "Sambhar Lake", "Loktak Lake"], 0, "Wular Lake in Jammu and Kashmir is India's largest freshwater lake. Chilika is brackish.", 3, "P"],
+      ["Mount Everest is located in:", ["Nepal", "India", "Bhutan", "China"], 0, "Mount Everest lies on the Nepal-China border. Its height is about 8,849 m.", 1, "P"],
+      ["The Indian Standard Meridian passes through:", ["Mirzapur", "Delhi", "Kolkata", "Nagpur"], 0, "The 82°30'E meridian passes near Mirzapur in Uttar Pradesh and sets Indian Standard Time.", 3, "P"],
+      ["The Western Ghats are also known as:", ["Sahyadri", "Nilgiri", "Aravalli", "Shivalik"], 0, "The Western Ghats are called Sahyadri in Maharashtra and Karnataka. They are a biodiversity hotspot.", 2, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 1"}]
+    ]
+  },
+  {
+    "s": "geography",
+    "t": "climate-monsoon",
+    "q": [
+      ["The southwest monsoon normally arrives in Kerala around:", ["1 June", "1 May", "15 July", "1 April"], 0, "The southwest monsoon usually sets in over Kerala around 1 June and covers India by July.", 1, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 1"}],
+      ["The wettest place in India is generally:", ["Mawsynram", "Cherrapunji", "Agumbe", "Pasighat"], 0, "Mawsynram in Meghalaya receives the highest average annual rainfall in India.", 2, "P"],
+      ["Winter rainfall in north-west India is caused by:", ["Western disturbances", "Retreating monsoon", "Norwesters", "Local thunderstorms"], 0, "Western disturbances are extra-tropical cyclones from the Mediterranean that bring winter rain and snow.", 3, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 1"}],
+      ["The Coromandel Coast receives most of its rain from the:", ["Northeast monsoon", "Southwest monsoon", "Western disturbances", "Jet stream"], 0, "The northeast monsoon in October-December brings rain to the Coromandel Coast of Tamil Nadu and Andhra.", 3, "P"],
+      ["El Nino is associated with:", ["Weak Indian monsoon", "Strong Indian monsoon", "Early monsoon", "Winter rain in Punjab"], 0, "El Nino warming in the eastern Pacific often weakens the Indian southwest monsoon.", 4, "P"],
+      ["Which phenomenon is a hot, dry wind of the northern plains in summer?", ["Loo", "Kal Baisakhi", "Mango shower", "Norwester"], 0, "Loo blows across north and north-west India in May-June, often pushing temperatures above 45°C.", 2, "P"],
+      ["The retreating monsoon season in India is:", ["October-November", "June-September", "March-May", "December-February"], 0, "The southwest monsoon withdraws from October, and the retreating monsoon brings rain to southeast India.", 2, "Y", {"year": 2024, "date": "12 Sept", "shift": "Shift 1"}],
+      ["About what share of India's annual rainfall comes from the southwest monsoon?", ["75%", "40%", "55%", "90%"], 0, "The southwest monsoon provides roughly three-fourths of India's annual rainfall and is vital for agriculture.", 3, "P"],
+      ["Norwesters in West Bengal are locally called:", ["Kal Baisakhi", "Loo", "Mango showers", "Bardoli Chheerha"], 0, "Kal Baisakhi are violent pre-monsoon thunderstorms in Bengal and Assam. In Assam they are called Bardoli Chheerha.", 4, "P"],
+      ["The place with the lowest recorded temperatures in India is generally:", ["Dras", "Shimla", "Srinagar", "Leh"], 0, "Dras in Ladakh is one of the coldest inhabited places in India, with winter temperatures far below freezing.", 3, "P"],
+      ["Mango showers are pre-monsoon rains that help the mango crop in:", ["Kerala and Karnataka", "Punjab and Haryana", "Bihar and UP", "Odisha and Bengal"], 0, "Mango showers occur in Kerala, Karnataka and Goa before the monsoon and help mango ripening.", 3, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 2"}],
+      ["The Bay of Bengal branch of the monsoon is deflected by the:", ["Himalayas", "Aravalli", "Vindhya", "Western Ghats"], 0, "The Himalayas force the Bay of Bengal branch to turn west, spreading rain across north India.", 4, "P"],
+      ["Indian summers are hottest in which region?", ["North-west plains", "Kerala coast", "Western Ghats", "Andaman Islands"], 0, "Rajasthan and adjoining north-west plains record the highest summer temperatures due to dry winds and clear skies.", 2, "P"],
+      ["Which state receives rain from both the southwest and northeast monsoons?", ["Tamil Nadu", "Punjab", "Rajasthan", "Gujarat"], 0, "Tamil Nadu gets some southwest monsoon rain on the Western Ghats and most of its rain from the northeast monsoon.", 4, "P"],
+      ["The monsoon is caused mainly by:", ["Seasonal reversal of winds", "Ocean tides", "Earthquakes", "Volcanic activity"], 0, "Differential heating of land and sea reverses wind direction seasonally, producing the monsoon.", 2, "Y", {"year": 2023, "date": "16 Sept", "shift": "Shift 2"}]
+    ]
+  },
+  {
+    "s": "geography",
+    "t": "soil-vegetation",
+    "q": [
+      ["Black soil in India is best suited for which crop?", ["Cotton", "Tea", "Rice", "Jute"], 0, "Black soil, also called regur, retains moisture and is ideal for cotton. It forms from basaltic lava.", 1, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["Laterite soil develops mainly under:", ["Heavy rainfall and leaching", "Desert conditions", "Alluvial deposits", "Volcanic ash"], 0, "Laterite soil forms in hot, wet climates where heavy rain leaches silica and leaves iron and aluminium oxides.", 3, "P"],
+      ["The most fertile and widespread soil type in India is:", ["Alluvial soil", "Red soil", "Laterite soil", "Desert soil"], 0, "Alluvial soil covers the northern plains and river valleys and is rich in potash and lime.", 2, "P"],
+      ["Red soil gets its colour mainly from:", ["Iron oxides", "Humus", "Calcium carbonate", "Mica"], 0, "Iron oxide gives red soil its colour. It is common in the Deccan and eastern India.", 2, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 2"}],
+      ["Mangrove forests in India are best developed in:", ["Sundarbans", "Thar Desert", "Himalayas", "Deccan Plateau"], 0, "The Sundarbans in West Bengal have the largest mangrove forests in India, adapted to saline tidal water.", 2, "P"],
+      ["Tropical evergreen forests in India are found mainly in:", ["Western Ghats and northeast", "Rajasthan", "Punjab", "Gujarat"], 0, "Evergreen forests need over 200 cm of rain and occur in the Western Ghats, northeast and Andaman Islands.", 3, "P"],
+      ["Jharia is famous for:", ["Coal", "Iron ore", "Gold", "Diamond"], 0, "Jharia in Jharkhand is a major coal field and one of India's most important coalfields.", 2, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["Kolar gold fields are located in:", ["Karnataka", "Andhra Pradesh", "Tamil Nadu", "Telangana"], 0, "Kolar in Karnataka is historically India's most famous gold mining area.", 3, "P"],
+      ["Monazite sand, a source of thorium, is found mainly in:", ["Kerala", "Punjab", "Assam", "Bihar"], 0, "The beach sands of Kerala contain monazite, an important source of thorium for nuclear energy.", 4, "P"],
+      ["Bailadila iron ore mines are in:", ["Chhattisgarh", "Odisha", "Jharkhand", "Karnataka"], 0, "Bailadila in Chhattisgarh is known for high-grade iron ore. It supplies major steel plants.", 4, "P"],
+      ["Panna, famous for diamonds, is in:", ["Madhya Pradesh", "Rajasthan", "Gujarat", "Andhra Pradesh"], 0, "Panna in Madhya Pradesh has India's only active diamond mine.", 3, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 2"}],
+      ["Desert soil is typically:", ["Sandy and low in organic matter", "Clayey and waterlogged", "Rich in humus", "Acidic and leached"], 0, "Desert soil is sandy, saline and low in organic matter, with limited water retention.", 2, "P"],
+      ["Sal is a characteristic tree of which forest type?", ["Tropical deciduous", "Mangrove", "Alpine", "Thorn forest"], 0, "Sal grows in tropical deciduous forests of central and eastern India. Teak is another key species.", 2, "P"],
+      ["Which state is India's largest producer of bauxite?", ["Odisha", "Punjab", "Bihar", "Haryana"], 0, "Odisha leads in bauxite production, with deposits in the Kalahandi and Koraput regions.", 4, "P"],
+      ["Which forest type is found in the Himalayan region above the tree line?", ["Alpine", "Evergreen", "Mangrove", "Thorn"], 0, "Alpine forests and meadows occur above the tree line in the Himalayas, with short growing seasons.", 3, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 1"}]
+    ]
+  },
+  {
+    "s": "geography",
+    "t": "agriculture",
+    "q": [
+      ["Rice is mainly a crop of which season?", ["Kharif", "Rabi", "Zaid", "Winter"], 0, "Rice is a kharif crop sown with the southwest monsoon and harvested in autumn.", 1, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["Wheat is mainly grown in which season?", ["Rabi", "Kharif", "Zaid", "Monsoon"], 0, "Wheat is a rabi crop sown in winter and harvested in spring, mainly in Punjab, Haryana and UP.", 1, "P"],
+      ["Tea cultivation in India is concentrated in:", ["Assam and West Bengal", "Punjab and Haryana", "Gujarat and Rajasthan", "Kerala and Tamil Nadu"], 0, "Assam and the Darjeeling hills of West Bengal dominate tea production, which needs humid slopes and drainage.", 2, "P"],
+      ["Coffee is mainly grown in:", ["Karnataka", "Punjab", "Bihar", "Rajasthan"], 0, "Karnataka, especially Coorg and Chikmagalur, leads Indian coffee production, followed by Kerala and Tamil Nadu.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 2"}],
+      ["Jute is mainly grown in:", ["West Bengal", "Punjab", "Kerala", "Himachal Pradesh"], 0, "West Bengal is India's leading jute producer, followed by Bihar and Assam. Jute needs hot, humid conditions.", 2, "P"],
+      ["The Green Revolution in India was most successful in the production of:", ["Wheat", "Jute", "Tea", "Cotton"], 0, "High-yielding wheat varieties and irrigation transformed Punjab, Haryana and western UP during the Green Revolution.", 2, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 2"}],
+      ["Zaid crops are grown:", ["Between rabi and kharif", "Only in winter", "Only during monsoon", "In hill areas"], 0, "Zaid is a short summer season between rabi and kharif, when crops such as watermelon and cucumber are grown.", 3, "P"],
+      ["India's largest sugarcane-producing state is generally:", ["Uttar Pradesh", "Punjab", "Kerala", "Odisha"], 0, "Uttar Pradesh leads sugarcane production, followed by Maharashtra. Sugarcane needs high temperature and water.", 2, "P"],
+      ["Rubber is mainly cultivated in:", ["Kerala", "Haryana", "Rajasthan", "Punjab"], 0, "Kerala accounts for most Indian natural rubber production, with a hot, humid climate and heavy rainfall.", 3, "P"],
+      ["Millets are important because they are:", ["Drought resistant", "Water intensive", "Grown only in winter", "Dependent on frost"], 0, "Millets such as jowar, bajra and ragi tolerate dry conditions and poor soils, making them climate-resilient.", 2, "P"],
+      ["Which crop is known as a cash crop?", ["Cotton", "Wheat", "Rice", "Barley"], 0, "Cash crops are grown mainly for sale, such as cotton, sugarcane, jute and tobacco.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["Shifting cultivation in the north-east is locally called:", ["Jhum", "Podu", "Kumari", "Dahiya"], 0, "Jhum cultivation involves clearing and burning patches of forest, cropping for a few years, then moving on.", 3, "P"],
+      ["The Blue Revolution refers to:", ["Fisheries and aquaculture", "Milk production", "Oilseeds", "Floriculture"], 0, "The Blue Revolution promotes fisheries and aquaculture. The White Revolution is dairy and the Yellow Revolution oilseeds.", 2, "P"],
+      ["Which state is the largest producer of wheat in India?", ["Uttar Pradesh", "Kerala", "Assam", "Odisha"], 0, "Uttar Pradesh is India's largest wheat producer, followed by Madhya Pradesh and Punjab.", 2, "Y", {"year": 2023, "date": "16 Sept", "shift": "Shift 1"}],
+      ["Terrace farming is commonly practised in:", ["Hilly areas", "Desert plains", "Coastal deltas", "Flood plains"], 0, "Terrace farming creates stepped fields on slopes to conserve soil and water, common in the Himalayas and Western Ghats.", 3, "P"]
+    ]
+  },
+  {
+    "s": "geography",
+    "t": "map-static",
+    "q": [
+      ["Which river flows through Srinagar?", ["Jhelum", "Ganga", "Yamuna", "Beas"], 0, "The Jhelum flows through the Kashmir Valley and Srinagar. It is a tributary of the Indus.", 2, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 1"}],
+      ["Which Indian state has the longest coastline?", ["Gujarat", "Tamil Nadu", "Andhra Pradesh", "Maharashtra"], 0, "Gujarat has India's longest coastline, over 1,600 km, including the Gulf of Kutch and Gulf of Khambhat.", 3, "P"],
+      ["Which country shares the longest land border with India?", ["Bangladesh", "China", "Pakistan", "Nepal"], 0, "Bangladesh shares about 4,096 km of border with India, the longest among India's neighbours.", 2, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 1"}],
+      ["The Palk Strait separates India from:", ["Sri Lanka", "Maldives", "Myanmar", "Indonesia"], 0, "The Palk Strait lies between Tamil Nadu and Sri Lanka, with Adam's Bridge (Ram Setu) nearby.", 2, "P"],
+      ["Which state is known as the Land of Five Rivers?", ["Punjab", "Haryana", "Uttar Pradesh", "Rajasthan"], 0, "Punjab means land of five rivers: Sutlej, Beas, Ravi, Chenab and Jhelum.", 1, "P"],
+      ["The southernmost point of India is:", ["Indira Point", "Kanyakumari", "Point Calimere", "Dhanushkodi"], 0, "Indira Point in the Nicobar Islands is India's southernmost point. Kanyakumari is the southernmost mainland point.", 4, "P"],
+      ["Which state has the highest number of districts?", ["Uttar Pradesh", "Madhya Pradesh", "Maharashtra", "Bihar"], 0, "Uttar Pradesh has the most districts in India, followed by Madhya Pradesh and Maharashtra.", 3, "P"],
+      ["Ahmedabad is situated on the banks of which river?", ["Sabarmati", "Tapi", "Narmada", "Mahi"], 0, "Ahmedabad lies on the Sabarmati river in Gujarat. Gandhinagar is nearby.", 3, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["Which pass connects Srinagar with Leh?", ["Zoji La", "Nathu La", "Palghat", "Bomdi La"], 0, "Zoji La is a high mountain pass on the Srinagar-Leh route. Nathu La connects Sikkim with Tibet.", 4, "P"],
+      ["Lakshadweep is located in the:", ["Arabian Sea", "Bay of Bengal", "Indian Ocean only", "Andaman Sea"], 0, "Lakshadweep is a coral archipelago in the Arabian Sea, southwest of Kerala.", 2, "P"],
+      ["Which river is known as the Sorrow of Bihar?", ["Kosi", "Damodar", "Gandak", "Son"], 0, "The Kosi shifts its course and causes severe floods in Bihar, earning the name Sorrow of Bihar.", 3, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 2"}],
+      ["Which city is located on the banks of the Gomti river?", ["Lucknow", "Kanpur", "Patna", "Agra"], 0, "Lucknow stands on the Gomti, a tributary of the Ganga. Kanpur is on the Ganga.", 3, "P"],
+      ["Which state shares borders with the most other states?", ["Uttar Pradesh", "Madhya Pradesh", "Maharashtra", "Rajasthan"], 0, "Uttar Pradesh borders eight states and union territories, the most of any Indian state.", 3, "P"],
+      ["The Andaman and Nicobar Islands lie in the:", ["Bay of Bengal", "Arabian Sea", "Laccadive Sea", "Persian Gulf"], 0, "The Andaman and Nicobar Islands are in the Bay of Bengal, southeast of the Indian mainland.", 1, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 2"}],
+      ["Which river flows through the Grand Canyon-like gorge at Chitrakoot?", ["Mandakini", "Godavari", "Kaveri", "Tapi"], 0, "The Mandakini (Payaswini) flows through Chitrakoot, known for its rocky gorge and waterfalls.", 5, "P"]
+    ]
+  }
+]

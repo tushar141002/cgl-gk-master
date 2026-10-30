@@ -1,0 +1,107 @@
+[
+  {
+    "s": "history",
+    "t": "prehistoric-ivc",
+    "q": [
+      ["The Great Bath of the Indus Valley Civilization was discovered at which site?", ["Mohenjo-daro", "Harappa", "Lothal", "Kalibangan"], 0, "The Great Bath is a large brick-lined tank at Mohenjo-daro, suggesting ritual bathing. Tip: Great Bath = Mohenjo-daro, Dockyard = Lothal.", 1, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 1"}],
+      ["The Harappan script is best described as:", ["Undeciphered", "Written in Sanskrit", "A form of Tamil", "Alphabetic Greek"], 0, "Harappan seals carry short inscriptions, but the script remains undeciphered. It is mostly pictographic with about 400-600 signs.", 2, "P"],
+      ["Which Harappan site is famous for its ancient dockyard?", ["Lothal", "Dholavira", "Rakhigarhi", "Banawali"], 0, "Lothal in Gujarat had a tidal dockyard linked to the Gulf of Khambhat. It was a bead-making and trade centre.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 2"}],
+      ["Fire altars, suggesting ritual practices, were found at:", ["Kalibangan", "Mohenjo-daro", "Harappa", "Chanhudaro"], 0, "Kalibangan in Rajasthan yielded rows of fire altars and a ploughed field. Tip: Kalibangan = fire altars + ploughed field.", 3, "P"],
+      ["Mehrgarh is important because it provides evidence of:", ["Early farming and animal domestication", "Iron smelting", "Shipbuilding", "Temple architecture"], 0, "Mehrgarh, in Balochistan, shows early wheat and barley farming and domesticated animals before the mature Harappan phase.", 3, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["Which Harappan site is known for a large water reservoir and a signboard?", ["Dholavira", "Rakhigarhi", "Lothal", "Surkotada"], 0, "Dholavira in Gujarat has sophisticated water reservoirs and a ten-sign board. It is a UNESCO World Heritage Site.", 4, "P"],
+      ["The largest Harappan site located in India is:", ["Rakhigarhi", "Mohenjo-daro", "Harappa", "Lothal"], 0, "Rakhigarhi, in Haryana, is the largest Harappan site in India. Mohenjo-daro and Harappa are in Pakistan.", 3, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 2"}],
+      ["The famous bronze figure of the Dancing Girl was found at:", ["Mohenjo-daro", "Lothal", "Kalibangan", "Dholavira"], 0, "The Dancing Girl is a bronze sculpture from Mohenjo-daro. It shows the Harappans' skill in metal casting.", 2, "P"],
+      ["Harappan seals were mostly made of which material?", ["Steatite", "Iron", "Granite", "Glass"], 0, "Most Harappan seals are made of steatite, a soft stone that is easy to carve and then fired.", 3, "P"],
+      ["Burzahom, a Neolithic site with pit dwellings, is located in:", ["Kashmir", "Kerala", "Gujarat", "Assam"], 0, "Burzahom is in the Kashmir Valley. Its early inhabitants lived in pits cut into the ground.", 3, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["The Bhimbetka rock shelters, famous for prehistoric paintings, are in:", ["Madhya Pradesh", "Maharashtra", "Rajasthan", "Karnataka"], 0, "Bhimbetka lies in the Vindhyan hills of Madhya Pradesh and has paintings from the Palaeolithic to historic periods.", 2, "P"],
+      ["Which metal was NOT used by the Harappans?", ["Iron", "Bronze", "Copper", "Gold"], 0, "The Harappans belonged to the Bronze Age; iron came into use in India later. Tip: Harappan = bronze, not iron.", 2, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 2"}],
+      ["Chanhudaro was especially known for:", ["Bead making", "Shipbuilding", "Stone temples", "Iron tools"], 0, "Chanhudaro, in Sindh, was a craft centre famous for bead making and shell working.", 3, "P"],
+      ["Which crop was NOT commonly cultivated by the Harappans?", ["Sugarcane", "Wheat", "Barley", "Cotton"], 0, "Harappans grew wheat, barley, peas and cotton. Sugarcane cultivation became common in later periods.", 4, "P"],
+      ["The meaning of the name Mohenjo-daro is:", ["Mound of the dead", "City of wells", "Land of rivers", "Fort of kings"], 0, "Mohenjo-daro is Sindhi for mound of the dead. The site is in Sindh, Pakistan.", 3, "P"]
+    ]
+  },
+  {
+    "s": "history",
+    "t": "vedic-mauryan-gupta",
+    "q": [
+      ["Which is the oldest of the four Vedas?", ["Rigveda", "Samaveda", "Yajurveda", "Atharvaveda"], 0, "The Rigveda is the oldest Veda and contains hymns dedicated to various gods. The other three are later.", 1, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 1"}],
+      ["The Gayatri Mantra appears in which Veda?", ["Rigveda", "Atharvaveda", "Samaveda", "Yajurveda"], 0, "The Gayatri Mantra is in the Rigveda and is dedicated to Savitri. Tip: Gayatri = Rigveda.", 2, "P"],
+      ["The Kalinga War, after which Ashoka embraced Buddhism, was fought in:", ["261 BCE", "321 BCE", "185 BCE", "78 CE"], 0, "Ashoka fought the Kalinga War around 261 BCE. The bloodshed led him to adopt Dhamma and non-violence.", 3, "P"],
+      ["Who founded the Mauryan Empire?", ["Chandragupta Maurya", "Ashoka", "Bindusara", "Samudragupta"], 0, "Chandragupta Maurya founded the empire around 321 BCE with the help of Chanakya.", 1, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 2"}],
+      ["The Arthashastra is attributed to:", ["Kautilya", "Kalidasa", "Panini", "Aryabhata"], 0, "Kautilya, also called Chanakya, wrote the Arthashastra on statecraft and economics.", 2, "P"],
+      ["Ashokan inscriptions were mainly written in which script in most of India?", ["Brahmi", "Kharosthi", "Devanagari", "Tamil"], 0, "Most Ashokan edicts use Prakrit in Brahmi script; in the northwest, Kharosthi was also used.", 3, "Y", {"year": 2024, "date": "12 Sept", "shift": "Shift 1"}],
+      ["The Gupta period is often called the Golden Age of India because of advances in:", ["Science, literature and art", "Naval warfare", "Iron production", "Colonial trade"], 0, "The Guptas patronised literature, astronomy, mathematics and temple art; Kalidasa and Aryabhata belong to this era.", 2, "P"],
+      ["Who is called the Napoleon of India by historian V. A. Smith?", ["Samudragupta", "Ashoka", "Harshavardhana", "Chandragupta II"], 0, "Samudragupta's extensive military campaigns earned him the title Napoleon of India in V. A. Smith's writing.", 4, "P"],
+      ["The four Vedas are Rigveda, Samaveda, Yajurveda and:", ["Atharvaveda", "Ayurveda", "Dhanurveda", "Gandharvaveda"], 0, "The Atharvaveda is the fourth Veda and contains spells, charms and philosophical hymns.", 2, "Y", {"year": 2023, "date": "16 Sept", "shift": "Shift 2"}],
+      ["In the Vedic period, the assembly of elders was called:", ["Sabha", "Danda", "Bali", "Varna"], 0, "Sabha and Samiti were important assemblies in the early Vedic period. Sabha was the assembly of elders.", 3, "P"],
+      ["Dharmamahamatra, an officer appointed by Ashoka, was responsible for:", ["Public welfare and moral instruction", "Tax collection", "Army recruitment", "Foreign trade"], 0, "Dharmamahamatra looked after welfare, religious harmony and the propagation of Dhamma.", 4, "P"],
+      ["The iron pillar at Mehrauli, Delhi, is associated with which ruler?", ["Chandragupta II", "Kanishka", "Harshavardhana", "Ashoka"], 0, "The rust-resistant iron pillar at Mehrauli is linked to Chandragupta II of the Gupta dynasty.", 3, "P"],
+      ["Nalanda Mahavihara was founded during the reign of:", ["Kumaragupta I", "Ashoka", "Harshavardhana", "Kanishka"], 0, "Nalanda was founded under Kumaragupta I and became a major Buddhist learning centre.", 3, "Y", {"year": 2024, "date": "13 Sept", "shift": "Shift 2"}],
+      ["Buddha delivered his first sermon at:", ["Sarnath", "Bodh Gaya", "Lumbini", "Kushinagar"], 0, "The first sermon, the Dhammachakkapavattana Sutta, was delivered at Sarnath near Varanasi.", 2, "P"],
+      ["Ashoka sent his daughter Sanghamitra to spread Buddhism in:", ["Sri Lanka", "China", "Persia", "Greece"], 0, "Sanghamitra and her brother Mahendra are credited with spreading Buddhism in Sri Lanka.", 3, "P"]
+    ]
+  },
+  {
+    "s": "history",
+    "t": "medieval-india",
+    "q": [
+      ["The First Battle of Panipat in 1526 was fought between Babur and:", ["Ibrahim Lodi", "Rana Sanga", "Sher Shah Suri", "Hem Chandra Vikramaditya"], 0, "Babur defeated Ibrahim Lodi in 1526, establishing the Mughal Empire. He used gunpowder and artillery effectively.", 1, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["The construction of the Qutub Minar was started by:", ["Qutb-ud-din Aibak", "Iltutmish", "Alauddin Khalji", "Akbar"], 0, "Qutb-ud-din Aibak began the Qutub Minar; it was completed by his successor Iltutmish.", 2, "P"],
+      ["Which Delhi Sultanate ruler introduced strict market regulations and price controls?", ["Alauddin Khalji", "Balban", "Firoz Shah Tughlaq", "Sikandar Lodi"], 0, "Alauddin Khalji controlled markets, prices and the supply of goods to keep his army and city stable.", 3, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 2"}],
+      ["Muhammad bin Tughlaq shifted his capital from Delhi to:", ["Daulatabad", "Agra", "Lahore", "Fatehpur Sikri"], 0, "He moved the capital to Daulatabad in the Deccan, but the experiment failed and the capital returned to Delhi.", 2, "P"],
+      ["The Vijayanagara Empire was founded by:", ["Harihara and Bukka", "Krishnadevaraya", "Rajaraja Chola", "Pulakeshin II"], 0, "Harihara and Bukka founded Vijayanagara in 1336. The city was on the Tungabhadra river.", 3, "P"],
+      ["Krishnadevaraya, the Vijayanagara ruler, wrote which work in Telugu?", ["Amuktamalyada", "Baburnama", "Rajatarangini", "Akbarnama"], 0, "Krishnadevaraya wrote Amuktamalyada, a Telugu poetic work on the life of Andal.", 4, "P"],
+      ["Akbar proclaimed the Din-i-Ilahi in:", ["1582", "1526", "1605", "1556"], 0, "Akbar promulgated Din-i-Ilahi in 1582 as a syncretic faith. It attracted very few followers.", 3, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 2"}],
+      ["The Battle of Talikota in 1565 led to the decline of:", ["Vijayanagara Empire", "Delhi Sultanate", "Mughal Empire", "Bahmani Kingdom"], 0, "A coalition of Deccan sultanates defeated Vijayanagara at Talikota, leading to its decline.", 3, "P"],
+      ["Sher Shah Suri is credited with introducing the silver coin called:", ["Rupiya", "Dinar", "Mohur", "Tanka"], 0, "Sher Shah Suri introduced the rupiya, a silver coin that influenced later Indian currency.", 2, "P"],
+      ["The chief architect of the Taj Mahal was:", ["Ustad Ahmad Lahauri", "Mimar Sinan", "Ustad Isa Khan", "Raja Birbal"], 0, "Ustad Ahmad Lahauri is generally credited as the chief architect of the Taj Mahal.", 4, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 1"}],
+      ["Baburnama was originally written in which language?", ["Chagatai Turkish", "Persian", "Arabic", "Urdu"], 0, "Babur wrote his memoirs in Chagatai Turkish; they were later translated into Persian.", 4, "P"],
+      ["Who was the first woman ruler of the Delhi Sultanate?", ["Razia Sultan", "Nur Jahan", "Mumtaz Mahal", "Chand Bibi"], 0, "Razia Sultan ruled from 1236 to 1240 and was the first woman to rule Delhi.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 2"}],
+      ["The Third Battle of Panipat in 1761 was fought between the Marathas and:", ["Ahmad Shah Abdali", "Babur", "Akbar", "Nadir Shah"], 0, "Ahmad Shah Abdali defeated the Marathas at Panipat in 1761, checking Maratha expansion in the north.", 3, "P"],
+      ["The Moroccan traveller Ibn Battuta visited India during the reign of:", ["Muhammad bin Tughlaq", "Akbar", "Alauddin Khalji", "Shah Jahan"], 0, "Ibn Battuta came to India in the 14th century and served as a judge under Muhammad bin Tughlaq.", 4, "P"],
+      ["Shivaji was crowned Chhatrapati in 1674 at:", ["Raigad", "Pune", "Satara", "Kolhapur"], 0, "Shivaji's coronation took place at Raigad fort in 1674, marking the rise of Maratha power.", 3, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 1"}]
+    ]
+  },
+  {
+    "s": "history",
+    "t": "freedom-struggle",
+    "q": [
+      ["Who founded the Brahmo Samaj in 1828?", ["Raja Ram Mohan Roy", "Dayanand Saraswati", "Swami Vivekananda", "Ishwar Chandra Vidyasagar"], 0, "Raja Ram Mohan Roy founded the Brahmo Samaj and campaigned against sati and for women's education.", 2, "Y", {"year": 2022, "date": "19 Sept", "shift": "Shift 1"}],
+      ["The Arya Samaj was founded by:", ["Dayanand Saraswati", "Raja Ram Mohan Roy", "Annie Besant", "Jyotiba Phule"], 0, "Dayanand Saraswati founded the Arya Samaj in 1875 and gave the slogan Back to the Vedas.", 2, "P"],
+      ["Swami Vivekananda founded the Ramakrishna Mission in:", ["1897", "1885", "1905", "1919"], 0, "Vivekananda founded the Ramakrishna Mission in 1897 at Belur, focused on service and education.", 3, "P"],
+      ["The Indian National Congress was founded in 1885 by:", ["A. O. Hume", "Dadabhai Naoroji", "W. C. Bonnerjee", "Surendranath Banerjee"], 0, "A. O. Hume, a retired British civil servant, played a key role in founding the INC. W. C. Bonnerjee was its first president.", 2, "Y", {"year": 2024, "date": "12 Sept", "shift": "Shift 2"}],
+      ["The Partition of Bengal was announced in 1905 by:", ["Lord Curzon", "Lord Ripon", "Lord Dalhousie", "Lord Minto"], 0, "Viceroy Lord Curzon announced the partition of Bengal in 1905, triggering the Swadeshi movement.", 3, "P"],
+      ["The Jallianwala Bagh massacre took place in:", ["1919", "1857", "1920", "1930"], 0, "On 13 April 1919, General Dyer ordered firing on an unarmed crowd at Jallianwala Bagh, Amritsar.", 1, "Y", {"year": 2023, "date": "13 Sept", "shift": "Shift 2"}],
+      ["Mahatma Gandhi launched the Non-Cooperation Movement in:", ["1920", "1930", "1942", "1919"], 0, "The Non-Cooperation Movement began in 1920 and was withdrawn after the Chauri Chaura incident in 1922.", 2, "P"],
+      ["The Dandi March of 1930 was a protest against:", ["The salt tax", "The Rowlatt Act", "Partition of Bengal", "The Simon Commission"], 0, "Gandhi marched from Sabarmati to Dandi to make salt and defy the British salt monopoly.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 2"}],
+      ["The Quit India Movement was launched in:", ["1942", "1930", "1920", "1939"], 0, "Gandhi gave the call Do or Die in August 1942. The movement demanded an immediate end to British rule.", 1, "P"],
+      ["Who led the Indian National Army (INA) during the freedom struggle?", ["Subhas Chandra Bose", "Jawaharlal Nehru", "Bhagat Singh", "C. Rajagopalachari"], 0, "Subhas Chandra Bose reorganised the INA and gave the slogan Give me blood and I will give you freedom.", 2, "Y", {"year": 2024, "date": "13 Sept", "shift": "Shift 1"}],
+      ["The Rowlatt Act of 1919 was opposed because it allowed:", ["Detention without trial", "Free trade", "New taxes on salt", "Partition of provinces"], 0, "The Rowlatt Act allowed imprisonment without trial, leading to nationwide protests and the Jallianwala Bagh tragedy.", 3, "P"],
+      ["The Simon Commission was boycotted because:", ["It had no Indian members", "It raised taxes", "It banned the INC", "It divided Bengal"], 0, "The all-British Simon Commission arrived in 1928; Indians protested the absence of Indian representation.", 3, "P"],
+      ["The Poona Pact of 1932 was signed between Gandhi and:", ["B. R. Ambedkar", "Muhammad Ali Jinnah", "Jawaharlal Nehru", "Subhas Chandra Bose"], 0, "The Poona Pact replaced separate electorates for Dalits with reserved seats in joint electorates.", 4, "P"],
+      ["Who was the first woman president of the Indian National Congress?", ["Annie Besant", "Sarojini Naidu", "Vijaya Lakshmi Pandit", "Kasturba Gandhi"], 0, "Annie Besant was elected INC president in 1917. Sarojini Naidu was the first Indian woman president.", 4, "Y", {"year": 2023, "date": "16 Sept", "shift": "Shift 1"}],
+      ["Mangal Pandey is associated with the Revolt of:", ["1857", "1875", "1905", "1942"], 0, "Mangal Pandey attacked British officers at Barrackpore in 1857, a spark for the revolt.", 1, "P"]
+    ]
+  },
+  {
+    "s": "history",
+    "t": "post-independence",
+    "q": [
+      ["The Indian Independence Act was passed by the British Parliament in:", ["1947", "1946", "1950", "1945"], 0, "The Indian Independence Act 1947 created India and Pakistan as independent dominions.", 2, "Y", {"year": 2022, "date": "21 Sept", "shift": "Shift 1"}],
+      ["The Constitution of India was adopted on:", ["26 November 1949", "26 January 1950", "15 August 1947", "9 December 1946"], 0, "The Constituent Assembly adopted the Constitution on 26 November 1949; it came into force on 26 January 1950.", 1, "Y", {"year": 2023, "date": "14 Sept", "shift": "Shift 1"}],
+      ["Who was the first President of India?", ["Rajendra Prasad", "S. Radhakrishnan", "C. Rajagopalachari", "Jawaharlal Nehru"], 0, "Dr Rajendra Prasad was the first President of India (1950-1962).", 1, "P"],
+      ["The States Reorganisation Act, based on language, was passed in:", ["1956", "1950", "1961", "1971"], 0, "The States Reorganisation Act 1956 reorganised states largely on linguistic lines.", 3, "P"],
+      ["Goa was liberated from Portuguese rule in:", ["1961", "1947", "1956", "1975"], 0, "Operation Vijay in 1961 integrated Goa, Daman and Diu with India.", 3, "Y", {"year": 2024, "date": "10 Sept", "shift": "Shift 1"}],
+      ["The Green Revolution in India is associated with:", ["M. S. Swaminathan", "Verghese Kurien", "Homi Bhabha", "Vikram Sarabhai"], 0, "M. S. Swaminathan led the Green Revolution, which used high-yielding wheat varieties and modern inputs.", 2, "P"],
+      ["The White Revolution, or Operation Flood, was led by:", ["Verghese Kurien", "M. S. Swaminathan", "Norman Borlaug", "C. Subramaniam"], 0, "Verghese Kurien led Operation Flood, which transformed India's dairy sector through cooperatives.", 2, "Y", {"year": 2022, "date": "20 Sept", "shift": "Shift 1"}],
+      ["The Emergency in India was imposed in:", ["1975", "1971", "1984", "1991"], 0, "A national emergency was declared in June 1975 and lasted until March 1977.", 2, "P"],
+      ["The 42nd Constitutional Amendment is often called the:", ["Mini Constitution", "Basic Structure Amendment", "Anti-Defection Act", "Right to Education Amendment"], 0, "The 42nd Amendment (1976) added socialist, secular and integrity to the Preamble and made many changes.", 4, "P"],
+      ["Panchayati Raj was given constitutional status by the:", ["73rd Amendment", "42nd Amendment", "44th Amendment", "52nd Amendment"], 0, "The 73rd Amendment 1992 gave constitutional status to Panchayati Raj institutions; the 74th covers urban bodies.", 2, "Y", {"year": 2023, "date": "15 Sept", "shift": "Shift 2"}],
+      ["India's economic liberalisation began in:", ["1991", "1981", "2001", "1971"], 0, "In 1991, Finance Minister Manmohan Singh introduced reforms that opened the economy and reduced licensing.", 2, "P"],
+      ["India's first general election was held in:", ["1951-52", "1947", "1956", "1962"], 0, "The first general election took place between October 1951 and February 1952.", 3, "P"],
+      ["Sikkim became a state of India in:", ["1975", "1961", "1956", "1987"], 0, "Sikkim became the 22nd state of India in 1975 after a referendum abolished the monarchy.", 4, "P"],
+      ["The First Amendment to the Constitution was passed in:", ["1951", "1950", "1952", "1955"], 0, "The First Amendment 1951 added the Ninth Schedule and placed restrictions on free speech.", 4, "Y", {"year": 2024, "date": "11 Sept", "shift": "Shift 2"}],
+      ["India's first National Emergency was declared in 1962 during the war with:", ["China", "Pakistan", "Bangladesh", "Sri Lanka"], 0, "A national emergency was declared in 1962 during the India-China war, the first of three such emergencies.", 3, "P"]
+    ]
+  }
+]
