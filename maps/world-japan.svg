@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 680" role="img" aria-label="Marked country">
+  <rect width="600" height="680" fill="#eef5ef"/>
+  <g stroke="#d7e5db" stroke-width="1">
+    <line x1="0" y1="0" x2="0" y2="680"/><line x1="60" y1="0" x2="60" y2="680"/><line x1="120" y1="0" x2="120" y2="680"/><line x1="180" y1="0" x2="180" y2="680"/><line x1="240" y1="0" x2="240" y2="680"/><line x1="300" y1="0" x2="300" y2="680"/><line x1="360" y1="0" x2="360" y2="680"/><line x1="420" y1="0" x2="420" y2="680"/><line x1="480" y1="0" x2="480" y2="680"/><line x1="540" y1="0" x2="540" y2="680"/>
+    <line x1="0" y1="0" x2="600" y2="0"/><line x1="0" y1="60" x2="600" y2="60"/><line x1="0" y1="120" x2="600" y2="120"/><line x1="0" y1="180" x2="600" y2="180"/><line x1="0" y1="240" x2="600" y2="240"/><line x1="0" y1="300" x2="600" y2="300"/><line x1="0" y1="360" x2="600" y2="360"/><line x1="0" y1="420" x2="600" y2="420"/><line x1="0" y1="480" x2="600" y2="480"/><line x1="0" y1="540" x2="600" y2="540"/><line x1="0" y1="600" x2="600" y2="600"/><line x1="0" y1="660" x2="600" y2="660"/>
+  </g>
+  
+  <path d="M60 80 L150 60 L200 90 L180 140 L140 170 L100 150 L70 120 Z M150 190 L190 200 L210 250 L185 320 L160 340 L145 290 L135 240 Z M280 70 L340 60 L360 100 L330 120 L290 110 Z M290 130 L350 130 L370 200 L340 280 L310 300 L290 230 L280 170 Z M360 70 L500 60 L560 100 L540 150 L500 180 L450 160 L420 190 L380 160 L350 120 Z M420 185 L440 200 L430 230 L415 210 Z M480 220 L520 230 L510 250 L490 240 Z M500 290 L560 280 L575 330 L540 355 L505 340 Z" fill="#cfe4d3" stroke="#4c7a5c" stroke-width="2" stroke-linejoin="round"/>
+  <line x1="20" y1="200" x2="590" y2="200" stroke="#9db8a5" stroke-dasharray="6 6"/>
+  <text x="26" y="194" font-family="system-ui" font-size="12" fill="#6b8472">Equator</text>
+  <circle cx="545" cy="142" r="16" fill="#dc2626" opacity=".18"/>
+  <circle cx="545" cy="142" r="8" fill="#dc2626" stroke="#fff" stroke-width="3"/>
+  <g font-family="system-ui, sans-serif" fill="#48604f">
+    <text x="24" y="40" font-size="20" font-weight="700">Marked country</text>
+    <text x="24" y="650" font-size="14">Schematic map · not to scale</text>
+  </g>
+  <g transform="translate(550,610)" stroke="#48604f" fill="#48604f" font-family="system-ui" font-size="13">
+    <path d="M0 20 L0 -18" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="-4" y="-24" font-weight="700">N</text>
+  </g>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#48604f"/></marker></defs>
+</svg>

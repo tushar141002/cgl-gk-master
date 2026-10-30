@@ -1,0 +1,1 @@
+var e=[`A`,`B`,`C`,`D`];export{e as t};
