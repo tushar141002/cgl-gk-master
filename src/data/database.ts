@@ -1,12 +1,16 @@
-import Dexie, { type EntityTable } from 'dexie';
+import Dexie, { type EntityTable, type Table } from 'dexie';
 import type {
+  AttemptId,
   AttemptRecord,
+  BatchId,
   CardState,
   Cursor,
   DailySummary,
   DeviceId,
   Question,
   QuestionCorrection,
+  QuestionReport,
+  ReportReason,
   Settings,
   Skill,
 } from '../../shared/contract';
@@ -49,10 +53,31 @@ export interface BookmarkRow {
 
 export type DailySummaryRow = DailySummary;
 
+/**
+ * One queued error report (F11), collapsed by `(qid, qv, reason)` so a student
+ * who taps the same reason twice sends one row. `sent` is local bookkeeping.
+ */
+export interface ReportRow extends QuestionReport {
+  readonly sent: 0 | 1;
+}
+
 export interface SettingsRow extends Settings {
   readonly id: 'app';
   /** Epoch milliseconds, UTC. */
   readonly updatedAt: number;
+}
+
+/**
+ * A batch that may already have reached the server. It is written before the
+ * request and cleared only after a reply, so a retry resends exactly the same
+ * set under the same id and the server can replay its stored response (D-067,
+ * D-070). Without the pinned ids a retry could carry a newer attempt under an
+ * old batch id, and the server would answer with the old batch's response.
+ */
+export interface PendingBatch {
+  readonly batchId: BatchId;
+  readonly attemptIds: readonly AttemptId[];
+  readonly reports: readonly QuestionReport[];
 }
 
 export interface SyncMetaRow {
@@ -61,6 +86,8 @@ export interface SyncMetaRow {
   readonly cursor: Cursor | null;
   /** Epoch milliseconds, UTC. */
   readonly lastSyncAt: number | null;
+  /** Absent on rows written before Step 7B; read as null. */
+  readonly pendingBatch?: PendingBatch | null;
 }
 
 export class AppDatabase extends Dexie {
@@ -74,6 +101,7 @@ export class AppDatabase extends Dexie {
   dailySummary!: EntityTable<DailySummaryRow, 'date'>;
   settings!: EntityTable<SettingsRow, 'id'>;
   syncMeta!: EntityTable<SyncMetaRow, 'id'>;
+  reports!: Table<ReportRow, [string, number, ReportReason]>;
 
   constructor(name: string = DATABASE_NAME) {
     super(name);
@@ -92,6 +120,12 @@ export class AppDatabase extends Dexie {
       dailySummary: 'date',
       settings: 'id',
       syncMeta: 'id',
+    });
+
+    // Step 7B: the offline queue for "Report an error" taps (F11). Additive:
+    // version 1 databases upgrade in place and keep every row.
+    this.version(2).stores({
+      reports: '[qid+qv+reason], sent, at',
     });
   }
 }

@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { istDayKey, type Question } from '../../shared/contract';
+import { istDayKey, type Question, type QuestionCorrection } from '../../shared/contract';
 import { openDatabase, type AppDatabase } from '../../src/data/database';
 import { CardRepository } from '../../src/data/repositories/CardRepository';
+import { CorrectionRepository } from '../../src/data/repositories/CorrectionRepository';
 import { DailyRepository } from '../../src/data/repositories/DailyRepository';
 import { QuestionRepository } from '../../src/data/repositories/QuestionRepository';
 import { SkillRepository } from '../../src/data/repositories/SkillRepository';
@@ -150,6 +151,54 @@ describe('PracticeService.answer (F2)', () => {
     const skill = await new SkillRepository(db).get(SUBTOPIC);
     expect(skill?.elo).toBeLessThan(1200);
     expect((await new DailyRepository(db).get(istDayKey(AT)))?.correct).toBe(0);
+  });
+
+  it('grades against a published correction before the fixed pack arrives', async () => {
+    const q = question('polity-fr-0001', 1200, 0);
+    await seed(q);
+
+    const correction: QuestionCorrection = {
+      id: 'corr-1',
+      qid: q.id,
+      fromVersion: 1,
+      toVersion: 2,
+      oldAnswer: 0,
+      newAnswer: 2,
+      reason: 'wrong key',
+      correctedAt: '2026-11-07T05:00:00.000Z',
+    };
+    await new CorrectionRepository(db).putMany([correction]);
+
+    // The installed pack still says 0; choosing 2 is correct because the
+    // correction is already stored (F6, D-071).
+    const result = await service().answer(q, 2, 700);
+
+    expect(result.correct).toBe(true);
+    expect((await db.attempts.toArray())[0]?.correct).toBe(true);
+    const skill = await new SkillRepository(db).get(SUBTOPIC);
+    expect(skill?.elo).toBeGreaterThan(1200);
+  });
+
+  it('ignores a correction for a different question version', async () => {
+    const q = question('polity-fr-0001', 1200, 0);
+    await seed(q);
+
+    await new CorrectionRepository(db).putMany([
+      {
+        id: 'corr-later',
+        qid: q.id,
+        fromVersion: 2,
+        toVersion: 3,
+        oldAnswer: 0,
+        newAnswer: 2,
+        reason: 'wrong key',
+        correctedAt: '2026-11-07T05:00:00.000Z',
+      },
+    ]);
+
+    const result = await service().answer(q, 2, 700);
+
+    expect(result.correct).toBe(false);
   });
 
   it('caps the next due date at the exam deadline', async () => {

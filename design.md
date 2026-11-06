@@ -107,6 +107,10 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-066 | Compaction prunes attempts only behind a checkpoint | Data | Accepted |
 | D-067 | A retried batch replays its stored response; corrections use a watermark with overlap | Sync | Accepted |
 | D-068 | The migrations run in PGlite; the Edge Function stays a thin adapter | Build | Accepted |
+| D-069 | `SyncManager` reaches the server through an injected transport | Sync | Accepted |
+| D-070 | The in-flight batch is pinned before the request; a retry replays it | Sync | Accepted |
+| D-071 | Report taps live in their own table, keyed by question, version and reason | Data | Accepted |
+| D-072 | Corrections are stored first, folded in once and used for grading immediately | Sync | Accepted |
 
 ---
 
@@ -863,3 +867,47 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** The deployed migrations are what runs in the tests, so a bad policy, constraint or function fails locally. Keeping the untested part to four checks makes the blind spot small and obvious.
 - **Trade-off accepted:** PGlite is Postgres, not Supabase: no PostgREST, no auth service, no storage and no scheduling. The Edge adapter and the real project wiring are verified only against a real project, and the adapter is outside `tsc`.
 - **Revisit when:** Docker or a staging Supabase project is available, or the adapter grows logic that deserves a test.
+
+## D-069: `SyncManager` reaches the server through an injected transport
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** The client half of F4 has to POST a batch with a bearer token, then classify the reply as success, retryable or terminal. If the manager called `fetch` directly, every retry and idempotency test would fake a global, and the token lookup, URL and timeout would have to be threaded through the retry state. Auth itself is Step 7C and is not decided yet.
+- **Decision:** `SyncTransport` is a one-method interface — `send(batch): Promise<SyncResponse>`. `SyncManager` depends only on it. `HttpSyncTransport` is the only file that knows the function URL, the access-token getter, `fetch`, the JSON body and the timeout; it rejects only when no HTTP response arrived, and returns every status as a `SyncResponse` because the Edge Function answers failures in the same shape. Tests pass a scripted fake.
+- **Alternatives considered:** Call `fetch` from `SyncManager` (one fewer file, but auth, URL and retry classification end up in one class and each test mutates globals); inject only `fetch` (narrower, but the manager still owns headers and token lookup, and a fake `Response` cannot easily express "no response at all").
+- **Why:** Retry, pinning and correction handling are tested without a network or a token, and 7C can supply a token source without touching the manager. The untested surface shrinks to one adapter.
+- **Trade-off accepted:** One more interface and a second implementation to keep in step. Until 7C wires a real token, `HttpSyncTransport` is exercised only against a fake `fetch`.
+- **Revisit when:** Pull (F7) needs a second transport method, or token refresh grows logic that belongs in a shared client rather than a getter.
+
+## D-070: The in-flight batch is pinned before the request; a retry replays it
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** D-067 makes the server replay the stored response for a repeated `(user_id, batch_id)`. That guarantee is only useful if the client resends the same id with the same contents. A client that keeps only a boolean `synced` flag can crash after sending, then build a new batch — with newly arrived attempts — under a fresh id, or reuse an old id with different contents and receive a response for the wrong set.
+- **Decision:** Before the request, `syncMeta.pendingBatch` stores `{ batchId, attemptIds, reports }`. A retry, including one after a restart, rebuilds the batch from those exact attempt rows and report objects under the same id. The pin is cleared only after the reply's corrections are folded in, when the server rejects the batch as poison (`invalid_batch`, `invalid_json`), or when none of its attempts survive. It is kept on a network throw and on `timeout`, `sync_failed`, `batch_in_progress` or any reply carrying `retryAfterMs`, so the next run retries. Auth and validation failures are terminal and surface as a status without clearing the pin.
+- **Alternatives considered:** A fresh `batchId` per attempt (simple, and safe for attempts because of the inbox primary key, but corrections can be re-delivered and the stored-response path goes unused); store only the id and rebuild from unsynced rows (smaller, but a newly arrived attempt would silently join an old id); no pin (fewest writes, loses the D-067 guarantee entirely).
+- **Why:** A lost response is exactly replayable, so corrections cannot be lost between the server commit and the client's receipt. The pin is one row write per batch, and the server already has the dedupe path.
+- **Trade-off accepted:** The report payload is copied into the pin, though it is capped at 20 and tiny. An attempt deleted by compaction before a retry drops out of the resent batch; the server then replays the stored response for the rest. The client carries retry state across restarts, so a poison batch must be cleared deliberately rather than forgotten by a reboot.
+- **Revisit when:** The server moves to per-attempt acknowledgement, or the pending state outgrows `syncMeta` and needs its own table.
+
+## D-071: Report taps live in their own table, keyed by question, version and reason
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** F11 queues "Report an error" taps offline and sends at most 20 with a sync batch. The server dedupes them by `(user_id, qid, qv, reason)`. A JSON array in `syncMeta` would have no per-row state: every read parses the whole queue, every mark rewrites it, and a repeated tap either grows the array or needs a scan to find.
+- **Decision:** Dexie schema version 2 adds `reports`, keyed `[qid+qv+reason]`, with `sent: 0 | 1` and an `at` index. `ReportRepository.queue` inserts only when the key is new, so a repeated tap collapses. `pending(limit)` returns the oldest unsent rows; `markSent` flips exactly the rows that were sent. The upgrade is additive and keeps every existing table.
+- **Alternatives considered:** A JSON queue in `syncMeta` (no schema bump, but whole-array rewrites, no per-row flag and unbounded growth when one report keeps failing); a flag on the attempts store (no new table, but reports are not attempts and would pollute replay and the synced counter).
+- **Why:** The device key matches the server's uniqueness rule, so a double tap and a retried batch both collapse to one row. Reads are an index lookup, and the sent flag lets a batch mark only what it carried.
+- **Trade-off accepted:** The schema version moves to 2, so an existing install runs a Dexie upgrade on first open. The queue has no delivery status beyond unsent/sent — a rejected report looks the same as an accepted one until the admin flow exists.
+- **Revisit when:** Reports need server-side status (accepted / rejected / answered) or attach a free-text note that makes two reports on the same key genuinely different.
+
+## D-072: Corrections are stored first, folded in once and used for grading immediately
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** F6 sketches one pass per correction: regrade the question, rebuild every card and skill, repeat. A phone with several corrections would replay its whole log several times. Worse, F6's ordering rule says the corrected key must grade answers from the moment the correction arrives, before the fixed pack is downloaded; a rebuild-only implementation keeps grading against the old key until the pack update lands.
+- **Decision:** `CorrectionApplier.apply(corrections)` runs one transaction: dedupe by correction id, store the fresh rows, count `changed` once per question by comparing each attempt's stored verdict with the corrected key for its own version, build a corrected index from the installed bank plus every stored correction, rebuild cards and skills once with `Replayer.rebuild`, replace both derived stores, and mark the fresh rows seen. Correction version ranges map every covered version to `newAnswer`, so an attempt recorded under the old pack and one recorded after the fix grade the same way. `PracticeService.answer` reads `CorrectionRepository.answerFor(qid, qv)` inside its own transaction and grades the attempt against that answer, which makes the ordering rule true without waiting for the pack.
+- **Alternatives considered:** Literal per-correction loop (matches F6's sketch, but N full replays on a Redmi 9A); one rebuild per correction with no grading change (simpler, but a student answering between sync and pack download is graded against a key known to be wrong); wait for the corrected pack before applying (one code path, but corrections then depend on the CDN and can be missed offline).
+- **Why:** One rebuild covers a whole batch regardless of how many corrections it carries, and the answer key is right at the next tap. The attempt log stays append-only; only derived state moves.
+- **Trade-off accepted:** `changed` counts questions whose verdict flipped, not individual attempts, so the banner wording must say so. A correction whose range spans several versions applies the same new answer to all of them, which is the pack contract's version semantics. Corrections for a question not installed yet are stored and used for grading but skipped by the index until the question arrives.
+- **Revisit when:** 7A-2 checkpoints make a full-log rebuild too expensive on an old device, or corrections arrive in bulk and need an incremental fold.

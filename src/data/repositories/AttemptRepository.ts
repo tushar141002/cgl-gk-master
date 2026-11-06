@@ -42,6 +42,19 @@ export class AttemptRepository {
     return rows.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id)).slice(0, limit);
   }
 
+  /** The whole log in replay order, for a correction rebuild (F6). */
+  async all(): Promise<AttemptRow[]> {
+    const rows = await this.db.attempts.toArray();
+    return rows.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
+  }
+
+  /** Loads specific attempts in the order asked, skipping ids no longer stored. */
+  async byIds(ids: readonly AttemptId[]): Promise<AttemptRow[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.db.attempts.bulkGet([...ids]);
+    return rows.filter((row): row is AttemptRow => row !== undefined);
+  }
+
   async markSynced(ids: readonly AttemptId[]): Promise<void> {
     if (ids.length === 0) return;
     await this.db.attempts

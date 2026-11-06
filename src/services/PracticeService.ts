@@ -18,6 +18,7 @@ import { StreakTracker } from '../core/StreakTracker';
 import type { AppDatabase } from '../data/database';
 import { AttemptRepository } from '../data/repositories/AttemptRepository';
 import { CardRepository } from '../data/repositories/CardRepository';
+import { CorrectionRepository } from '../data/repositories/CorrectionRepository';
 import { DailyRepository } from '../data/repositories/DailyRepository';
 import { QuestionRepository } from '../data/repositories/QuestionRepository';
 import { SkillRepository } from '../data/repositories/SkillRepository';
@@ -61,6 +62,7 @@ export class PracticeService {
   private readonly skills: SkillRepository;
   private readonly daily: DailyRepository;
   private readonly questions: QuestionRepository;
+  private readonly corrections: CorrectionRepository;
   private readonly now: () => number;
   private readonly rng: () => number;
   private readonly newId: (at: number) => AttemptId;
@@ -75,6 +77,7 @@ export class PracticeService {
     this.skills = new SkillRepository(db);
     this.daily = new DailyRepository(db);
     this.questions = new QuestionRepository(db);
+    this.corrections = new CorrectionRepository(db);
     this.now = options.now ?? Date.now;
     this.rng = options.rng ?? Math.random;
     this.newId = options.newId ?? ((at) => uuidV7(at));
@@ -148,15 +151,8 @@ export class PracticeService {
     examDeadline?: number,
   ): Promise<PracticeFeedback> {
     const at = this.now();
-    const attemptValue = Attempt.create(question, chosen, ms, {
-      id: this.newId(at),
-      deviceId: this.options.deviceId,
-      mode: 'practice',
-      at,
-    });
-    const attempt = attemptValue.record;
-    const skipped = attemptValue.isSkip;
-    const outcome: Outcome = skipped ? 'skip' : attempt.correct ? 'correct' : 'wrong';
+    const id = this.newId(at);
+    let feedback: PracticeFeedback | null = null;
 
     // Reads and writes share one transaction, so a second answer cannot slip
     // between reading the derived state and replacing it (D-060). Everything
@@ -167,7 +163,23 @@ export class PracticeService {
       this.db.cardState,
       this.db.skills,
       this.db.dailySummary,
+      this.db.corrections,
       async () => {
+        // A published correction wins over the installed pack's key from the
+        // moment it lands, before the fixed pack is downloaded (F6, D-072).
+        const correctedAnswer = await this.corrections.answerFor(question.id, question.v);
+        const graded = correctedAnswer === null ? question : { ...question, answer: correctedAnswer };
+
+        const attemptValue = Attempt.create(graded, chosen, ms, {
+          id,
+          deviceId: this.options.deviceId,
+          mode: 'practice',
+          at,
+        });
+        const attempt = attemptValue.record;
+        const skipped = attemptValue.isSkip;
+        const outcome: Outcome = skipped ? 'skip' : attempt.correct ? 'correct' : 'wrong';
+
         await this.attempts.append(attempt);
 
         if (!skipped) {
@@ -180,9 +192,14 @@ export class PracticeService {
 
         const today = (await this.daily.get(istDayKey(at))) ?? null;
         await this.daily.put(StreakTracker.apply(attempt, today));
+
+        feedback = { attempt, question, skipped, correct: attempt.correct, ms };
       },
     );
 
-    return { attempt, question, skipped, correct: attempt.correct, ms };
+    if (feedback === null) {
+      throw new Error('practice transaction completed without a result');
+    }
+    return feedback;
   }
 }

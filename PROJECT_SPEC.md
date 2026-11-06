@@ -1,7 +1,7 @@
 # CGL GK Master — Project Spec
 
 **Last updated:** 2026-11-07
-**Status:** Steps 1–6 are complete and Step 7A (sync backend) landed on 2026-11-07. The migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` are written and exercised against the real SQL in PGlite (§5, §13, D-063..D-068). The client sync manager, auth and the nightly archive remain.
+**Status:** Steps 1–6 are complete; Step 7A (sync backend) and Step 7B (client sync) landed on 2026-11-07. The migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` are written and exercised against the real SQL in PGlite; the client `SyncManager` pins each batch, drives the retry curve and folds corrections in. Auth wiring, the sync timer and the nightly archive remain (§5, §13, D-063..D-072).
 
 This is the single source of truth for what we are building and why. Companion files:
 
@@ -160,6 +160,8 @@ Dependency direction: `ui → services/sync → core ← data`. `core/` imports 
 
 **Step 7A sync backend (completed 2026-11-07):** `supabase/migrations/` defines `profiles`, `sync_state`, `sync_batches`, `attempt_inbox` (one row per attempt, D-063), `daily_stats`, `question_stats`, `checkpoints`, `question_corrections` and `question_reports`, with indexes, Row-Level Security for `authenticated` and no access for `anon`. `apply_sync_batch(jsonb)` is the only write path: one transaction validates the batch, returns a stored response for a repeated `batchId`, dedupes attempts by primary key, updates aggregates (D-064, D-065, D-067) and returns `SyncResponse`. `sync_pull(text, integer)` pages the log for a new device (F7). `compact_sync_inbox(interval)` prunes only behind a checkpoint (D-066). `supabase/functions/sync/index.ts` is a thin Deno adapter. 38 new tests boot Postgres in WASM through `@electric-sql/pglite` and run the migrations unchanged, including RLS as a non-owner (D-068); 388 tests pass.
 
+**Step 7B client sync (completed 2026-11-07):** `src/sync/SyncManager.ts` sends unsynced attempts and queued reports in one batch at a time (200 attempts, 20 reports), records the server cursor and folds corrections in. The batch id and its exact contents are pinned in `syncMeta.pendingBatch` before the request, so a retry after a lost response or an app restart resends the same set and receives the server's stored response (D-067, D-070). `src/sync/SyncTransport.ts` is the only file that touches `fetch`, the URL and the token (D-069); `src/sync/backoff.ts` doubles 1 s → 5 min with jitter and honours `retryAfterMs`. Report taps live in a new `reports` table, Dexie schema v2, keyed `[qid+qv+reason]` (D-071). `src/sync/CorrectionApplier.ts` stores a batch of corrections and rebuilds cards/skills once with a corrected index; `PracticeService.answer` grades against `CorrectionRepository.answerFor` from the moment the row lands (D-072). 58 new tests cover replies, retries, pinning, corrections, the transport and the queue; 446 tests pass. The sync timer and the real access token are Step 7C.
+
 ---
 
 ## 6. Data model
@@ -179,7 +181,8 @@ The attempt log is the single source of truth. FSRS card state and Elo ratings a
 | bookmarks | qid, createdAt | Saved questions |
 | dailySummary | date, attempted (graded only), correct, ms | Streak and charts (D-041..D-043) |
 | settings | language, theme, dailyGoal, examDate, reminderTime | Preferences |
-| syncMeta | deviceId, cursor, lastSyncAt | Sync bookkeeping |
+| syncMeta | deviceId, cursor, lastSyncAt, pendingBatch | Sync bookkeeping; `pendingBatch` pins an in-flight batch (D-070) |
+| reports | [qid+qv+reason], at, sent | Offline "Report an error" queue, Dexie v2 (D-071) |
 
 ### On the server (Supabase)
 
@@ -410,7 +413,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 3 Content pipeline | **Done 2026-11-07** — `Question.ts`, strict CSV master validator, pack builder, Ed25519 manifest signing, tests (233 passing). Admin verification UI deferred to Step 7 (D-047..D-050) |
 | 4 UI design system (fonts, colours, components) | **Done 2026-11-07** — tokens, base and component layers, self-hosted Mukta subset, living preview, 47 design-system tests (D-051..D-054) |
 | 5–6 App build | **Done 2026-11-07** — Step 5: Vite + Svelte 5 shell, hash router, Dexie schema and eight repositories, typed bilingual UI, Home + Settings (D-055..D-058). Step 6: signed bundled pack install, single-transaction answer cycle, due-first picker, sub-topic chooser and practice/feedback screen (D-059..D-062, 350 tests) |
-| 7 Backend & security | **7A done 2026-11-07** — migrations, RLS, `apply_sync_batch`, `sync_pull`, `compact_sync_inbox`, thin `/sync` Edge adapter, 38 PGlite tests (D-063..D-068). Pending: 7B client sync, 7C auth, 7D security finish, 7E live mocks, 7A-2 archive + checkpoints |
+| 7 Backend & security | **7A + 7B done 2026-11-07** — migrations, RLS, `apply_sync_batch`, `sync_pull`, `compact_sync_inbox`, thin `/sync` Edge adapter, 38 PGlite tests (D-063..D-068). Client `SyncManager` with pinned retries, transport seam, report queue and correction rebuild, 58 client tests in total (D-069..D-072). Pending: 7C auth + sync timer/history pull, 7D security finish, 7E live mocks, 7A-2 archive + checkpoints |
 | 8 Polish & launch | Pending |
 
 ---

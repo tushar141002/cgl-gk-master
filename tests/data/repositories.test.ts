@@ -1,12 +1,22 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { AttemptRecord, CardState, OptionIndex, Question, SectionId } from '../../shared/contract';
+import type {
+  AttemptRecord,
+  CardState,
+  OptionIndex,
+  Question,
+  QuestionCorrection,
+  QuestionReport,
+  SectionId,
+} from '../../shared/contract';
 import { openDatabase, type AppDatabase } from '../../src/data/database';
 import { AttemptRepository } from '../../src/data/repositories/AttemptRepository';
 import { CardRepository } from '../../src/data/repositories/CardRepository';
+import { CorrectionRepository } from '../../src/data/repositories/CorrectionRepository';
 import { DailyRepository } from '../../src/data/repositories/DailyRepository';
 import { PackRepository } from '../../src/data/repositories/PackRepository';
 import { QuestionRepository } from '../../src/data/repositories/QuestionRepository';
+import { ReportRepository } from '../../src/data/repositories/ReportRepository';
 import { SettingsRepository } from '../../src/data/repositories/SettingsRepository';
 import { SyncRepository } from '../../src/data/repositories/SyncRepository';
 
@@ -69,6 +79,29 @@ function card(qid: string, due: number): CardState {
     lapses: 0,
     lastReview: null,
     phase: 'review',
+  };
+}
+
+function report(
+  qid: string,
+  at: number,
+  reason: QuestionReport['reason'] = 'wrong-key',
+  qv = 1,
+): QuestionReport {
+  return { qid, qv, reason, at };
+}
+
+function correction(id: string, overrides: Partial<QuestionCorrection> = {}): QuestionCorrection {
+  return {
+    id,
+    qid: 'q-1',
+    fromVersion: 1,
+    toVersion: 2,
+    oldAnswer: 0,
+    newAnswer: 3,
+    reason: 'wrong key',
+    correctedAt: '2026-11-07T05:00:00.000Z',
+    ...overrides,
   };
 }
 
@@ -146,11 +179,173 @@ describe('SyncRepository', () => {
       deviceId: 'device-fixed',
       cursor: '1700000000000:attempt-1',
       lastSyncAt: 1_700_000_100_000,
+      pendingBatch: null,
     });
+  });
+
+  it('keeps the stored cursor when the server has none', async () => {
+    const repo = new SyncRepository(db);
+    await repo.ensureDeviceId(() => 'device-fixed');
+    await repo.setCursor('1700000000000:attempt-1', 1_700_000_100_000);
+
+    await repo.setCursor(null, 1_700_000_200_000);
+
+    expect(await repo.getMeta()).toMatchObject({
+      cursor: '1700000000000:attempt-1',
+      lastSyncAt: 1_700_000_200_000,
+    });
+  });
+
+  it('pins and clears the in-flight batch', async () => {
+    const repo = new SyncRepository(db);
+    await repo.ensureDeviceId(() => 'device-fixed');
+
+    const pending = {
+      batchId: 'batch-1',
+      attemptIds: ['a1', 'a2'],
+      reports: [report('q-1', 1_000)],
+    };
+    await repo.setPending(pending);
+    expect((await repo.getMeta())?.pendingBatch).toEqual(pending);
+
+    await repo.setPending(null);
+    expect((await repo.getMeta())?.pendingBatch).toBeNull();
   });
 
   it('refuses a cursor before the device exists', async () => {
     await expect(new SyncRepository(db).setCursor('1:a', 1)).rejects.toThrow(/ensureDeviceId/);
+  });
+
+  it('refuses a pinned batch before the device exists', async () => {
+    await expect(
+      new SyncRepository(db).setPending({ batchId: 'b1', attemptIds: [], reports: [] }),
+    ).rejects.toThrow(/ensureDeviceId/);
+  });
+});
+
+describe('ReportRepository', () => {
+  it('queues a report as unsent and collapses a repeated tap', async () => {
+    const repo = new ReportRepository(db);
+    await repo.queue(report('q-1', 1_000));
+    await repo.queue(report('q-2', 1_001));
+    await repo.queue(report('q-1', 2_000));
+
+    expect(await repo.count()).toBe(2);
+
+    const pending = await repo.pending(10);
+    expect(pending.map((row) => row.qid)).toEqual(['q-1', 'q-2']);
+    expect(pending[0]).toMatchObject({ qid: 'q-1', qv: 1, reason: 'wrong-key', at: 1_000, sent: 0 });
+  });
+
+  it('treats a different reason or version as a separate report', async () => {
+    const repo = new ReportRepository(db);
+    await repo.queue(report('q-1', 1_000));
+    await repo.queue(report('q-1', 1_001, 'typo'));
+    await repo.queue(report('q-1', 1_002, 'wrong-key', 2));
+
+    expect(await repo.count()).toBe(3);
+  });
+
+  it('returns the oldest reports first and respects the limit', async () => {
+    const repo = new ReportRepository(db);
+    await repo.queue(report('q-late', 3_000));
+    await repo.queue(report('q-early', 1_000));
+    await repo.queue(report('q-mid', 2_000));
+
+    expect((await repo.pending(2)).map((row) => row.qid)).toEqual(['q-early', 'q-mid']);
+  });
+
+  it('marks exactly the sent reports and leaves the rest queued', async () => {
+    const repo = new ReportRepository(db);
+    const first = report('q-1', 1_000);
+    await repo.queue(first);
+    await repo.queue(report('q-2', 2_000));
+
+    await repo.markSent([first]);
+
+    expect((await repo.pending(10)).map((row) => row.qid)).toEqual(['q-2']);
+  });
+
+  it('ignores a markSent for a row that is no longer stored', async () => {
+    const repo = new ReportRepository(db);
+    await expect(repo.markSent([report('q-gone', 1_000)])).resolves.toBeUndefined();
+    expect(await repo.count()).toBe(0);
+  });
+});
+
+describe('CorrectionRepository', () => {
+  it('stores only new corrections and reports how many were inserted', async () => {
+    const repo = new CorrectionRepository(db);
+
+    expect(await repo.putMany([correction('corr-1'), correction('corr-2')])).toBe(2);
+    expect(await repo.putMany([correction('corr-1'), correction('corr-3')])).toBe(1);
+
+    const all = await repo.all();
+    expect(all.map((row) => row.id)).toEqual(['corr-1', 'corr-2', 'corr-3']);
+    expect(all[0]?.seen).toBe(0);
+  });
+
+  it('returns unseen corrections oldest first and marks them seen', async () => {
+    const repo = new CorrectionRepository(db);
+    await repo.putMany([
+      correction('corr-late', { correctedAt: '2026-11-07T06:00:00.000Z' }),
+      correction('corr-early', { correctedAt: '2026-11-07T05:00:00.000Z' }),
+    ]);
+
+    expect((await repo.unseen()).map((row) => row.id)).toEqual(['corr-early', 'corr-late']);
+
+    await repo.markSeen(['corr-early']);
+    expect((await repo.unseen()).map((row) => row.id)).toEqual(['corr-late']);
+  });
+
+  it('finds the answer that covers a question version', async () => {
+    const repo = new CorrectionRepository(db);
+    await repo.putMany([correction('corr-1', { fromVersion: 1, toVersion: 2, newAnswer: 3 })]);
+
+    expect(await repo.answerFor('q-1', 1)).toBe(3);
+    expect(await repo.answerFor('q-1', 2)).toBe(3);
+    expect(await repo.answerFor('q-1', 3)).toBeNull();
+    expect(await repo.answerFor('q-2', 1)).toBeNull();
+  });
+
+  it('grades a chained version against the newest covering correction', async () => {
+    const repo = new CorrectionRepository(db);
+    await repo.putMany([
+      correction('corr-a', {
+        fromVersion: 1,
+        toVersion: 2,
+        newAnswer: 3,
+        correctedAt: '2026-11-07T05:00:00.000Z',
+      }),
+      correction('corr-b', {
+        fromVersion: 2,
+        toVersion: 3,
+        newAnswer: 2,
+        correctedAt: '2026-11-07T06:00:00.000Z',
+      }),
+    ]);
+
+    expect(await repo.answerFor('q-1', 1)).toBe(3);
+    expect(await repo.answerFor('q-1', 2)).toBe(2);
+    expect(await repo.answerFor('q-1', 3)).toBe(2);
+  });
+
+  it('breaks a same-instant tie by correction id so the order is stable', async () => {
+    const repo = new CorrectionRepository(db);
+    const correctedAt = '2026-11-07T05:00:00.000Z';
+    await repo.putMany([
+      correction('corr-b', { newAnswer: 3, correctedAt }),
+      correction('corr-a', { newAnswer: 2, correctedAt }),
+    ]);
+
+    expect(await repo.answerFor('q-1', 1)).toBe(3);
+  });
+});
+
+describe('schema version 2', () => {
+  it('exposes the reports table added in Step 7B', async () => {
+    expect(db.tables.map((table) => table.name)).toContain('reports');
+    expect(db.reports.schema.primKey.keyPath).toEqual(['qid', 'qv', 'reason']);
   });
 });
 

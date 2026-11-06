@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 6 (practice) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and eight repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer (`src/sync/`), the practice and progress services (`src/services/`) and the Home/chooser/practice screens. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 7B (client sync) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and the repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer and the client sync manager (`src/sync/`), the practice and progress services (`src/services/`), the backend migrations and tests (`supabase/`, `tests/server/`) and the Home/chooser/practice screens. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -25,6 +25,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 6):** F1 now installs the bundled signed pack through `sync/PackInstaller.ts` after the shell mounts. F2 and F3 are real: `app/PracticeRoute.svelte` drives `services/PracticeService.ts`, which owns the single answer transaction and the due-first picker. The chooser lives at `#/practice`; a session is `#/practice/:subtopic` (D-059..D-062).
 >
 > **Updated 2026-11-07 (Step 7A):** the server half of F4 is real. `supabase/migrations/` defines the tables, RLS, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox`; `supabase/functions/sync/index.ts` is the thin `/sync` adapter. F9 now runs `compact_sync_inbox()` and the archive half is still planned as 7A-2. The client `SyncManager` and the checkpoint loader are 7B/7C (D-063..D-068).
+>
+> **Updated 2026-11-07 (Step 7B):** the client half of F4 is real. `sync/SyncManager.ts` pins a batch, sends it through `sync/SyncTransport.ts`, records the cursor and folds corrections in through `sync/CorrectionApplier.ts`; F11's queue is `data/repositories/ReportRepository.ts` in a new `reports` table (Dexie v2). F6 is now one transaction and `PracticeService.answer` grades against a stored correction; the timer/backoff caller and the real token are 7C (D-069..D-072).
 
 ---
 
@@ -81,12 +83,12 @@ src/
     QuestionPicker.ts        landed: pick (due first, random new, D-045..D-046)
     Question.ts              landed: from / issues / isCorrect / localized (D-047..D-049)
   data/
-    database.ts              Dexie schema (10 tables) and openDatabase()   landed
+    database.ts              Dexie schema (11 tables, v2) and openDatabase()   landed
     repositories/            landed: Question, Attempt, Card, Skill, Daily, Pack,
-                             Settings, Sync. Planned: Bookmark, Correction,
-                             Report, Mock
+                             Settings, Sync, Correction, Report.
+                             Planned: Bookmark, Mock
   services/
-    PracticeService.ts       landed: next / answer (one transaction, D-060)
+    PracticeService.ts       landed: next / answer (one transaction, D-060, D-072)
     ProgressService.ts       landed: overview / topics for Home and the chooser
     examDeadline.ts          landed: examDeadlineFrom(examDate)
     AuthService.ts  ReminderService.ts  MockService.ts
@@ -94,8 +96,12 @@ src/
   sync/
     PackInstaller.ts         landed: verify manifest + hash, replace packs (D-059)
     contentPublicKey.ts      landed: pinned Ed25519 public key
-    SyncManager.ts  PackUpdater.ts  ManifestVerifier.ts  CorrectionApplier.ts
-    CheckpointLoader.ts      (D-026)                          (planned)
+    SyncManager.ts           landed: runOnce / uploadAll, pinned retry, corrections
+                             (D-069..D-072)
+    SyncTransport.ts         landed: SyncTransport seam + HttpSyncTransport (D-069)
+    CorrectionApplier.ts     landed: one-transaction correction fold (F6, D-072)
+    backoff.ts               landed: retryDelay() doubling, jitter, server hint
+    PackUpdater.ts  ManifestVerifier.ts  CheckpointLoader.ts     (planned)
   ui/
     index.css                the only stylesheet the app imports (Step 4)
     tokens.css               colour/type/space/radius/motion tokens, light + dark (D-051..D-054)
@@ -127,7 +133,9 @@ tests/
   core/                      Attempt.test.ts, EloRating.test.ts, ... (Vitest, node env)
   shared/                    canonicalJson.test.ts, uuid.test.ts
   app/                       router.test.ts, theme.test.ts, bootstrap.test.ts
-  data/                      repositories.test.ts (fake-indexeddb)
+  data/                      repositories.test.ts (fake-indexeddb, schema v2 reports)
+  sync/                      SyncManager.test.ts, CorrectionApplier.test.ts,
+                             HttpSyncTransport.test.ts, backoff.test.ts
   tools/                     csv.test.ts, master.test.ts, build.test.ts, cli.test.ts,
                              fixtures.ts (in-memory master rows)
   ui/                        tokens.test.ts — WCAG contrast, token discipline, tap targets,
@@ -283,32 +291,42 @@ The band starts at ±100 Elo around `skill.elo`, then widens to ±200 and ±400,
 
 ## F4: Background sync
 
-Server half landed in 7A; the client half is 7B (D-063..D-067).
+Landed in 7A (server) and 7B (client). The timer and token source are 7C (D-063..D-072).
 
 ```
-sync/SyncManager.ts › runOnce()                                     (planned)
-├─ data/repositories/AttemptRepository.ts › unsynced(limit 200)     [DB read]
-├─ data/repositories/ReportRepository.ts › pending(limit 20)        [DB read]
-├─ sync/SyncManager.ts › buildBatch()                              pure
-├─ ⟶ POST /sync → supabase/functions/sync/index.ts                  [network]
-│  ├─ method, Bearer header, ≤512 KB body                           landed
-│  └─ ⟶ RPC public.apply_sync_batch(p_batch)                        [DB write]
-│     ├─ insert sync_batches; a repeated batchId returns its stored
-│     │  response and writes nothing                                D-067
-│     ├─ insert attempt_inbox once per (user_id, attempt_id)        D-063
-│     ├─ increment question_stats from the inserted rows only       D-065
-│     ├─ recompute daily_stats for the touched IST days             D-065
-│     ├─ insert question_reports, duplicates ignored                F11
-│     ├─ read corrections since the watermark, advance it           D-067
-│     └─ advance sync_state.last_cursor, store the response
-├─ data/repositories/AttemptRepository.ts › markSynced(ids)         [DB write]
-├─ data/repositories/ReportRepository.ts › markSent(ids)            [DB write]
-├─ sync/CorrectionApplier.ts › apply(corrections)                   → F6
-└─ sync/PackUpdater.ts › checkForUpdates()                          → F5
+sync/SyncManager.ts › runOnce()                                     landed
+├─ data/repositories/SyncRepository.ts › getMeta()                  [DB read]
+├─ sync/SyncManager.ts › pinnedBatch() | freshBatch()               choose next batch
+│  ├─ pinned: data/repositories/AttemptRepository.ts › byIds(ids)   [DB read]
+│  └─ fresh:  data/repositories/AttemptRepository.ts › unsynced(200) [DB read]
+│              data/repositories/ReportRepository.ts › pending(20)  [DB read]
+├─ data/repositories/SyncRepository.ts › setPending(batch)          [DB write, before send]
+├─ ⟶ sync/SyncTransport.ts › send(batch)                            [network]
+│  └─ sync/SyncTransport.ts › HttpSyncTransport › POST /sync → supabase/functions/sync/index.ts
+│     ├─ method, Bearer header, ≤512 KB body                        landed
+│     └─ ⟶ RPC public.apply_sync_batch(p_batch)                     [DB write]
+│        ├─ insert sync_batches; a repeated batchId returns its stored
+│        │  response and writes nothing                             D-067
+│        ├─ insert attempt_inbox once per (user_id, attempt_id)     D-063
+│        ├─ increment question_stats from the inserted rows only    D-065
+│        ├─ recompute daily_stats for the touched IST days          D-065
+│        ├─ insert question_reports, duplicates ignored             F11
+│        ├─ read corrections since the watermark, advance it        D-067
+│        └─ advance sync_state.last_cursor, store the response
+├─ sync/CorrectionApplier.ts › apply(corrections)                    → F6
+│  └─ before the pin clears, so a crash replays and de-dupes by id
+├─ ⟦ txn ⟧ replay the reply                                          [DB write]
+│  ├─ data/repositories/AttemptRepository.ts › markSynced(ids)
+│  ├─ data/repositories/ReportRepository.ts › markSent(reports)
+│  ├─ data/repositories/SyncRepository.ts › setPending(null)
+│  └─ data/repositories/SyncRepository.ts › setCursor(newCursor, serverTime)
+└─ sync/PackUpdater.ts › checkForUpdates()                           → F5 (planned)
 ```
 
 **Payload:** attempts plus `reports[]` (F11). No client-computed `daily` aggregates — the server derives them (D-028, D-065).
-**Failure path:** on network error, keep attempts unsynced and retry with backoff. Retries are safe because a repeated `batchId` returns the stored response (D-067) and a resent attempt is rejected by the inbox primary key (D-063). A partial success never happens: the RPC accepts the batch or raises, and the whole transaction rolls back.
+**Retry state:** the batch is pinned in `syncMeta.pendingBatch` before the request, so a retry — even after a restart — sends the same `batchId` with the same attempt ids and reports and receives the server's stored response (D-067, D-070). A new attempt that arrives meanwhile waits for the next batch. The pin is cleared only on success or a poison rejection (`invalid_batch`, `invalid_json`).
+**Result:** `runOnce` returns `idle | ok | retry{retryInMs} | failed`. Network throw, `timeout`, `sync_failed`, `batch_in_progress` and any `retryAfterMs` are retryable (`sync/backoff.ts` doubles from 1 s to 5 min with jitter); `unauthenticated`, `forbidden` and validation errors are terminal. The caller owns the timer (7C).
+**Failure path:** on network error, keep attempts unsynced and retry the pinned batch with backoff. Retries are safe because a repeated `batchId` returns the stored response (D-067) and a resent attempt is rejected by the inbox primary key (D-063). A partial success never happens: the RPC accepts the batch or raises, and the whole transaction rolls back.
 
 ---
 
@@ -336,20 +354,24 @@ sync/PackInstaller.ts › install()                             landed (D-059)
 ## F6: Apply an answer-key correction
 
 ```
-sync/CorrectionApplier.ts › apply(corrections)
-└─ for each correction:
-   ├─ data/repositories/CorrectionRepository.ts › put()              [DB write]
-   ├─ data/repositories/AttemptRepository.ts › byQuestion(qid)       [DB read]
-   ├─ data/repositories/AttemptRepository.ts › all()                 [DB read]
-   ├─ core/Replayer.ts › regrade(byQuestion, newAnswer)   pure → {attempts, changed}
+sync/CorrectionApplier.ts › apply(corrections)                        landed (D-072)
+└─ ⟦ txn ⟧ one transaction for the whole batch
+   ├─ data/repositories/CorrectionRepository.ts › putMany()           [DB write]
+   │  └─ fresh rows only, inserted unseen before grading can read them
+   ├─ data/repositories/AttemptRepository.ts › all()                  [DB read]
+   ├─ sync/CorrectionApplier.ts › changed per question                pure
+   │  └─ each attempt judged against the answer for its own version
    ├─ core/Replayer.ts › rebuild(all, checkpoint, correctedIndex) pure → {cards, skills}
-   ├─ ⟦ txn ⟧ data/repositories/{Card,Skill}Repository.ts › putAll() [DB write]
-   └─ return { changedCount }  → services/ raises an event, ui shows the banner   [UI]
+   │  └─ corrected index maps every version in [fromVersion, toVersion] to newAnswer
+   ├─ data/repositories/{Card,Skill}Repository.ts › clear + bulkPut    [DB write, replace]
+   └─ data/repositories/CorrectionRepository.ts › markSeen(ids)       [DB write]
 ```
 
-`sync/` may not import `ui/`, so the applier returns a count and the UI reacts to it.
+`sync/` may not import `ui/`, so the applier returns `{ applied, changed, rebuilt }` and the UI reacts to it.
 
-See D-022, D-038 and D-039. `regrade` produces the corrected view and the count for the banner; it writes nothing, because attempts are append-only. `rebuild` then re-derives cards and skills with the corrected answer key in the index. The original attempts are never edited; only derived state is recomputed.
+See D-022, D-038, D-039 and D-072. The corrected index decides each attempt's verdict; `changed` counts the questions that flipped rather than the rows that moved, and the attempt log is never edited. `rebuild` then re-derives cards and skills with the corrected answer key for the whole batch, one replay instead of one per correction. Only derived state is recomputed.
+
+**Grading rule:** `PracticeService.answer` calls `data/repositories/CorrectionRepository.ts › answerFor(qid, qv)` inside the answer transaction and grades the attempt against `newAnswer` when a stored correction covers the version. `CorrectionApplier` only makes the derived stores agree; the answer key is already correct at the next tap (D-072).
 
 **Checkpoint limit:** an attempt already folded into the newest checkpoint cannot be re-graded on a phone that has pruned; the server must republish the checkpoint. Corrections target recent questions in practice, and the banner says when history is incomplete.
 
@@ -430,14 +452,15 @@ See D-024 and D-041. The reminder keeps firing until the daily goal is met, even
 ## F11: Report an error on a question
 
 ```
-ui/screens/ReportError.svelte › submit(reason)
-└─ services/ReportService.ts › report(qid, qv, reason)
-   ├─ data/repositories/ReportRepository.ts › queue()               [DB write]
-   └─ ⟶ next sync batch: reports[] → question_reports              [network]
+ui/screens/ReportError.svelte › submit(reason)                       (planned screen)
+└─ services/ReportService.ts › report(qid, qv, reason)              (planned service)
+   ├─ data/repositories/ReportRepository.ts › queue()                [DB write]
+   │  └─ reports table, PK [qid+qv+reason]; a repeat tap is a no-op
+   └─ ⟶ next sync batch: reports[] (max 20) → question_reports       [network]
 ```
 
-Queued offline and sent with the next sync batch, so reporting never fails on patchy 4G. Requires one contract addition: a `reports: [{ qid, qv, reason, at }]` array (max 20 per batch) in the sync payload.
-**Failure path:** stays queued; a report is never dropped silently. Duplicate reports for the same question version are collapsed on the device.
+Queued offline and sent with the next sync batch, so reporting never fails on patchy 4G. The payload carries `reports: [{ qid, qv, reason, at }]` (max 20 per batch) and the server dedupes by `(user_id, qid, qv, reason)` (D-071).
+**Failure path:** stays queued; a report is never dropped silently. A repeated tap for the same question version and reason collapses to one row on the device and to one row on the server.
 
 ---
 
