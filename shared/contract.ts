@@ -21,6 +21,9 @@ export const GUESSING_FLOOR = 1 / OPTION_COUNT;
 export const MAX_ATTEMPTS_PER_BATCH = 200;
 export const MAX_REPORTS_PER_BATCH = 20;
 
+/** Contract limit for one history page (F7). */
+export const MAX_PULL_ATTEMPTS = 500;
+
 /** India Standard Time is UTC+05:30, year round. No daylight saving. */
 export const IST_OFFSET_MINUTES = 330;
 
@@ -269,8 +272,28 @@ export type SyncResponse =
   | {
       readonly ok: true;
       readonly serverTime: number;
-      readonly newCursor: string;
+      /** Null until the student has at least one accepted attempt. */
+      readonly newCursor: Cursor | null;
       readonly corrections: readonly QuestionCorrection[];
+    }
+  | {
+      readonly ok: false;
+      readonly error: string;
+      readonly retryAfterMs?: number;
+    };
+
+/**
+ * `sync_pull` response: one page of the attempt log in replay order, used by a
+ * new or second device (F7). `nextCursor` is the position to pass back; it is
+ * unchanged when the page is empty.
+ */
+export type PullResponse =
+  | {
+      readonly ok: true;
+      readonly serverTime: number;
+      readonly attempts: readonly AttemptRecord[];
+      readonly nextCursor: Cursor | null;
+      readonly hasMore: boolean;
     }
   | {
       readonly ok: false;

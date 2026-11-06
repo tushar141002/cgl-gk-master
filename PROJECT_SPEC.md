@@ -1,7 +1,7 @@
 # CGL GK Master — Project Spec
 
 **Last updated:** 2026-11-07
-**Status:** Step 1 (system design), Step 1.5 (data contract) and Step 1.6 (external review) complete. All six amendments (D-026 to D-031) were **accepted on 2026-11-01**. Step 2 (OOP core) is **complete**: the scaffold, `shared/contract.ts`, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, `AdaptiveEngine` and `QuestionPicker` are landed and tested (§5, §13). Step 3 (content pipeline) is next.
+**Status:** Steps 1–6 are complete and Step 7A (sync backend) landed on 2026-11-07. The migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` are written and exercised against the real SQL in PGlite (§5, §13, D-063..D-068). The client sync manager, auth and the nightly archive remain.
 
 This is the single source of truth for what we are building and why. Companion files:
 
@@ -158,6 +158,8 @@ Dependency direction: `ui → services/sync → core ← data`. `core/` imports 
 
 **Step 6 practice (completed 2026-11-07):** `src/sync/PackInstaller.ts` installs the signed pack bundled in the APK: it verifies the Ed25519 manifest signature against the key pinned in `src/sync/contentPublicKey.ts`, checks each pack's SHA-256, validates every question and replaces the pack in one Dexie transaction (D-059). `src/services/PracticeService.ts` owns the answer cycle in a single transaction — attempt append, FSRS-7 card, sub-topic Elo and IST daily counter — and picks the next question due-first, excluding scheduled cards from the new pool (D-060). `#/practice` is a sub-topic chooser; `#/practice/:subtopic` runs a session with instant feedback, locked options and an explicit Next (D-061, D-062). Home now shows real streak, accuracy, rating and due counts. Measured bundle: 78.48 kB gzip JS and 4.05 kB gzip CSS. 350 tests pass.
 
+**Step 7A sync backend (completed 2026-11-07):** `supabase/migrations/` defines `profiles`, `sync_state`, `sync_batches`, `attempt_inbox` (one row per attempt, D-063), `daily_stats`, `question_stats`, `checkpoints`, `question_corrections` and `question_reports`, with indexes, Row-Level Security for `authenticated` and no access for `anon`. `apply_sync_batch(jsonb)` is the only write path: one transaction validates the batch, returns a stored response for a repeated `batchId`, dedupes attempts by primary key, updates aggregates (D-064, D-065, D-067) and returns `SyncResponse`. `sync_pull(text, integer)` pages the log for a new device (F7). `compact_sync_inbox(interval)` prunes only behind a checkpoint (D-066). `supabase/functions/sync/index.ts` is a thin Deno adapter. 38 new tests boot Postgres in WASM through `@electric-sql/pglite` and run the migrations unchanged, including RLS as a non-owner (D-068); 388 tests pass.
+
 ---
 
 ## 6. Data model
@@ -183,15 +185,16 @@ The attempt log is the single source of truth. FSRS card state and Elo ratings a
 
 | Table or store | Key fields | Purpose |
 |---|---|---|
-| profiles | userId, name, language, examDate | Account |
-| attempt_inbox | userId, batchId, attempts, receivedAt | New attempts; emptied nightly |
+| profiles | userId, name, language, examDate | Account; one row per auth user |
+| sync_state | userId, lastCursor, lastCorrectionsAt, lastBatchAt | Newest accepted replay position and correction watermark (D-066, D-067) |
+| attempt_inbox | userId, attemptId, batchId, qid, qv, chosen, correct, ms, mode, at, deviceId, day, receivedAt | New attempts, one row each; the primary key dedupes retries (D-063) |
 | attempt logs (storage) | users/<id>/<yyyy-mm-dd>.gz, one immutable file per day, compact encoding | Full history after the newest checkpoint (D-027) |
-| daily_stats | userId, date, attempted, correct, ms, bySection | Multi-device streaks; derived on the server from attempts only (D-028); monthly roll-up after 4 months |
+| daily_stats | userId, date, attempted, correct, ms | Multi-device streaks; derived in the sync transaction from attempts only (D-065) |
 | checkpoints | userId, cursor (`"<at>:<id>"`), cardStates, skills, istDailyTotals, createdAt | Replay start point; written before any prune (D-026, D-040) |
-| question_stats | qid, attempts, correct, avgMs, elo | Difficulty calibration, nightly |
-| sync_batches | userId, batchId, receivedAt | Ignores duplicate retries |
+| question_stats | qid, attempts, correct, totalMs, avgMs, elo | Aggregate answer statistics, updated during sync (D-065); difficulty calibration nightly |
+| sync_batches | userId, batchId, receivedAt, attemptCount, reportCount, response | Idempotency key; a retry replays `response` verbatim (D-067) |
 | question_corrections | id, qid, fromVersion, toVersion, oldAnswer, newAnswer, reason, correctedAt | Append-only |
-| question_reports | userId, qid, reason, status | Student error reports |
+| question_reports | userId, qid, qv, reason, at, status | Student error reports |
 | mock_tests | id, title, startsAt, endsAt, durationSec, questionIds | Live mock definitions |
 | mock_sessions | id, userId, mockId, startedAt, submittedAt, score, correct, wrong, flagged | One per student per mock |
 | mock_answers | sessionId, qid, qv, chosen, ms | Graded on server |
@@ -242,20 +245,30 @@ POST /sync
   reports:  [ up to 20 { qid, qv, reason, at } ] }
 
 response
-{ ok, serverTime, newCursor, corrections: [ changes since cursor ] }
+{ ok, serverTime, newCursor, corrections: [ changes since the watermark ] }
 ```
 
 `reports` is new (F11). There is no client `daily` field (D-028): the server derives `daily_stats` from `attempts` alone: the IST day comes from `at` when it is not in the future and not older than 30 days, otherwise from `receivedAt`.
 
-`cursor` is the `"<at>:<id>"` replay position of the last attempt the client has folded in (D-040); the response's `newCursor` is the newest position the server has accepted.
+`cursor` is the `"<at>:<id>"` replay position of the last attempt the client has folded in (D-040); the response's `newCursor` is the newest position the server has accepted, or `null` while the student has no accepted attempt. A repeated `batchId` returns the response stored on the first call, so a lost reply can be retried (D-067).
+
+### History download (F7)
+
+```
+RPC sync_pull(after cursor | null, limit 1..500)
+{ ok, serverTime, attempts: [ attempt records in replay order ],
+  nextCursor, hasMore }
+```
+
+Used by a new or second device to merge history from the newest checkpoint onward. At-least-once: the client dedupes by attempt id and sorts by `(at, id)`.
 
 ---
 
 ## 8. Sync and corrections
 
 1. **Answer:** one IndexedDB transaction saves the attempt, updates FSRS and Elo, updates today's summary, marks it unsynced.
-2. **Sync:** on app open, every 5 minutes in use, and on background. Duplicates ignored by `batchId`.
-3. **Nightly job:** updates `question_stats`, writes each student's attempts to immutable **daily** log files (D-027), updates `daily_stats` from the attempts themselves (D-028), writes a checkpoint **before** any prune (D-026), and empties `attempt_inbox`. Must be idempotent.
+2. **Sync:** on app open, every 5 minutes in use, and on background. Duplicates ignored by `batchId`; a repeated batch returns the stored response (D-067), and `daily_stats`/`question_stats` derive inside the same transaction (D-065).
+3. **Nightly job:** writes each student's attempts to immutable **daily** log files (D-027), writes a checkpoint **before** any prune (D-026), calibrates `question_stats.elo`, and prunes only attempts a checkpoint already covers (D-066). Must be idempotent.
 4. **New or second device:** download the newest checkpoint and the log files after it, merge with local attempts, de-duplicate by attempt ID, sort by `(at, id)`, and replay from the checkpoint cursor (D-026, D-038, D-040).
 5. **Content updates:** check the signed manifest; re-download only changed packs; reject anything unsigned or with a bad hash.
 6. **Guest mode:** all local; first sign-in uploads the local log.
@@ -397,7 +410,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 3 Content pipeline | **Done 2026-11-07** — `Question.ts`, strict CSV master validator, pack builder, Ed25519 manifest signing, tests (233 passing). Admin verification UI deferred to Step 7 (D-047..D-050) |
 | 4 UI design system (fonts, colours, components) | **Done 2026-11-07** — tokens, base and component layers, self-hosted Mukta subset, living preview, 47 design-system tests (D-051..D-054) |
 | 5–6 App build | **Done 2026-11-07** — Step 5: Vite + Svelte 5 shell, hash router, Dexie schema and eight repositories, typed bilingual UI, Home + Settings (D-055..D-058). Step 6: signed bundled pack install, single-transaction answer cycle, due-first picker, sub-topic chooser and practice/feedback screen (D-059..D-062, 350 tests) |
-| 7 Backend & security | Pending |
+| 7 Backend & security | **7A done 2026-11-07** — migrations, RLS, `apply_sync_batch`, `sync_pull`, `compact_sync_inbox`, thin `/sync` Edge adapter, 38 PGlite tests (D-063..D-068). Pending: 7B client sync, 7C auth, 7D security finish, 7E live mocks, 7A-2 archive + checkpoints |
 | 8 Polish & launch | Pending |
 
 ---

@@ -23,6 +23,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 5):** the shell is real. F1 now runs `main.ts › start()` → `app/bootstrap.ts › bootstrap()`. The router, Dexie schema, repositories, i18n and theme helpers have real paths; Home and Settings render, other routes are placeholders until their steps land (D-055..D-058).
 >
 > **Updated 2026-11-07 (Step 6):** F1 now installs the bundled signed pack through `sync/PackInstaller.ts` after the shell mounts. F2 and F3 are real: `app/PracticeRoute.svelte` drives `services/PracticeService.ts`, which owns the single answer transaction and the due-first picker. The chooser lives at `#/practice`; a session is `#/practice/:subtopic` (D-059..D-062).
+>
+> **Updated 2026-11-07 (Step 7A):** the server half of F4 is real. `supabase/migrations/` defines the tables, RLS, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox`; `supabase/functions/sync/index.ts` is the thin `/sync` adapter. F9 now runs `compact_sync_inbox()` and the archive half is still planned as 7A-2. The client `SyncManager` and the checkpoint loader are 7B/7C (D-063..D-068).
 
 ---
 
@@ -110,11 +112,16 @@ src/
     screens/                 landed: Home, Practice, PracticeChooser, Settings,
                              Placeholder, StorageError
                              planned: Mock, Results, Progress, ReportError
-server/
-  functions/sync             POST /sync handler
-  functions/grade_mock       live mock grading
-  functions/delete_user      account deletion cascade (F12)
-  jobs/nightly_compaction    inbox → stats + immutable daily log files (D-027)
+supabase/
+  migrations/                applied in filename order by the CLI and by tests
+    20261107090000_sync_core.sql   tables, constraints, indexes, triggers (D-063)
+    20261107090100_sync_rpc.sql    RLS, grants, ist_day(), apply_sync_batch(),
+                                   sync_pull(), compact_sync_inbox() (D-064..D-067)
+  functions/
+    sync/index.ts            POST /sync adapter: method, bearer, size cap, RPC call
+    grade_mock/              live mock grading                           (planned)
+    delete_user/             account deletion cascade (F12)              (planned)
+    nightly_compaction/      schedules compact_sync_inbox()              (planned)
 
 tests/
   core/                      Attempt.test.ts, EloRating.test.ts, ... (Vitest, node env)
@@ -125,6 +132,9 @@ tests/
                              fixtures.ts (in-memory master rows)
   ui/                        tokens.test.ts — WCAG contrast, token discipline, tap targets,
                              font subset size and licence; i18n.test.ts
+  server/                    harness.ts (PGlite boots the real migrations), sql/auth-shim.sql,
+                             SyncBackend.test.ts — acceptance, idempotency, validation, IST
+                             days, cursor, corrections, pull, RLS, compaction
   fixtures/                  elo-golden.json, fsrs-golden.json — hand-computed pins
 
 content/
@@ -157,6 +167,7 @@ tools/content/               offline build, run with tsx; never imported by the 
 | `ui/` | `ui/` (styles and components), `core/` (types only), `shared/`. Screens receive data and callbacks as props; they never construct a repository. |
 | `tools/content/` | `shared/`, `src/core/Question.ts` (read-only validation), Node built-ins. Never `ui/`, `data/`, `services/`, `sync/`. |
 | `content/` | nothing — CSV data and build output only |
+| `supabase/` | nothing from the app — SQL migrations and a Deno adapter; never imported by the bundle. |
 
 **`core/` performs no writes.** Any flow step marked `[DB write]` belongs to a repository, never to a `core/` class.
 
@@ -272,24 +283,32 @@ The band starts at ±100 Elo around `skill.elo`, then widens to ±200 and ±400,
 
 ## F4: Background sync
 
+Server half landed in 7A; the client half is 7B (D-063..D-067).
+
 ```
-sync/SyncManager.ts › runOnce()
-├─ data/repositories/AttemptRepository.ts › unsynced(limit 200)    [DB read]
+sync/SyncManager.ts › runOnce()                                     (planned)
+├─ data/repositories/AttemptRepository.ts › unsynced(limit 200)     [DB read]
 ├─ data/repositories/ReportRepository.ts › pending(limit 20)        [DB read]
 ├─ sync/SyncManager.ts › buildBatch()                              pure
-├─ ⟶ POST /sync  → server/functions/sync                          [network]
-│  ├─ dedupe by batchId (sync_batches)
-│  ├─ insert attempt_inbox + question_reports
-│  ├─ derive daily_stats from the attempts (D-028)
-│  └─ return { newCursor, corrections }
-├─ data/repositories/AttemptRepository.ts › markSynced(ids)        [DB write]
-├─ data/repositories/ReportRepository.ts › markSent(ids)           [DB write]
-├─ sync/CorrectionApplier.ts › apply(corrections)                  → F6
-└─ sync/PackUpdater.ts › checkForUpdates()                         → F5
+├─ ⟶ POST /sync → supabase/functions/sync/index.ts                  [network]
+│  ├─ method, Bearer header, ≤512 KB body                           landed
+│  └─ ⟶ RPC public.apply_sync_batch(p_batch)                        [DB write]
+│     ├─ insert sync_batches; a repeated batchId returns its stored
+│     │  response and writes nothing                                D-067
+│     ├─ insert attempt_inbox once per (user_id, attempt_id)        D-063
+│     ├─ increment question_stats from the inserted rows only       D-065
+│     ├─ recompute daily_stats for the touched IST days             D-065
+│     ├─ insert question_reports, duplicates ignored                F11
+│     ├─ read corrections since the watermark, advance it           D-067
+│     └─ advance sync_state.last_cursor, store the response
+├─ data/repositories/AttemptRepository.ts › markSynced(ids)         [DB write]
+├─ data/repositories/ReportRepository.ts › markSent(ids)            [DB write]
+├─ sync/CorrectionApplier.ts › apply(corrections)                   → F6
+└─ sync/PackUpdater.ts › checkForUpdates()                          → F5
 ```
 
-**Payload:** attempts plus `reports[]` (F11). No client-computed `daily` aggregates — the server derives them (D-028).
-**Failure path:** on network error, keep attempts unsynced and retry with backoff. Retries are safe because the server ignores duplicate `batchId`s (see D-009, D-023). A partial success never happens: the transaction either accepts the batch or not.
+**Payload:** attempts plus `reports[]` (F11). No client-computed `daily` aggregates — the server derives them (D-028, D-065).
+**Failure path:** on network error, keep attempts unsynced and retry with backoff. Retries are safe because a repeated `batchId` returns the stored response (D-067) and a resent attempt is rejected by the inbox primary key (D-063). A partial success never happens: the RPC accepts the batch or raises, and the whole transaction rolls back.
 
 ---
 
@@ -375,17 +394,22 @@ See D-029. Mock questions are saved locally with a TTL and cleared on successful
 
 ## F9: Nightly compaction (server)
 
+`compact_sync_inbox()` is landed (7A, D-066); the archive and checkpoint writer are 7A-2.
+
 ```
-server/jobs/nightly_compaction › run()
-├─ read attempt_inbox
-├─ update question_stats (attempts, correct, avgMs, elo)
-├─ write one immutable file per user per day (users/<id>/<yyyy-mm-dd>.gz)   D-027
-├─ if due, write a checkpoint row (cursor, cardStates, skills)              D-026
-├─ recompute daily_stats from attempts, not from client aggregates          D-028
-└─ delete processed inbox rows
+supabase/functions/nightly_compaction › scheduled run()                      (planned)
+└─ ⟶ RPC public.compact_sync_inbox(p_batch_retention)                        [DB write]
+   ├─ delete attempt_inbox rows at or before the newest checkpoint cursor    D-026
+   ├─ delete sync_batches older than the retention that own no attempts      D-063
+   └─ return { attemptsPruned, batchesPruned }
+
+7A-2 (planned): write one immutable file per user per day
+(users/<id>/<yyyy-mm-dd>.gz, compact encoding, D-027), update question_stats.elo,
+write a checkpoint before the prune (D-026), and reconcile late attempts for
+days already archived (D-065).
 ```
 
-See D-023, D-026, D-027, D-028. Must be idempotent: running it twice must not double-count and must not rewrite an existing day file. Daily files are immutable by construction; a failed run loses at most one day, which the next run re-derives from the inbox.
+See D-023, D-026, D-027, D-028, D-066. Must be idempotent: running it twice must not double-count and must not rewrite an existing day file. Daily files are immutable by construction; a failed run loses at most one day, which the next run re-derives from the inbox.
 
 ---
 

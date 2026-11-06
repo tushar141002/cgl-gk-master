@@ -101,6 +101,12 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-060 | One service and one transaction own the answer cycle | Data | Accepted |
 | D-061 | Instant feedback, locked options, explicit Next | UI | Accepted |
 | D-062 | `#/practice` chooses a sub-topic; the session has its own URL | UI | Accepted |
+| D-063 | One row per accepted attempt; `(user_id, attempt_id)` is the dedupe key | Data | Accepted |
+| D-064 | One SECURITY DEFINER RPC owns the sync transaction | Sync | Accepted |
+| D-065 | Aggregates are derived at sync time, by recomputation where possible | Sync | Accepted |
+| D-066 | Compaction prunes attempts only behind a checkpoint | Data | Accepted |
+| D-067 | A retried batch replays its stored response; corrections use a watermark with overlap | Sync | Accepted |
+| D-068 | The migrations run in PGlite; the Edge Function stays a thin adapter | Build | Accepted |
 
 ---
 
@@ -791,3 +797,69 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** A sub-topic URL makes the back button, a future study plan and a future notification all work with the router we already have. It mirrors how Elo and FSRS already think, so no new selection rule is needed for launch. The chooser is also the honest empty state while the real bank is being written.
 - **Trade-off accepted:** One extra tap before the first answer, and no "review everything due" session yet. The chooser shows slug-derived labels until content carries display names. A mixed or due-only session will need a new service method, not just a screen change.
 - **Revisit when:** The bank is large enough that students want a cross-topic "due today" session, or study plans/notifications need to deep-link into a mixed queue.
+
+## D-063: One row per accepted attempt; `(user_id, attempt_id)` is the dedupe key
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** §6 sketched `attempt_inbox` as one row per batch carrying a JSONB `attempts` array. Every later question scans that array: "has this attempt arrived before", "what is the newest position", "how many answers today". A batch resent with an overlapping array would be hard to detect, and a correction or a report has no row to point at.
+- **Decision:** Store one row per attempt, keyed by `(user_id, attempt_id)`, with `batch_id` as a foreign key to `sync_batches` for provenance and cascade. The primary key is the duplicate guard: an attempt already seen inserts nothing, whatever batch it arrives in. The IST day is computed once on arrival and stored on the row.
+- **Alternatives considered:** Keep the JSONB array per batch (fewer rows, but array scans for every aggregate, duplicates inside an array are invisible, and no per-attempt uniqueness); one append-only table with no batch key (loses the retry idempotency key and the ability to forget a batch); store only a hash per attempt (small, but no rows to aggregate or serve back on a new device).
+- **Why:** Duplicate handling becomes a primary key instead of application logic, `sync_pull` pages with a plain index scan, and the cheap aggregates are ordinary `GROUP BY` queries. A year of heavy use is roughly 5,000 rows per student, which is nothing for Postgres.
+- **Trade-off accepted:** More rows than a batch blob, and `sync_batches` has to exist before its attempts, so the batch row is inserted first and its response filled in at the end of the transaction.
+- **Revisit when:** Write volume or storage forces the daily archive (D-027) to become the primary store and the inbox a short-lived landing zone.
+
+## D-064: One SECURITY DEFINER RPC owns the sync transaction
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** A batch touches six tables: the batch key, the attempt rows, question statistics, daily statistics, reports, and the sync cursor and correction watermark. PostgREST has no multi-statement transaction, so an Edge Function writing table by table can accept half a batch and double count the next retry.
+- **Decision:** `public.apply_sync_batch(p_batch jsonb)` is the only write path. It is `SECURITY DEFINER` with a pinned `search_path`, derives the caller from `auth.uid()`, validates shape and the 200-attempt / 20-report caps, and raises SQLSTATE `28000` or `22023` for bad input. The Edge Function only checks the method, the bearer header and the body size, then calls the RPC. `sync_pull` follows the same shape.
+- **Alternatives considered:** Write through the Supabase client from the Edge Function (more TypeScript, no atomicity, double count on retry); one RPC per table with a client-side saga (compensation logic for a problem a transaction removes); no `SECURITY DEFINER` and grant the tables to `authenticated` (every client becomes a trusted writer).
+- **Why:** A batch is accepted whole or not at all, and the rule sits in the database, where the PGlite tests can execute it. The adapter that cannot be tested stays almost empty.
+- **Trade-off accepted:** Business rules now live in plpgsql, which is harder to refactor and review than TypeScript. The RPC is covered by migration tests rather than by the app's type system.
+- **Revisit when:** The sync path grows into several RPCs, or a rule needs to be shared between the app and the server and starts drifting.
+
+## D-065: Aggregates are derived at sync time, by recomputation where possible
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** D-028 makes the server the only source of `daily_stats`, and F9 put the derivation in the nightly job. That means a second device sees yesterday's streak, and a failed job leaves every student's streak stale. Incrementing counters on arrival is immediate but double counts whenever a client resends attempts under a new batch id.
+- **Decision:** Derive inside the sync transaction. `question_stats` is global, so it is incremented only from the rows the attempt insert actually returned (`RETURNING`), which makes a resend a no-op. `daily_stats` is recomputed for each IST day the batch touches, from the inbox itself, with `ON CONFLICT ... DO UPDATE` replacing the values instead of adding to them. The IST day is decided once when the attempt arrives and stored, so a later clock cannot move an old attempt to another day.
+- **Alternatives considered:** Nightly only (F9 as written: stale streaks and a single point of failure); increment both (fast, but any resend or duplicate id doubles the counters); recompute every day for the user on every sync (idempotent, but scans the whole log each time and loses history once attempts are pruned).
+- **Why:** A retry is harmless by construction rather than by remembering to skip it, and Home is correct on the second device immediately. The touched-day recomputation only reads rows for the days in the batch.
+- **Trade-off accepted:** Each sync runs one small aggregate per touched day, and an attempt that arrives months late for a day already pruned by 7A-2 will need explicit reconciliation against the archive. `question_stats.elo` stays null until the calibration pass exists.
+- **Revisit when:** A student's inbox is large enough that the per-day recomputation is visible, or 7A-2 prunes days that late devices still write to.
+
+## D-066: Compaction prunes attempts only behind a checkpoint
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** An inbox that never shrinks costs storage and slows every aggregate. But D-016 makes the attempt log the source of truth: deleting attempts before a checkpoint exists deletes history that no device can replay. The nightly archive and its checkpoint writer are 7A-2, not 7A.
+- **Decision:** `compact_sync_inbox(p_batch_retention)` deletes an attempt only when it is at or before the newest checkpoint cursor for its owner, and deletes a batch idempotency key only when it is older than the retention window and no longer owns any attempt. 7A writes no checkpoints, so on a 7A database the job prunes only stale batch keys — it is safe to schedule now and starts reclaiming space when checkpoint writing lands.
+- **Alternatives considered:** Prune on age alone (simple, but destroys the source of truth the first time the job runs); never prune (unbounded growth and slower queries); prune only when a Storage archive is confirmed (needs 7A-2 before the job can exist, and leaves the maintenance path untested).
+- **Why:** The dangerous half is gated by the one fact that makes deletion safe; the harmless half runs today and exercises the job. The rule also cannot be broken by scheduling the job too early.
+- **Trade-off accepted:** Until 7A-2, the inbox keeps every attempt, so the storage win is not realised yet. A batch key is only forgotten after its attempts are gone, because the foreign key cascades.
+- **Revisit when:** 7A-2 writes checkpoints and daily files, at which point the retention window should be revisited against the 12-month local-retention rule.
+
+## D-067: A retried batch replays its stored response; corrections use a watermark with overlap
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** A client retries when the response is lost. Idempotency on the write side is not enough: corrections are read relative to a per-user watermark, so a second call would find the watermark already advanced and return fewer corrections than the first call, silently dropping the ones the client never received. A correction committed between the read and the watermark update can also be missed.
+- **Decision:** `sync_batches.response` stores the exact JSON the first call returned; a repeated `(user_id, batch_id)` returns it byte for byte, even if corrections have changed since. Corrections are selected where `corrected_at > last_corrections_at - interval '1 hour'`, then `last_corrections_at` moves to `now()`. The overlap re-sends anything from the last hour, and the client treats corrections as at-least-once.
+- **Alternatives considered:** Recompute the response on a retry (drops corrections already marked delivered); no overlap (a race window loses a correction); a per-correction acknowledgement table (exact once, but more state and a second round trip for a rare event); storing only the correction ids in the batch row (smaller, but the client still needs the payload).
+- **Why:** A lost response is exactly replayable, and a correction can only be missed if it is committed more than an hour after it was written, which the commit order makes impossible. Correction payloads are tiny and rare, so the duplicate is cheap.
+- **Trade-off accepted:** The same correction can arrive twice within an hour; the device's `corrections` store is keyed by qid, so applying it twice is a no-op. Batch response rows are kept for the batch retention window.
+- **Revisit when:** Corrections become frequent, or the client needs exactly-once delivery for a different payload.
+
+## D-068: The migrations run in PGlite; the Edge Function stays a thin adapter
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Build
+- **Context:** There is no Docker and no Supabase project on the development machine. SQL and row-level security written blind fail in production, where the failure is a leak or a lost batch rather than a red test. The Edge Function is Deno code, which the app's `tsc` setup cannot typecheck.
+- **Decision:** Add `@electric-sql/pglite` as a dev-only dependency. `tests/server/harness.ts` boots Postgres in WASM, applies `tests/server/sql/auth-shim.sql` (just `auth.users`, `auth.uid()` and the three API roles), then every file in `supabase/migrations/` in filename order. Tests switch to `authenticated` or `anon` with `set role` so RLS is exercised as a non-owner. `supabase/functions/sync/index.ts` is excluded from `tsconfig.json` and limited to method, auth header, body cap and one RPC call.
+- **Alternatives considered:** Mock the SQL (tests the mock); install Docker and the Supabase CLI (the faithful stack, but a heavyweight install the machine does not have); defer all SQL until staging (fast now, but RLS and transaction bugs surface after launch); typecheck Deno by copying the adapter into TypeScript (two copies of the same glue).
+- **Why:** The deployed migrations are what runs in the tests, so a bad policy, constraint or function fails locally. Keeping the untested part to four checks makes the blind spot small and obvious.
+- **Trade-off accepted:** PGlite is Postgres, not Supabase: no PostgREST, no auth service, no storage and no scheduling. The Edge adapter and the real project wiring are verified only against a real project, and the adapter is outside `tsc`.
+- **Revisit when:** Docker or a staging Supabase project is available, or the adapter grows logic that deserves a test.
