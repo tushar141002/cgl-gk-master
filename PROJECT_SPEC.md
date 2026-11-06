@@ -1,14 +1,14 @@
 # CGL GK Master — Project Spec
 
-**Last updated:** 2026-11-04
-**Status:** Step 1 (system design), Step 1.5 (data contract) and Step 1.6 (external review) complete. All six amendments (D-026 to D-031) were **accepted on 2026-11-01**. Step 2 is **in progress**: the scaffold, `shared/contract.ts`, `Attempt`, `EloRating` and `ReviewScheduler` are landed and tested (§5, §13).
+**Last updated:** 2026-11-07
+**Status:** Step 1 (system design), Step 1.5 (data contract) and Step 1.6 (external review) complete. All six amendments (D-026 to D-031) were **accepted on 2026-11-01**. Step 2 (OOP core) is **complete**: the scaffold, `shared/contract.ts`, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, `AdaptiveEngine` and `QuestionPicker` are landed and tested (§5, §13). Step 3 (content pipeline) is next.
 
 This is the single source of truth for what we are building and why. Companion files:
 
 | File | Purpose |
 |---|---|
 | `PROJECT_SPEC.md` | This file: what we are building, the full approved design |
-| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-031) |
+| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-046) |
 | `flow.md` | Code execution flows: entry points and call order between files |
 | `REVIEW-2026-11-01.md` | Step 1.6 external review: findings, open questions, what changed |
 
@@ -87,7 +87,7 @@ Launch (v1) covers sections 1–3. Sections 4–7 follow monthly.
 
 ## 3. Features
 
-- **Adaptive practice:** Elo rating per sub-topic, corrected for the 25% guessing floor of 4 options.
+- **Adaptive practice:** Elo rating per sub-topic, corrected for the 25% guessing floor of 4 options. Questions come from a ±100 Elo band that widens to ±200, ±400 and then the whole 600–2200 scale when a sub-topic is sparse (D-044). Due reviews come first, earliest first; new questions are random and avoid the last 30 answers unless that would dead-end (D-045, D-046).
 - **Spaced revision:** FSRS (desired retention 0.9), intervals capped at the student's exam date. Wrong answers return automatically.
 - **PYQ mode:** filter by exam year, shift, section.
 - **Practice mock tests:** 25 questions, 15 minutes, 0.5 negative marking.
@@ -152,7 +152,7 @@ All study logic runs on the phone. The CDN delivers content; Supabase stores sma
 
 Dependency direction: `ui → services/sync → core ← data`. `core/` imports only `core/`, types and pure helpers from `shared/contract.ts`, and pure third-party libraries (`ts-fsrs`); it performs no reads or writes, and repositories do all database work (D-030, D-036, D-037). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
 
-**Step 2 core (landed 2026-11-04 to 2026-11-07):** `shared/contract.ts` holds every boundary type and constant, plus `istDayKey`, `encodeCursor` and `compareCursor`; `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts` and `StreakTracker.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins, FSRS-7 schedule pins, checkpoint-resume tests and IST streak boundaries. `tsc --noEmit` and `npm test` both pass. The remaining core classes are listed in the step tracker.
+**Step 2 core (completed 2026-11-04 to 2026-11-07):** `shared/contract.ts` holds every boundary type and constant, plus `istDayKey`, `encodeCursor` and `compareCursor`; `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts`, `StreakTracker.ts`, `AdaptiveEngine.ts` and `QuestionPicker.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins, FSRS-7 schedule pins, checkpoint-resume tests, IST streak boundaries, band widening and picker priority/fallback. `tsc --noEmit` and `npm test` both pass. `Question.ts` moves to Step 3 with the content pipeline.
 
 ---
 
@@ -364,8 +364,8 @@ response
 | External review fixes | Done |
 | 1.5 Data contract | Done |
 | 1.6 External review (second pass) | Done. D-026 to D-031 accepted |
-| 2 OOP core classes | **In progress** — 2.0 scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, tests done (2026-11-07). Next: `QuestionPicker`, `AdaptiveEngine` |
-| 3 Content pipeline | Pending |
+| 2 OOP core classes | **Done 2026-11-07** — scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, `AdaptiveEngine`, `QuestionPicker`, tests (142 passing). `Question.ts` moves to Step 3 |
+| 3 Content pipeline | **Next** — `Question.ts`, pack format, import and verification |
 | 4 UI design system (fonts, colours, components) | Pending |
 | 5–6 App build | Pending |
 | 7 Backend & security | Pending |

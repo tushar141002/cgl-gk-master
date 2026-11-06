@@ -82,6 +82,9 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-041 | A streak day needs one graded answer; `dailyGoal` is separate | Product | Accepted |
 | D-042 | Derive the streak from daily summaries, no extra store | Data | Accepted |
 | D-043 | Skips do not count in daily counters | Data | Accepted |
+| D-044 | Fixed ±100 Elo band, widening ×2 to the full scale | Product | Accepted |
+| D-045 | Reviews by earliest due; new questions random; recent filters new only | Product | Accepted |
+| D-046 | Recent window is 30; all-recent falls back instead of dead-ending | Product | Accepted |
 
 ---
 
@@ -563,3 +566,36 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** Accuracy and average time stay honest, the streak rule has one definition, and no new field is needed. The attempt log still records the skip with its duration if the product later wants it.
 - **Trade-off accepted:** Time spent reading a question before skipping is not counted as practice time. A skip-only day writes a zero row and breaks the streak, which is the intended behaviour.
 - **Revisit when:** Time-on-task becomes a product metric, in which case add a `skipped` counter and a `skippedMs` field instead of overloading `attempted`.
+
+## D-044: Fixed ±100 Elo band, widening ×2 to the full scale
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Product
+- **Context:** `PROJECT_SPEC.md` promises adaptive difficulty ("stronger students get harder questions") but never defines the band, and F3 needs a concrete query range. `EloRating` already keeps each sub-topic rating inside 600–2200 and exposes `attemptCount`, so the band can be computed from data that exists. A sub-topic with only a few questions will regularly have nothing inside a narrow band, so the picker needs a widening rule that terminates.
+- **Decision:** `AdaptiveEngine.targetRange(skill, step = 0)` returns a half-width from `BAND_STEPS = [100, 200, 400]`, then the entire `600–2200` scale at `step = MAX_RANGE_STEP (3)`. The callers loop from step 0 and stop at the first range with a candidate. The rating is clamped to the scale before the band is applied, and both edges are rounded to two decimals, so a corrupt checkpoint cannot produce an inverted range.
+- **Alternatives considered:** A confidence band that starts ±250 and shrinks toward ±100 as `attemptCount` grows (more honestly adaptive, but adds constants and makes the first week depend on a curve nobody can explain or hand-check); bands based on expected score such as 45–75% (mathematically tidy, but the width changes with the rating and is harder to cache or index than a simple min/max); a single fixed band with no widening (simple, but sparse sub-topics dead-end).
+- **Why:** One constant per step, a finite loop, and a range the question store can index directly. At 1200, ±100 means roughly 52–73% expected score against the edges once the 25% guessing floor is included: a real step, not a punishment. The widening ladder already handles sparse sub-topics without a second mechanism.
+- **Trade-off accepted:** A brand-new student is banded around the default 1200 that the app has no evidence for yet, and the band is the same width whether the rating is fresh or settled. Ratings outside 600–2200 are treated as the nearest edge rather than rejected.
+- **Revisit when:** Real logs show students stuck at the edges of a band, or a confidence-aware band becomes worth the extra constants.
+
+## D-045: Reviews by earliest due; new questions random; recent filters new only
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Product
+- **Context:** F3 reads both due cards and new-question candidates, and has to choose one. FSRS already sets `due`; applying any other priority would starve overdue cards. New questions have no ordering that is better than another, but a deterministic "closest rating" rule keeps serving the same question until it is marked recent, which feels mechanical. `recentIds` exists to avoid repeats, but a relearning card from ten minutes ago is deliberately due again.
+- **Decision:** `QuestionPicker.pick(dueCards, candidates, recentIds, rng = Math.random)` serves the due card with the smallest `due`, breaking ties by question id. Only when nothing is due does it pick a new question uniformly at random from the eligible candidates, after sorting them by id so the same roll always selects the same question. `recentIds` filters new questions only. It returns `{ qid, reason: 'review' | 'new' }`, or `null` when both inputs are empty.
+- **Alternatives considered:** Earliest due first, then closest rating for new questions (no RNG and fully reproducible, but the same question keeps winning and the order feels mechanical); random for both reviews and new questions (simple, but an overdue card can be skipped indefinitely); priority by lowest `reps` (spreads coverage, but ignores FSRS's scheduling and slowly starves high-rep cards).
+- **Why:** FSRS owns review order, so the picker must not second-guess it. Random new questions give variety, and the injectable `rng` keeps every test deterministic. Keeping `recentIds` off reviews is what lets the 10-minute relearning step work at all.
+- **Trade-off accepted:** The choice of a new question is not reproducible from the log; only its outcome is. Tests must pass a fixed `rng`. Duplicate candidate rows are counted once so a join bug cannot weight a question twice.
+- **Revisit when:** Students report repeats before 30 answers, or the product wants a deterministic "next new question" order for a study plan.
+
+## D-046: Recent window is 30; all-recent falls back instead of dead-ending
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Product
+- **Context:** Avoiding recently seen questions needs a window size, and a small sub-topic can have fewer unseen questions than the window. A hard exclusion would show "finished" while unseen-but-recent questions remain, which is worse than a repeat: the student cannot practise at all. `recentIds` is supplied by the caller because `core/` may not read the attempt log (D-030).
+- **Decision:** The caller supplies the last **30** answered question ids. New-question selection filters them out; if that leaves nothing, it ignores the exclusion and serves from the full candidate list. `pick` returns `null` — the "finished" state — only when there are no due cards and no candidates at all.
+- **Alternatives considered:** Hard exclusion with a "You've finished this sub-topic" screen even when recent questions remain (cleaner rule, worse empty state, and a student with a 12-question sub-topic can never clear it); no recent filter (always serves something, but the same few questions dominate); a longer window such as 50 (fewer repeats, but more sub-topics hit the fallback).
+- **Why:** Practising a recent question is better than a dead end, and the fallback keeps the "finished" signal honest: it now means the bank is genuinely empty. Thirty answers is roughly three daily goals, long enough that a repeat feels rare in a normal sub-topic.
+- **Trade-off accepted:** A student with a tiny sub-topic may see the same question again sooner than 30 answers. The window is a caller convention rather than a constant enforced by the picker, so the value must stay in sync with `PracticeSession`.
+- **Revisit when:** Pack sizes per sub-topic make 30 too long or too short, or the UI needs to distinguish "all seen recently" from "nothing left".

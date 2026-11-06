@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts`, `src/core/ReviewScheduler.ts`, `src/core/Replayer.ts`, `src/core/StreakTracker.ts` (plus `tests/core/*.test.ts` and the fixtures). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 2 (OOP core) is complete. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts`, `StreakTracker.ts`, `AdaptiveEngine.ts`, `QuestionPicker.ts` (plus `tests/core/*.test.ts` and the fixtures). `Question.ts` moves to Step 3 with the content pipeline; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -13,6 +13,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 2.2):** `Replayer` is real. F6 now re-grades through the corrected index and rebuilds; F7 names `rebuild(attempts, checkpoint, index)`; the checkpoint cursor is the `"<at>:<id>"` tuple (D-038..D-040). F2 also states where a new card comes from.
 >
 > **Updated 2026-11-07 (Step 2.3):** `StreakTracker` is real. F1 derives the streak from all daily rows instead of one summary; F2 names `apply(attempt, todaySummary)`; F10 uses `goalMet(todaySummary, settings.dailyGoal)` (D-041..D-043).
+>
+> **Updated 2026-11-07 (Step 2.4):** `AdaptiveEngine` and `QuestionPicker` are real. F3 shows the widening loop (`targetRange(skill, step)`), the single `pick(dueCards, candidates, recentIds, rng)` call, and the `{ qid, reason } | null` result (D-044..D-046).
 
 ---
 
@@ -56,7 +58,9 @@ src/
     ReviewScheduler.ts       landed: newCard / review (FSRS-7, sync preset, D-037)
     Replayer.ts              landed: rebuild / regrade (checkpoint replay, D-038..D-040)
     StreakTracker.ts         landed: apply / evaluate / goalMet (IST days, D-041..D-043)
-    Question.ts  AdaptiveEngine.ts  QuestionPicker.ts                (planned)
+    AdaptiveEngine.ts        landed: targetRange (band + widening, D-044)
+    QuestionPicker.ts        landed: pick (due first, random new, D-045..D-046)
+    Question.ts                                                     (Step 3)
   data/
     database.ts              Dexie schema and open()                  (planned)
     repositories/            QuestionRepository, AttemptRepository, CardRepository,
@@ -163,17 +167,24 @@ ui/screens/Practice.svelte › onOptionTap(index)
 
 ```
 services/PracticeSession.ts › next()
-├─ data/repositories/CardRepository.ts › dueCards()                  [DB read]
-├─ data/repositories/SkillRepository.ts › get(subtopic)              [DB read]
-├─ core/AdaptiveEngine.ts › targetRange(skill)                       pure
-├─ data/repositories/QuestionRepository.ts › candidates(range)       [DB read]
-└─ core/QuestionPicker.ts › pick(dueCards, candidates, recentIds)    pure
+├─ data/repositories/CardRepository.ts › dueCards(now)                  [DB read]
+├─ if none are due:
+│  ├─ data/repositories/SkillRepository.ts › get(subtopic)              [DB read]
+│  ├─ data/repositories/AttemptRepository.ts › recentQids(30)           [DB read]
+│  └─ loop step 0..MAX_RANGE_STEP, stop at the first non-empty:
+│     ├─ core/AdaptiveEngine.ts › targetRange(skill, step)              pure → {min,max}
+│     └─ data/repositories/QuestionRepository.ts › candidates(range)    [DB read]
+└─ core/QuestionPicker.ts › pick(dueCards, candidates, recentIds, rng)  pure
+   → { qid, reason: 'review' | 'new' } | null
 ```
 
 `PracticeSession` does the reads and hands plain data to `QuestionPicker`, so `core/` never imports `data/` (D-030).
 
-Order of preference: due revision cards first, then a new question within ±1 difficulty band of the student's rating, avoiding recently seen ones.
-**Failure path:** if no candidate exists, widen the range; if still none, show "You've finished this sub-topic".
+Order of preference: due revision cards first, **earliest `due` first**, with a tie broken by question id. Otherwise a new question is picked uniformly at random from the questions inside the band, sorted by id first so the same roll always means the same question. `recentIds` filters new questions only; it never blocks a review (D-045).
+
+The band starts at ±100 Elo around `skill.elo`, then widens to ±200 and ±400, and finally to the whole 600–2200 scale (`targetRange(skill, step)` with `step = 0..MAX_RANGE_STEP`), always clamped (D-044). If every candidate is recent, the picker ignores the exclusion rather than dead-ending a tiny sub-topic (D-046).
+
+**Failure path:** `pick` returns `null` only when nothing is due and the candidate list is empty; the screen then says "You've finished this sub-topic".
 
 ---
 
