@@ -5,8 +5,10 @@ signed question packs; nothing here ships directly.
 
 - `master/questions.csv` — the real bank. It starts with just the header.
 - `sample/questions.csv` — four fake rows used to exercise the pipeline.
-- `packs.lock.json` — created by the first real build; commit it so pack
+- `packs.lock.json` — created by the first real CDN build; commit it so pack
   versions and hashes survive between builds.
+- `bundled.lock.json` — lock for the pack shipped inside the APK; the build
+  writes both the lock and the signed files under `public/packs/` (D-059).
 
 ## Columns
 
@@ -53,8 +55,26 @@ On PowerShell, put the command on one line or use a backtick instead of `\`.
 
 `CGL_SIGNING_KEY` and `CGL_PACK_URL_BASE` can replace `--key` and `--url-base`.
 `--generated-at <iso>` makes the manifest timestamp reproducible. The private
-key must never be committed; the public key is safe to ship and will be pinned
-in the app when the pack verifier lands.
+key must never be committed; the public key is safe to ship and is pinned in
+`src/sync/contentPublicKey.ts`.
+
+## Bundled pack (D-059)
+
+The pack that ships inside the APK is built into `public/packs/`, with its lock
+at `content/bundled.lock.json`:
+
+```sh
+npm run content:build -- --input content/sample/questions.csv --out public/packs \
+  --lock content/bundled.lock.json --key ../cgl-keys/ed25519-private.pem \
+  --url-base https://cdn.cglgkmaster.app/packs \
+  --generated-at 2026-11-07T00:00:00.000Z
+```
+
+Vite copies `public/packs/` into `dist/packs/` on every build. On launch the app
+fetches `./packs/manifest.json`, verifies the signature with the pinned key,
+checks each pack's SHA-256 and validates every question before writing it to
+IndexedDB. Rebuild the bundled pack whenever its questions change, and use the
+same signing key the app pins; rotating the key requires an app update.
 
 ## Build output
 

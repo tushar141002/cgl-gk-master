@@ -3,26 +3,48 @@
   import type { Settings } from '../../shared/contract';
   import type { AppDatabase } from '../data/database';
   import { SettingsRepository } from '../data/repositories/SettingsRepository';
+  import { ProgressService } from '../services/ProgressService';
+  import { PracticeService } from '../services/PracticeService';
+  import { examDeadlineFrom } from '../services/examDeadline';
+  import { PackInstaller } from '../sync/PackInstaller';
+  import { CONTENT_PUBLIC_KEY } from '../sync/contentPublicKey';
   import { translate, type MessageKey } from '../ui/i18n/messages';
   import { provideI18n } from '../ui/i18n/context';
   import { applyLanguage, applyTheme, writeThemeHint } from '../ui/theme';
-  import Home from '../ui/screens/Home.svelte';
   import SettingsScreen from '../ui/screens/Settings.svelte';
   import Placeholder from '../ui/screens/Placeholder.svelte';
+  import HomeRoute from './HomeRoute.svelte';
+  import PracticeRoute from './PracticeRoute.svelte';
   import NavBar from './NavBar.svelte';
   import { currentPath, matchPath, subscribePath, type Route } from './router';
 
-  let { db, initialSettings }: { db: AppDatabase; initialSettings: Settings } = $props();
+  let { db, initialSettings, deviceId }: { db: AppDatabase; initialSettings: Settings; deviceId: string } =
+    $props();
 
   const settingsRepo = new SettingsRepository(untrack(() => db));
+  const progressService = new ProgressService(untrack(() => db));
+  const practiceService = new PracticeService(
+    untrack(() => db),
+    {
+      deviceId: untrack(() => deviceId),
+    },
+  );
+  const installer = new PackInstaller(
+    untrack(() => db),
+    { publicKeyPem: CONTENT_PUBLIC_KEY },
+  );
 
   let settings = $state<Settings>(untrack(() => initialSettings));
   let path = $state(currentPath());
   let online = $state(true);
   let saveError = $state(false);
+  let contentState = $state<'preparing' | 'ready' | 'failed'>('preparing');
+  /** Bumped after a successful install so mounted routes re-read the bank. */
+  let contentVersion = $state(0);
 
   const route = $derived(matchPath(path));
   const titleKey = $derived(titleKeyFor(route));
+  const examDeadline = $derived(examDeadlineFrom(settings.examDate));
 
   provideI18n({
     get language() {
@@ -44,12 +66,35 @@
     globalThis.addEventListener('online', syncOnline);
     globalThis.addEventListener('offline', syncOnline);
 
+    void installContent();
+
     return () => {
       stopRouter();
       globalThis.removeEventListener('online', syncOnline);
       globalThis.removeEventListener('offline', syncOnline);
     };
   });
+
+  /**
+   * Installs the packs shipped in the APK (D-059). It runs after first paint
+   * and never blocks the UI; a failure leaves the retry banner and whatever
+   * version was already on the phone.
+   */
+  async function installContent(): Promise<void> {
+    contentState = 'preparing';
+    try {
+      const result = await installer.install();
+      console.info(
+        `content ready: ${result.installed.length} installed, ${result.skipped.length} skipped, ` +
+          `${result.totalQuestions} question(s)`,
+      );
+      contentState = 'ready';
+      contentVersion += 1;
+    } catch (error) {
+      console.error('could not install content', error);
+      contentState = 'failed';
+    }
+  }
 
   async function save(patch: Partial<Settings>): Promise<void> {
     try {
@@ -100,6 +145,16 @@
     {#if !online}
       <div class="banner banner--info">{translate(settings.language, 'offline.message')}</div>
     {/if}
+    {#if contentState === 'preparing'}
+      <div class="banner banner--info" role="status">{translate(settings.language, 'content.preparing')}</div>
+    {:else if contentState === 'failed'}
+      <div class="banner banner--danger" role="alert">
+        <span>{translate(settings.language, 'content.failed')}</span>
+        <button class="btn btn--ghost" type="button" onclick={() => void installContent()}>
+          {translate(settings.language, 'common.retry')}
+        </button>
+      </div>
+    {/if}
     {#if saveError}
       <div class="banner banner--danger" role="alert">
         {translate(settings.language, 'settings.saveFailed')}
@@ -107,9 +162,18 @@
     {/if}
 
     {#if route.name === 'home'}
-      <Home dailyGoal={settings.dailyGoal} />
+      {#key contentVersion}
+        <HomeRoute progress={progressService} dailyGoal={settings.dailyGoal} />
+      {/key}
     {:else if route.name === 'practice'}
-      <Placeholder titleKey="practice.title" />
+      {#key `practice:${route.subtopic ?? ''}:${contentVersion}`}
+        <PracticeRoute
+          subtopic={route.subtopic}
+          practice={practiceService}
+          progress={progressService}
+          {examDeadline}
+        />
+      {/key}
     {:else if route.name === 'mock'}
       <Placeholder titleKey="mock.title" />
     {:else if route.name === 'progress'}

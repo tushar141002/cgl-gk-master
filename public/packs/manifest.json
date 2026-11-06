@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-07T00:00:00.000Z",
+  "packs": [
+    {
+      "id": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "kind": "evergreen",
+      "version": 1,
+      "sha256": "9ad5b875ee8c4479dcc1b798682eb3d9d07f65509a8147f88fac71dc210ba366",
+      "url": "https://cdn.cglgkmaster.app/packs/geography-indian-geography-v1-9ad5b875ee8c.json",
+      "count": 1,
+      "bytes": 1299
+    },
+    {
+      "id": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "kind": "evergreen",
+      "version": 1,
+      "sha256": "adf8bad9f183137f49e22850cd696f3829ecdaa2ecb694435b66026965cf885e",
+      "url": "https://cdn.cglgkmaster.app/packs/history-ancient-india-v1-adf8bad9f183.json",
+      "count": 1,
+      "bytes": 1387
+    },
+    {
+      "id": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "kind": "evergreen",
+      "version": 1,
+      "sha256": "692276f66ea8f21d9b7a2ad0910d0833b8ddd2e17d598a7637155ab493d28d90",
+      "url": "https://cdn.cglgkmaster.app/packs/polity-fundamental-rights-v1-692276f66ea8.json",
+      "count": 1,
+      "bytes": 1376
+    }
+  ],
+  "signature": "S9AfZYPuU8lSYQLYYa0U39VwBLkZOyEn0kXO8MetCc+lZSt8TWBhwUqC2HKYMkbUUYDXCrj34h5Ztlp7P0ufCQ=="
+}

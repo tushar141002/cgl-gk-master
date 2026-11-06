@@ -1,0 +1,20 @@
+{
+  "manifestVersion": 1,
+  "packs": {
+    "geography-indian-geography": {
+      "version": 1,
+      "contentHash": "136f0600f06dab9f72efcf1cad0ec62a58b233523f8e88458f0abd87063ef142",
+      "sha256": "9ad5b875ee8c4479dcc1b798682eb3d9d07f65509a8147f88fac71dc210ba366"
+    },
+    "history-ancient-india": {
+      "version": 1,
+      "contentHash": "3fda488fe2e31489a6904084b89527ae035e57d6131c0a7b6600b455ea6c18d5",
+      "sha256": "adf8bad9f183137f49e22850cd696f3829ecdaa2ecb694435b66026965cf885e"
+    },
+    "polity-fundamental-rights": {
+      "version": 1,
+      "contentHash": "e49c010627845faa588cafc58aa2b3439c9d3b88708ef1f58fd86f37e550bbb5",
+      "sha256": "692276f66ea8f21d9b7a2ad0910d0833b8ddd2e17d598a7637155ab493d28d90"
+    }
+  }
+}

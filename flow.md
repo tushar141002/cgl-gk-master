@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 5 (app shell) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and eight repositories (`src/data/`), and typed bilingual UI copy (329 tests). Screens beyond Home and Settings are placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 6 (practice) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and eight repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer (`src/sync/`), the practice and progress services (`src/services/`) and the Home/chooser/practice screens. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -21,6 +21,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 4):** the UI layers are real: `ui/index.css` imports fonts → tokens → base → components. `ui/preview.html` is the living reference. No screen exists yet, so F1–F12 keep their planned paths; screens must compose the components rather than restyle them (D-051..D-054).
 >
 > **Updated 2026-11-07 (Step 5):** the shell is real. F1 now runs `main.ts › start()` → `app/bootstrap.ts › bootstrap()`. The router, Dexie schema, repositories, i18n and theme helpers have real paths; Home and Settings render, other routes are placeholders until their steps land (D-055..D-058).
+>
+> **Updated 2026-11-07 (Step 6):** F1 now installs the bundled signed pack through `sync/PackInstaller.ts` after the shell mounts. F2 and F3 are real: `app/PracticeRoute.svelte` drives `services/PracticeService.ts`, which owns the single answer transaction and the due-first picker. The chooser lives at `#/practice`; a session is `#/practice/:subtopic` (D-059..D-062).
 
 ---
 
@@ -59,7 +61,10 @@ shared/
 src/
   main.ts                    entry point: bootstrap, first-run theme, mount, Android back
   app/
-    App.svelte               root component: route switch, settings save, i18n provider
+    App.svelte               root component: route switch, settings save, i18n provider,
+                             content install state (F1)
+    HomeRoute.svelte         loads ProgressService.overview(), renders Home
+    PracticeRoute.svelte     chooser/session state, timing and callbacks (F2, F3)
     bootstrap.ts             bootstrap(): open DB, ensure settings, mint device id (F1)
     router.ts                parseHash / buildHref / matchPath / navigate / subscribePath (D-056)
     NavBar.svelte            four-item bottom navigation
@@ -79,9 +84,14 @@ src/
                              Settings, Sync. Planned: Bookmark, Correction,
                              Report, Mock
   services/
-    PracticeSession.ts  AuthService.ts  ReminderService.ts  MockService.ts
+    PracticeService.ts       landed: next / answer (one transaction, D-060)
+    ProgressService.ts       landed: overview / topics for Home and the chooser
+    examDeadline.ts          landed: examDeadlineFrom(examDate)
+    AuthService.ts  ReminderService.ts  MockService.ts
     ReportService.ts  AccountService.ts                       (planned)
   sync/
+    PackInstaller.ts         landed: verify manifest + hash, replace packs (D-059)
+    contentPublicKey.ts      landed: pinned Ed25519 public key
     SyncManager.ts  PackUpdater.ts  ManifestVerifier.ts  CorrectionApplier.ts
     CheckpointLoader.ts      (D-026)                          (planned)
   ui/
@@ -97,8 +107,9 @@ src/
     Icon.svelte              inline SVG icon component
     i18n/messages.ts         en + hi dictionary, translate()        landed (D-057)
     i18n/context.ts          provideI18n / useI18n                  landed
-    screens/                 landed: Home, Settings, Placeholder, StorageError
-                             planned: Practice, Mock, Results, Progress, ReportError
+    screens/                 landed: Home, Practice, PracticeChooser, Settings,
+                             Placeholder, StorageError
+                             planned: Mock, Results, Progress, ReportError
 server/
   functions/sync             POST /sync handler
   functions/grade_mock       live mock grading
@@ -119,8 +130,11 @@ tests/
 content/
   master/questions.csv       authoritative bank: one row per question (D-047)
   sample/questions.csv       four-row pipeline fixture (3 verified, 1 draft)
-  packs.lock.json            written by the first build; commit it so versions persist
+  bundled.lock.json          lock for the pack shipped inside the APK (D-059)
+  packs.lock.json            written by the first CDN build; commit it so versions persist
   dist/                      build output (gitignored)
+
+public/packs/                signed manifest and pack files copied into the APK (D-059)
 
 tools/content/               offline build, run with tsx; never imported by the app
   csv.ts                     strict RFC 4180 reader
@@ -177,66 +191,82 @@ main.ts › start()                                       [UI]
 │  ├─ data/repositories/SettingsRepository.ts › ensure() [DB read/write] first launch only
 │  └─ data/repositories/SyncRepository.ts › ensureDeviceId() [DB read/write] (D-011)
 ├─ ui/theme.ts › resolveSystemTheme() / applyTheme() / applyLanguage()   first launch + every boot
-├─ app/App.svelte › mount()                              [UI] (D-055, D-056)
+├─ app/App.svelte › mount({ db, initialSettings, deviceId })   [UI] (D-055, D-056)
 ├─ ⇢ @capacitor/app › backButton listener                native only (D-056)
-├─ ⟵ data/repositories/DailyRepository.ts › all()        [DB read]   (planned, Step 6)
-├─ ⟵ core/StreakTracker.ts › evaluate(summaries, todayKey)  pure → {current, doneToday}  (planned)
-└─ ⟶ async sync/SyncManager.ts › start()                 → F4, F5 (planned)
+├─ app/App.svelte › onMount()
+│  ├─ app/router.ts › subscribePath()                    hash changes → route
+│  ├─ window › online / offline listeners                connectivity banner
+│  └─ ⟶ sync/PackInstaller.ts › install()                async, never blocks first paint (D-059)
+│     ├─ ⟶ GET ./packs/manifest.json                     bundled asset
+│     ├─ sync/contentPublicKey.ts › CONTENT_PUBLIC_KEY   pinned Ed25519 key
+│     ├─ verify signature + SHA-256 + core/Question.ts validation
+│     └─ data/repositories/QuestionRepository.ts › replacePack()  [DB write] one transaction
+└─ app/HomeRoute.svelte › services/ProgressService.ts › overview()   [DB read]
 ```
 
-**Failure path:** if the database fails to open, `main.ts` mounts `ui/screens/StorageError.svelte` with a retry instead of `App`. Nothing on the network blocks first paint; sync starts only after the UI is mounted. A failed settings write is reported by the shell banner and the DOM is restored to the stored values.
+**Failure path:** if the database fails to open, `main.ts` mounts `ui/screens/StorageError.svelte` with a retry instead of `App`. Nothing on the network blocks first paint; the bundled install starts after mount and a failure leaves the previous pack in place plus a retry banner in the shell. A failed settings write is reported by the shell banner and the DOM is restored to the stored values. The CDN check (`sync/PackUpdater.ts`) is still planned and will hang off the same verified install path (F5).
 
 ---
 
 ## F2: Answer a question (hot path, < 50 ms)
 
 ```
-ui/screens/Practice.svelte › onOptionTap(index)
-└─ services/PracticeSession.ts › submitAnswer(index)
-   ├─ core/Attempt.ts › Attempt.create(question, chosen, ms, ctx)  pure
-   ├─ ⟦ txn ⟧
-   │  ├─ data/repositories/AttemptRepository.ts › append()          [DB write]
-   │  ├─ core/ReviewScheduler.ts › review(cardState, outcome, now, examDeadline) pure
-   │  ├─ data/repositories/CardRepository.ts › put()                [DB write]
-   │  ├─ core/EloRating.ts › updateSkill(skill, questionRating, outcome) pure
-   │  ├─ data/repositories/SkillRepository.ts › put()               [DB write]
-   │  ├─ core/StreakTracker.ts › apply(attempt, todaySummary)       pure
-   │  └─ data/repositories/DailyRepository.ts › put()               [DB write]
-   │  ⟦ /txn ⟧
-   ├─ ui/screens/Practice.svelte › showFeedback()                   [UI]
-   └─ → F3
+ui/screens/Practice.svelte › choose(index) — paints the selection immediately
+└─ app/PracticeRoute.svelte › answer(chosen)
+   └─ services/PracticeService.ts › answer(question, chosen, ms, examDeadline)
+      ├─ core/Attempt.ts › Attempt.create(question, chosen, ms, ctx)  pure
+      ├─ ⟦ txn ⟧
+      │  ├─ data/repositories/AttemptRepository.ts › append()          [DB write]
+      │  ├─ data/repositories/CardRepository.ts › get(qid)             [DB read]
+      │  ├─ core/ReviewScheduler.ts › review(card, outcome, now, examDeadline) pure
+      │  ├─ data/repositories/CardRepository.ts › put()                [DB write]
+      │  ├─ data/repositories/SkillRepository.ts › get(subtopic)       [DB read]
+      │  ├─ core/EloRating.ts › updateSkill(skill, questionRating, outcome) pure
+      │  ├─ data/repositories/SkillRepository.ts › put()               [DB write]
+      │  ├─ data/repositories/DailyRepository.ts › get(istDayKey(now)) [DB read]
+      │  ├─ core/StreakTracker.ts › apply(attempt, todaySummary)       pure
+      │  └─ data/repositories/DailyRepository.ts › put()               [DB write]
+      │  ⟦ /txn ⟧
+      ├─ ui/screens/Practice.svelte › feedback props                   [UI]
+      └─ “Next question” → F3 (nothing advances automatically)
 ```
 
-`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022). `ReviewScheduler.review` calls the FSRS-7 preset synchronously (correct → `Good`, wrong → `Again`), and clamps the new due date to `examDeadline` without touching stability (D-037). `cardState` comes from `CardRepository.get(qid)`; when the question has never been served, `PracticeSession` creates it with `ReviewScheduler.newCard(qid, now)` before the review, so a skip stores a fresh card that is still due rather than advancing anything. `StreakTracker.apply(attempt, todaySummary)` returns the day's updated counters and starts the row when `todaySummary` is null; a skip leaves `attempted`, `correct` and `ms` unchanged, so it cannot complete the streak (D-041, D-043).
+`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged and writes a zero daily row, but is a no-op for Elo and FSRS: no card is created and no skill row is touched (D-034, D-043). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022). `ReviewScheduler.review` calls the FSRS-7 preset synchronously (correct → `Good`, wrong → `Again`), and clamps the new due date to `examDeadline` without touching stability (D-037). Card, skill and daily reads happen **inside** the transaction, so a second answer cannot interleave (D-060).
 
 **Why one transaction:** five separate writes cost far more than one commit on a Redmi 9A class device, and either everything is saved or nothing is.
-**Ordering:** render the next question optimistically and let the transaction commit behind it; never block the tap on the commit. Flush any in-flight transaction on `onPause` so a backgrounded app cannot lose an answer.
-**Failure path:** if the transaction fails, nothing is saved, the attempt object is kept in memory and retried with the same UUID (idempotent), and an error is reported to Sentry. The UI shows "Couldn't save, retrying" — the attempt is not silently lost.
+**Ordering:** the option tap paints first and the commit follows; the answer is not fire-and-forget, and the screen shows feedback only after the commit returns (D-061). Options and Skip lock while the commit is in flight.
+**Failure path:** if the transaction fails, nothing is saved. `PracticeRoute` keeps the chosen index and elapsed `ms` in memory and shows a retry banner; the retry re-submits that same choice and time rather than inventing a second attempt. Nothing is silently lost. Flushing on `onPause` is still planned with background sync.
 
 ---
 
 ## F3: Pick the next question
 
 ```
-services/PracticeSession.ts › next()
-├─ data/repositories/CardRepository.ts › dueCards(now)                  [DB read]
-├─ if none are due:
-│  ├─ data/repositories/SkillRepository.ts › get(subtopic)              [DB read]
-│  ├─ data/repositories/AttemptRepository.ts › recentQids(30)           [DB read]
-│  └─ loop step 0..MAX_RANGE_STEP, stop at the first non-empty:
-│     ├─ core/AdaptiveEngine.ts › targetRange(skill, step)              pure → {min,max}
-│     └─ data/repositories/QuestionRepository.ts › candidates(range)    [DB read]
-└─ core/QuestionPicker.ts › pick(dueCards, candidates, recentIds, rng)  pure
-   → { qid, reason: 'review' | 'new' } | null
+app/PracticeRoute.svelte › loadQuestion()
+└─ services/PracticeService.ts › next(subtopic)
+   ├─ data/repositories/QuestionRepository.ts › bySubtopic(subtopic)     [DB read]
+   ├─ data/repositories/CardRepository.ts › all()                        [DB read]
+   ├─ serve the earliest due card for an installed question
+   ├─ else:
+   │  ├─ data/repositories/SkillRepository.ts › get(subtopic)            [DB read]
+   │  ├─ data/repositories/AttemptRepository.ts › recentQids(30)         [DB read]
+   │  └─ loop step 0..MAX_RANGE_STEP, stop at the first band with a fresh question:
+   │     ├─ core/AdaptiveEngine.ts › targetRange(skill, step)            pure → {min,max}
+   │     ├─ data/repositories/QuestionRepository.ts › candidates(range)  [DB read]
+   │     └─ drop every qid that already has a card (scheduled, due or not)
+   └─ core/QuestionPicker.ts › pick([], fresh, recentIds, rng)           pure
+      → { qid, reason: 'new' } | null
 ```
 
-`PracticeSession` does the reads and hands plain data to `QuestionPicker`, so `core/` never imports `data/` (D-030).
+`PracticeService` does the reads and hands plain data to `QuestionPicker`, so `core/` never imports `data/` (D-030). The due branch sorts by `due` then `qid` and returns the first one whose question is still installed, which is why a card left behind by an uninstalled pack is skipped rather than dead-ending the session.
 
 Order of preference: due revision cards first, **earliest `due` first**, with a tie broken by question id. Otherwise a new question is picked uniformly at random from the questions inside the band, sorted by id first so the same roll always means the same question. `recentIds` filters new questions only; it never blocks a review (D-045).
 
+A card that is scheduled but **not due** is excluded from the new-question pool too, so its revision interval is never skipped by serving it as fresh. That is a Step 6 refinement of D-045: the original wording only excluded due cards from the candidate pool.
+
 The band starts at ±100 Elo around `skill.elo`, then widens to ±200 and ±400, and finally to the whole 600–2200 scale (`targetRange(skill, step)` with `step = 0..MAX_RANGE_STEP`), always clamped (D-044). If every candidate is recent, the picker ignores the exclusion rather than dead-ending a tiny sub-topic (D-046).
 
-**Failure path:** `pick` returns `null` only when nothing is due and the candidate list is empty; the screen then says "You've finished this sub-topic".
+**Failure path:** `next` returns `null` only when nothing is due and no unscheduled question exists in any band; the screen then says "No questions here yet" and links back to the chooser. A failed DB read shows the load-failed banner with a retry.
 
 ---
 
@@ -266,17 +296,21 @@ sync/SyncManager.ts › runOnce()
 ## F5: Question pack update
 
 ```
-sync/PackUpdater.ts › checkForUpdates()
-├─ ⟶ GET manifest.json                                     [network]
-├─ sync/ManifestVerifier.ts › verify(manifest)             Ed25519 over canonicalJson(body), D-025/D-050
-├─ sync/PackUpdater.ts › diff(manifest, localPacks)        pure
+sync/PackInstaller.ts › install()                             landed (D-059)
+├─ ⟶ GET manifest.json (bundled asset; CDN URL later)         [network]
+├─ sync/contentPublicKey.ts › CONTENT_PUBLIC_KEY
+├─ verify Ed25519 over canonicalJson({version, generatedAt, packs})   D-025/D-050
+├─ compare (version, sha256) with data/repositories/PackRepository.ts  [DB read]
+│  └─ unchanged → skip
 └─ for each changed pack:
-   ├─ ⟶ GET pack file                                      [network]
-   ├─ sync/PackUpdater.ts › checkSha256()
-   └─ data/repositories/QuestionRepository.ts › replacePack()   [DB write]
+   ├─ ⟶ GET pack file (local file derived from manifest CDN URL)  [network]
+   ├─ sha256Hex(bytes) — must equal the manifest entry
+   ├─ core/Question.ts validation for every question
+   ├─ data/repositories/QuestionRepository.ts › replacePack()  [DB write, one txn]
+   └─ data/repositories/PackRepository.ts › put()              [DB write]
 ```
 
-**Failure path:** if the signature or hash fails, discard the download, keep the old pack, report to Sentry. Never install an unverified pack.
+**Failure path:** if the signature, the hash or any question fails, the install stops before the transaction and the previous pack stays installed; the shell reports the failure with a retry. A WebView without Ed25519 fails closed. The CDN-check half (`sync/PackUpdater.ts`) is still planned: it will fetch the same manifest shape from the CDN, verify it through this same code path, and only replace packs whose version or hash changed.
 
 ---
 

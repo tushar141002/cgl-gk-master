@@ -26,4 +26,9 @@ export class CardRepository {
   async count(): Promise<number> {
     return this.db.cardState.count();
   }
+
+  /** Every scheduled card, for filters that must not re-serve a non-due card. */
+  async all(): Promise<CardStateRow[]> {
+    return this.db.cardState.toArray();
+  }
 }

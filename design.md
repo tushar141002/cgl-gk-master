@@ -97,6 +97,10 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-056 | Own typed hash router, Android back in `main.ts` | UI | Accepted |
 | D-057 | Typed message dictionary, no i18n library | UI | Accepted |
 | D-058 | No public PWA in v1; Capacitor only | Build | Accepted |
+| D-059 | Bundle the signed first pack in the APK and verify it before import | Security | Accepted |
+| D-060 | One service and one transaction own the answer cycle | Data | Accepted |
+| D-061 | Instant feedback, locked options, explicit Next | UI | Accepted |
+| D-062 | `#/practice` chooses a sub-topic; the session has its own URL | UI | Accepted |
 
 ---
 
@@ -743,3 +747,47 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** The Android app is the funded deliverable and the only surface that can be tested on the target Redmi 9A class phone. Keeping the SPA PWA-compatible costs nothing today and preserves the option. Deferring the manifest and service worker removes a whole class of cache-update bugs from the launch window.
 - **Trade-off accepted:** No browser install, no desktop use and no shareable web link at launch; reach depends on Play Store discovery. A later PWA launch inherits an untested storage model.
 - **Revisit when:** The Play launch is stable and demand for a browser version is demonstrated, or desktop users become a meaningful share of requests.
+
+## D-059: Bundle the signed first pack in the APK and verify it before import
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Security
+- **Context:** The first launch happens on a budget phone with patchy 4G, often before the student signs in. The app must be usable offline immediately, yet question text is the one thing the app must not accept from an untrusted source: a modified answer key would teach the wrong fact.
+- **Decision:** Ship the sample pack (`public/packs/*.json` plus its signed `manifest.json`) inside the APK. On startup `src/sync/PackInstaller.ts` fetches the bundled manifest from the WebView origin, verifies the Ed25519 signature over `canonicalJson({ version, generatedAt, packs })` with the key pinned in `src/sync/contentPublicKey.ts`, checks each pack's SHA-256, validates every question with `core/Question.ts`, and only then replaces the pack inside one Dexie transaction. A pack already at the advertised version and hash is skipped. If Web Crypto lacks Ed25519 the installer fails closed and the shell shows a retry banner.
+- **Alternatives considered:** Download the first pack from the CDN on first launch (smaller APK, but a cold install with no data is unusable and the first run becomes a network dependency); ship the pack unsigned as a demo and sign only downloaded updates (one trust rule for updates and none for the content the student sees first, which is the wrong place to save a signature check); sign packs but import before verifying (a bad pack could still reach the database if validation fails mid-write).
+- **Why:** Bundling gives a working practice session on a phone in airplane mode. The same manifest verification path will serve CDN updates later (F5), so there is one trust chain and one parser to test. Validation before writing means a corrupt or tampered pack leaves the previous version untouched. The demo is three verified questions, about 4 KB of JSON, so the APK cost is negligible now and the mechanism is proven before the 2,000-question bank exists.
+- **Trade-off accepted:** Every content build that ships in an APK requires an app update; the bundled manifest's CDN URLs are only used to derive the local file names. A rotating signing key means an app update. The developer must keep the private key outside the repository (the keygen command refuses to write inside it).
+- **Revisit when:** The bundled pack grows enough to matter for APK size, or content updates must reach installed apps without a Play release.
+
+## D-060: One service and one transaction own the answer cycle
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** One tap changes five things: the append-only attempt, the FSRS card, the sub-topic Elo, the IST daily counter, and the feedback the student sees. Spread across UI code, a crash or a double tap can leave derived state disagreeing with the log, and the replay rule (D-016) exists precisely to prevent that.
+- **Decision:** `src/services/PracticeService.ts` is the only writer in the answer path. `answer(question, chosen, ms, examDeadline)` creates the attempt value with `core/Attempt.ts`, then opens one Dexie `rw` transaction over `attempts`, `cardState`, `skills` and `dailySummary`. The reads of current card, skill and daily row happen inside that transaction; FSRS and Elo remain pure calls. `chosen === null` logs the attempt and writes a zero daily row, and touches neither card nor skill (D-034, D-043). The UI receives a `PracticeFeedback` only after the commit.
+- **Alternatives considered:** Five independent repository calls from the screen (simple to write, but a failure between calls leaves a graded attempt without its card or counter); write the attempt first and derive card/skill/daily later in the background (fastest tap-to-paint, but Home and the next pick read stale derived state until the background job runs, and a crash loses the work); keep the reads outside the transaction (a second answer could interleave and overwrite the first one's card state).
+- **Why:** A single commit is faster than five on the target hardware and gives all-or-nothing semantics. It also puts the entire rule set in one service that can be tested with `fake-indexeddb`, leaving `ui/` and `core/` unchanged. The measured flow on the preview build stays far below the 50 ms tap budget because the option is painted optimistically before the promise resolves.
+- **Trade-off accepted:** The transaction is short but includes the derived-state reads, so an answer is not "fire and forget". A failed commit shows a retry banner and the question stays on screen; the retry repeats the same choice and elapsed time rather than inventing a second attempt. `PracticeService` becomes a hot spot that must be kept free of UI concerns.
+- **Revisit when:** Answer volume or a new derived table makes the transaction visibly slow, or sync requires writing the attempt before the derived state.
+
+## D-061: Instant feedback, locked options, explicit Next
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** A practice tap is both an answer and a learning moment. Auto-advancing hides the explanation; leaving options live lets a second tap overwrite the attempt; showing only "wrong" without the right answer teaches nothing.
+- **Decision:** Tapping an option paints the selection immediately, disables every option and the Skip button, then shows the verdict banner, the correct option with a `CORRECT` label, the chosen wrong option with a `WRONG` label, and the bilingual explanation. Nothing advances until the student taps **Next question**. A skip follows the same shape with a "Skipped" banner and no wrong marking. State is never colour alone: the verdict labels are text.
+- **Alternatives considered:** Auto-advance after a short delay (fast drill feel, but a wrong tap or a slow reader loses the explanation and the next question may be answered accidentally); advance on the next option tap (fewer buttons, but the student cannot stop to read and a second tap can look like an answer to the next question); no explanation until a separate review screen (smaller hot path, but feedback is the learning event and batching it loses the context).
+- **Why:** The target student is preparing for a timed exam and needs to understand a mistake once, not collect a score. A locked board prevents double submissions and makes the tap's effect unambiguous. The explicit Next keeps the reading time under the student's control, and the two labels satisfy the accessibility rule already established in D-053/D-054.
+- **Trade-off accepted:** Two taps per question, so a 10-question goal takes more wall-clock time than a drill. The explanation card adds vertical space on a small screen. The UI must hold local "picked" state until the service returns, and reset it when a skipped question is served again.
+- **Revisit when:** Usability testing shows the fixed Next is slower than the learning benefit, or a timed mock needs a different answer flow.
+
+## D-062: `#/practice` chooses a sub-topic; the session has its own URL
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** Elo and FSRS are scoped to a sub-topic, and the sample bank has one question per sub-topic. A single mixed practice stream would either share one rating across unrelated subjects or need a cross-topic selection rule that does not exist yet. The router already supports `#/practice/:subtopic` (D-056).
+- **Decision:** `#/practice` loads `ProgressService.topics()` and shows one row per installed sub-topic with its section, question count and current rating. Choosing a row navigates to `#/practice/<subtopic>`, which starts a session through `PracticeService.next(subtopic)`. A session's empty state links back to the chooser. Home's primary button always opens the chooser; no route starts a mixed session in Step 6.
+- **Alternatives considered:** Start one mixed session from `#/practice` across all sub-topics (one tap fewer, but the Elo target and the due-card queue would mix subjects and the student could not choose Polity on a day before the exam); keep practice on one page with an in-page sheet (no URL per topic, so back does not return to the chooser and deep links from a future study plan are impossible); put the chooser on Home (more taps to reach other sections, and Home already carries the daily goal and streak).
+- **Why:** A sub-topic URL makes the back button, a future study plan and a future notification all work with the router we already have. It mirrors how Elo and FSRS already think, so no new selection rule is needed for launch. The chooser is also the honest empty state while the real bank is being written.
+- **Trade-off accepted:** One extra tap before the first answer, and no "review everything due" session yet. The chooser shows slug-derived labels until content carries display names. A mixed or due-only session will need a new service method, not just a screen change.
+- **Revisit when:** The bank is large enough that students want a cross-topic "due today" session, or study plans/notifications need to deep-link into a mixed queue.

@@ -156,6 +156,8 @@ Dependency direction: `ui → services/sync → core ← data`. `core/` imports 
 
 **Step 5 shell (completed 2026-11-07):** Vite 8 + Svelte 5 SPA, no SvelteKit (D-055). `src/main.ts` bootstraps storage, applies the first-run or stored theme, mounts `src/app/App.svelte`, and listens for the native Android back button (D-056). `src/app/router.ts` is a typed hash router over `#/home`, `#/practice`, `#/practice/:subtopic`, `#/mock/:id`, `#/progress`, `#/settings` and a renderable 404. `src/data/database.ts` defines the ten-table Dexie schema; eight repositories (Question, Attempt, Card, Skill, Daily, Pack, Settings, Sync) cover the stores the app reads today. UI chrome is a typed `en`/`hi` dictionary with no i18n library (D-057). Home and Settings render; other routes are placeholders until their steps land. Measured bundle: 55.66 kB gzip JS and 4.05 kB gzip CSS. 329 tests pass.
 
+**Step 6 practice (completed 2026-11-07):** `src/sync/PackInstaller.ts` installs the signed pack bundled in the APK: it verifies the Ed25519 manifest signature against the key pinned in `src/sync/contentPublicKey.ts`, checks each pack's SHA-256, validates every question and replaces the pack in one Dexie transaction (D-059). `src/services/PracticeService.ts` owns the answer cycle in a single transaction — attempt append, FSRS-7 card, sub-topic Elo and IST daily counter — and picks the next question due-first, excluding scheduled cards from the new pool (D-060). `#/practice` is a sub-topic chooser; `#/practice/:subtopic` runs a session with instant feedback, locked options and an explicit Next (D-061, D-062). Home now shows real streak, accuracy, rating and due counts. Measured bundle: 78.48 kB gzip JS and 4.05 kB gzip CSS. 350 tests pass.
+
 ---
 
 ## 6. Data model
@@ -394,7 +396,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 2 OOP core classes | **Done 2026-11-07** — scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, `AdaptiveEngine`, `QuestionPicker`, tests (142 passing). `Question.ts` moves to Step 3 |
 | 3 Content pipeline | **Done 2026-11-07** — `Question.ts`, strict CSV master validator, pack builder, Ed25519 manifest signing, tests (233 passing). Admin verification UI deferred to Step 7 (D-047..D-050) |
 | 4 UI design system (fonts, colours, components) | **Done 2026-11-07** — tokens, base and component layers, self-hosted Mukta subset, living preview, 47 design-system tests (D-051..D-054) |
-| 5–6 App build | **Step 5 done 2026-11-07** — Vite + Svelte 5 shell, hash router, Dexie schema and eight repositories, typed bilingual UI, Home + Settings (D-055..D-058, 329 tests). Step 6 (practice service, Practice/feedback screen, pack install) is next |
+| 5–6 App build | **Done 2026-11-07** — Step 5: Vite + Svelte 5 shell, hash router, Dexie schema and eight repositories, typed bilingual UI, Home + Settings (D-055..D-058). Step 6: signed bundled pack install, single-transaction answer cycle, due-first picker, sub-topic chooser and practice/feedback screen (D-059..D-062, 350 tests) |
 | 7 Backend & security | Pending |
 | 8 Polish & launch | Pending |
 

@@ -1,0 +1,33 @@
+{
+  "id": "geography-indian-geography",
+  "version": 1,
+  "questions": [
+    {
+      "id": "geography-india-0001",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "PYQ",
+        "exam": "SSC CGL",
+        "year": 2022,
+        "shift": "Shift 2",
+        "date": "2022-12-01"
+      },
+      "en": {
+        "q": "Which river is known as the 'Sorrow of Bihar'?",
+        "options": ["Kosi", "Gandak", "Son", "Damodar"],
+        "explanation": "The Kosi shifts its course and floods north Bihar, earning the name."
+      },
+      "hi": {
+        "q": "किस नदी को 'बिहार का शोक' कहा जाता है?",
+        "options": ["कोसी", "गंडक", "सोन", "दामोदर"],
+        "explanation": "कोसी अपना मार्ग बदलती है और उत्तर बिहार में बाढ़ लाती है, इसलिए इसे यह नाम मिला।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    }
+  ]
+}

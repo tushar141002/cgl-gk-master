@@ -34,7 +34,7 @@ async function start(): Promise<void> {
     writeThemeHint(settings.theme);
     applyLanguage(settings.language, document.documentElement);
 
-    mount(App, { target, props: { db: boot.db, initialSettings: settings } });
+    mount(App, { target, props: { db: boot.db, initialSettings: settings, deviceId: boot.deviceId } });
 
     if (Capacitor.isNativePlatform()) {
       const { App: NativeApp } = await import('@capacitor/app');

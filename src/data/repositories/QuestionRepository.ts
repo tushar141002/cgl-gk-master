@@ -29,6 +29,21 @@ export class QuestionRepository {
     await this.db.questions.bulkPut([...questions]);
   }
 
+  /** Replaces every question in a pack, inside the caller's transaction. */
+  async replacePack(packId: string, questions: readonly Question[]): Promise<void> {
+    await this.db.questions.where('packId').equals(packId).delete();
+    if (questions.length > 0) await this.db.questions.bulkPut([...questions]);
+  }
+
+  /** All questions in one sub-topic, regardless of Elo band. */
+  async bySubtopic(subtopic: SubtopicId): Promise<QuestionRow[]> {
+    return this.db.questions.where('subtopic').equals(subtopic).toArray();
+  }
+
+  async all(): Promise<QuestionRow[]> {
+    return this.db.questions.toArray();
+  }
+
   /**
    * Questions in one section and Elo band, in key order. The caller filters by
    * `excludeIds`; the query limit is intentionally left to the loop so a band
