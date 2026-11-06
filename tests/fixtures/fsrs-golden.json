@@ -1,0 +1,38 @@
+{
+  "_comment": "Regression pins for the FSRS-7 preset (ts-fsrs 6.0.0) with fuzzing off. Values were produced by the documented preset and cross-checked against `await DefaultScheduler({ enableFuzz: false })`; see design.md D-037.",
+  "t0": "2026-11-04T06:00:00.000Z",
+  "t1": "2026-11-10T06:00:00.000Z",
+  "freshCorrect": {
+    "phase": "review",
+    "dueAt": "2026-11-09T00:39:55.164Z",
+    "stability": 3.9221,
+    "stabilityFast": 3.13768,
+    "difficulty": 3.53072398,
+    "scheduledDays": 4.777721809269842,
+    "learningStep": 0,
+    "reps": 1,
+    "lapses": 0
+  },
+  "thenCorrect": {
+    "phase": "review",
+    "dueAt": "2026-12-08T08:28:23.574Z",
+    "stability": 11.57516893,
+    "stabilityFast": 180.75559094,
+    "difficulty": 3.49771674,
+    "scheduledDays": 28.103050626628942,
+    "learningStep": 0,
+    "reps": 2,
+    "lapses": 0
+  },
+  "thenWrong": {
+    "phase": "relearning",
+    "dueAt": "2026-11-10T06:10:00.000Z",
+    "stability": 1.22875668,
+    "stabilityFast": 0.2685893,
+    "difficulty": 8.6920928,
+    "scheduledDays": 0.006944444444444444,
+    "learningStep": 0,
+    "reps": 2,
+    "lapses": 1
+  }
+}

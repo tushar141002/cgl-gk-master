@@ -2,11 +2,13 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts` (plus `tests/core/*.test.ts` and `tests/fixtures/elo-golden.json`). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts`, `src/core/ReviewScheduler.ts` (plus `tests/core/*.test.ts` and the fixtures). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
 > **Updated 2026-11-04 (Step 2.0):** folder map includes `shared/` and `tests/`; import matrix allows `core/` → `shared/` types only (D-036); F2 now names the real `Attempt.create(question, chosen, ms, ctx)` and `updateSkill(skill, questionRating, outcome)` signatures.
+>
+> **Updated 2026-11-04 (Step 2.1):** `ReviewScheduler` is real and synchronous; F2 calls `review(cardState, outcome, now, examDeadline)` and caps the due date at the exam (D-037).
 
 ---
 
@@ -46,7 +48,8 @@ src/
     Attempt.ts               landed: create / from / regrade / toJSON
     EloRating.ts             landed: expectedScore / kFactor / updateSkill /
                              updateQuestionRating / newSkill
-    Question.ts  AdaptiveEngine.ts  ReviewScheduler.ts  QuestionPicker.ts
+    ReviewScheduler.ts       landed: newCard / review (FSRS-7, sync preset, D-037)
+    Question.ts  AdaptiveEngine.ts  QuestionPicker.ts
     StreakTracker.ts  Replayer.ts                                    (planned)
   data/
     database.ts              Dexie schema and open()                  (planned)
@@ -76,7 +79,7 @@ tests/
 | Directory | May import from |
 |---|---|
 | `shared/` | nothing — plain data, constants and tiny pure helpers only |
-| `core/` | `core/`, `shared/` (types and pure helpers only). Never `ui/`, `data/`, `sync/`, `services/`. |
+| `core/` | `core/`, `shared/` (types and pure helpers only), and pure third-party libraries such as `ts-fsrs`. Never `ui/`, `data/`, `sync/`, `services/`. |
 | `data/` | `core/` (types only), `shared/` |
 | `services/` | `core/`, `data/`, `sync/`, `shared/` |
 | `sync/` | `core/`, `data/`, `shared/` |
@@ -130,7 +133,7 @@ ui/screens/Practice.svelte › onOptionTap(index)
    ├─ core/Attempt.ts › Attempt.create(question, chosen, ms, ctx)  pure
    ├─ ⟦ txn ⟧
    │  ├─ data/repositories/AttemptRepository.ts › append()          [DB write]
-   │  ├─ core/ReviewScheduler.ts › review(cardState, attempt)       pure
+   │  ├─ core/ReviewScheduler.ts › review(cardState, outcome, now, examDeadline) pure
    │  ├─ data/repositories/CardRepository.ts › put()                [DB write]
    │  ├─ core/EloRating.ts › updateSkill(skill, questionRating, outcome) pure
    │  ├─ data/repositories/SkillRepository.ts › put()               [DB write]
@@ -141,7 +144,7 @@ ui/screens/Practice.svelte › onOptionTap(index)
    └─ → F3
 ```
 
-`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022).
+`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022). `ReviewScheduler.review` calls the FSRS-7 preset synchronously (correct → `Good`, wrong → `Again`), and clamps the new due date to `examDeadline` without touching stability (D-037).
 
 **Why one transaction:** five separate writes cost far more than one commit on a Redmi 9A class device, and either everything is saved or nothing is.
 **Ordering:** render the next question optimistically and let the transaction commit behind it; never block the tap on the commit. Flush any in-flight transaction on `onPause` so a backgrounded app cannot lose an answer.

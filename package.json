@@ -20,5 +20,8 @@
     "prettier": "^3.9.10",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "ts-fsrs": "^6.0.0"
   }
 }

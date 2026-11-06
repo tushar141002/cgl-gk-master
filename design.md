@@ -75,6 +75,7 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-034 | Skips are ignored by Elo and FSRS | Data | Accepted |
 | D-035 | Toolchain: strict tsc + Vitest + Prettier, no ESLint yet | Build | Accepted |
 | D-036 | `core/` may import `shared/` types and pure helpers | Architecture | Accepted |
+| D-037 | FSRS integration: ts-fsrs v6 / FSRS-7, synchronous preset, binary grading | Architecture | Accepted |
 
 ---
 
@@ -479,3 +480,14 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** One definition of every boundary shape, in one file, usable by the app, the admin bundle and the server functions. It keeps `core/` testable in a plain Node process with no mocks, which is the property D-030 was protecting.
 - **Trade-off accepted:** `shared/contract.ts` becomes load-bearing for three targets and must stay plain data. Any helper added there must remain pure and tiny, and a change to a shared type now ripples to every consumer at once (which is the intent, but it raises the cost of a careless edit).
 - **Revisit when:** `shared/` grows beyond types, constants and one-line pure helpers, or a bundler boundary makes the shared module awkward to include in the server or admin build.
+
+## D-037: FSRS integration: ts-fsrs v6 / FSRS-7, synchronous preset, binary grading
+- **Date:** 2026-11-04
+- **Status:** Accepted
+- **Area:** Architecture
+- **Context:** D-006 chose FSRS and the tech stack names `ts-fsrs`, but Step 2 has to fix how it is called. `ts-fsrs` v6 recommends `DefaultScheduler()`, which is **async** because it dynamically imports the model file, and it probes versions with `Object.hasOwn` (Chrome 93+). F2 runs inside a Dexie transaction on the hot path, where awaiting a non-Dexie promise can commit the transaction early; the target device class can also carry an older WebView. Separately, the FSRS-7 card carries `stabilityFast`, `scheduledDays` and `learningStep`, none of which the first draft of `CardState` had.
+- **Decision:** Pin `ts-fsrs` 6.0.0 and use **FSRS-7** through a synchronous preset composed with `defineScheduler`, `FSRS7Model` and the same seven middlewares as `DefaultScheduler()`; configure `desiredRetention: 0.9`, default learning/relearning steps, `enableFuzz: false`, `allowModelOverride: true`, and the default maximum interval. Correct maps to `Good`, wrong to `Again`, skip to a no-op. `CardState` gains `stabilityFast`, `scheduledDays` and `learningStep`. The next due date is clamped to `examDeadline` (and never earlier than `now`); stability and difficulty are left untouched by the cap. Golden pins live in `tests/fixtures/fsrs-golden.json`.
+- **Alternatives considered:** `await DefaultScheduler()` once at startup and inject it (supported API, but makes `ReviewScheduler` async or stateful and still carries the `Object.hasOwn` call); the legacy `fsrs()` factory (synchronous, but deprecated in v6, defaults to FSRS-6, has no `stabilityFast`, and is scheduled for removal); hand-rolling FSRS (more code, more risk, no benefit over a 20 KB pinned library); recreating the scheduler per review with `maximumInterval` set from the exam date (correct, but rebuilds config on every tap and still needs the async loader).
+- **Why:** The call stays synchronous and deterministic, so it is safe inside the transaction and testable with fixed timestamps. The composed preset produces output identical to `await DefaultScheduler({ enableFuzz: false })` (verified before writing the wrapper), so we keep the supported algorithm without its async loader. Pinning the exact output means a model or weight change fails a test instead of silently rewriting every existing card.
+- **Trade-off accepted:** We replicate the preset configuration, so a `ts-fsrs` upgrade that changes defaults will not reach us automatically; the locked version plus golden pins make the change deliberate. Binary grading discards the `Hard`/`Easy` distinction and any response-time signal, and a wrong answer always schedules the full relearning step. The library also adds a runtime dependency to a 300 KB budget; the actual compressed cost is measured when the Vite build exists (Week 5-6).
+- **Revisit when:** Upgrading `ts-fsrs` or changing the model version; when response time or a confidence control should influence the grade; or if the production bundle or the test phone's WebView cannot carry the library.

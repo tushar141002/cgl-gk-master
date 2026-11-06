@@ -1,7 +1,7 @@
 # CGL GK Master — Project Spec
 
 **Last updated:** 2026-11-04
-**Status:** Step 1 (system design), Step 1.5 (data contract) and Step 1.6 (external review) complete. All six amendments (D-026 to D-031) were **accepted on 2026-11-01**. Step 2 is **in progress**: the scaffold, `shared/contract.ts`, `Attempt` and `EloRating` are landed and tested (§5, §13).
+**Status:** Step 1 (system design), Step 1.5 (data contract) and Step 1.6 (external review) complete. All six amendments (D-026 to D-031) were **accepted on 2026-11-01**. Step 2 is **in progress**: the scaffold, `shared/contract.ts`, `Attempt`, `EloRating` and `ReviewScheduler` are landed and tested (§5, §13).
 
 This is the single source of truth for what we are building and why. Companion files:
 
@@ -146,13 +146,13 @@ All study logic runs on the phone. The CDN delivers content; Supabase stores sma
 | Android packaging | Capacitor |
 | Backend | Supabase (Postgres, Google auth, Row-Level Security, storage) |
 | File delivery | Cloudflare Pages / CDN |
-| Revision algorithm | FSRS via `ts-fsrs` |
+| Revision algorithm | FSRS-7 via `ts-fsrs` v6, synchronous preset, fuzzing off (D-037) |
 | Question generation | Claude API (Batch API, smaller model for drafts) |
 | Monitoring | Sentry free tier |
 
-Dependency direction: `ui → services/sync → core ← data`. `core/` imports only `core/` plus types and pure helpers from `shared/contract.ts`, and performs no reads or writes; repositories do all database work (D-030, D-036). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
+Dependency direction: `ui → services/sync → core ← data`. `core/` imports only `core/`, types and pure helpers from `shared/contract.ts`, and pure third-party libraries (`ts-fsrs`); it performs no reads or writes, and repositories do all database work (D-030, D-036, D-037). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
 
-**Step 2.0 scaffold (landed 2026-11-04):** `shared/contract.ts` holds every boundary type and constant; `src/core/Attempt.ts` and `src/core/EloRating.ts` are implemented and unit-tested with Vitest, including hand-computed golden pins in `tests/fixtures/elo-golden.json`. `tsc --noEmit` and `npm test` both pass. The remaining core classes are listed in the step tracker.
+**Step 2.0 scaffold (landed 2026-11-04):** `shared/contract.ts` holds every boundary type and constant; `src/core/Attempt.ts`, `src/core/EloRating.ts` and `src/core/ReviewScheduler.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins and FSRS-7 schedule pins. `tsc --noEmit` and `npm test` both pass. The remaining core classes are listed in the step tracker.
 
 ---
 
@@ -167,7 +167,7 @@ The attempt log is the single source of truth. FSRS card state and Elo ratings a
 | questions | id, v, packId, section, subtopic, source, en/hi {q, options, explanation}, answer, eloSeed, image | Offline question bank |
 | packs | id, version, sha256 | Downloaded packs |
 | attempts | id (UUID v7), qid, qv, chosen, correct, ms, mode, mockId, at, deviceId, synced | Append-only log |
-| cardState | qid, due, stability, difficulty, reps, lapses | FSRS state, derived |
+| cardState | qid, due, stability, stabilityFast, difficulty, scheduledDays, learningStep, reps, lapses, lastReview, phase | FSRS-7 state, derived (D-037) |
 | skills | subtopicId, elo, attemptCount | Elo rating, derived |
 | corrections | qid, toVersion, seen | Corrected-question notes |
 | bookmarks | qid, createdAt | Saved questions |
@@ -360,7 +360,7 @@ response
 | External review fixes | Done |
 | 1.5 Data contract | Done |
 | 1.6 External review (second pass) | Done. D-026 to D-031 accepted |
-| 2 OOP core classes | **In progress** — 2.0 scaffold, `Attempt`, `EloRating`, tests done (2026-11-04). Next: `ReviewScheduler`, `Replayer`, `StreakTracker`, `QuestionPicker`, `AdaptiveEngine` |
+| 2 OOP core classes | **In progress** — 2.0 scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, tests done (2026-11-04). Next: `Replayer`, `StreakTracker`, `QuestionPicker`, `AdaptiveEngine` |
 | 3 Content pipeline | Pending |
 | 4 UI design system (fonts, colours, components) | Pending |
 | 5–6 App build | Pending |

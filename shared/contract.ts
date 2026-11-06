@@ -150,13 +150,25 @@ export interface AttemptRecord {
 
 export type CardPhase = 'new' | 'learning' | 'review' | 'relearning';
 
-/** FSRS state for one question. Derived from attempts. */
+/**
+ * FSRS-7 state for one question. Derived from attempts, never synced per
+ * attempt (D-016). The field names and semantics mirror the `ts-fsrs` v6 card
+ * so the nightly rebuild and the phone run the same scheduler (D-037).
+ */
 export interface CardState {
   readonly qid: QuestionId;
   /** Epoch milliseconds, UTC. */
   readonly due: number;
+  /** Memory stability in days. */
   readonly stability: number;
+  /** FSRS-7's fast stability component. Fed back into the next review. */
+  readonly stabilityFast: number;
+  /** Item difficulty on the FSRS scale. */
   readonly difficulty: number;
+  /** The interval FSRS chose, in fractional days. */
+  readonly scheduledDays: number;
+  /** Index into the learning or relearning step list; 0 when in review. */
+  readonly learningStep: number;
   readonly reps: number;
   readonly lapses: number;
   /** Epoch milliseconds, UTC, or null when the card has never been reviewed. */
