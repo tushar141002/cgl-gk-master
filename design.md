@@ -93,6 +93,10 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-052 | Mukta, self-hosted and subset, for both scripts | UI | Accepted |
 | D-053 | Deep indigo accent; feedback colours stay semantic | UI | Accepted |
 | D-054 | Comfortable density: 16px body, 48px targets | UI | Accepted |
+| D-055 | Vite + Svelte 5 SPA, no SvelteKit | Build | Accepted |
+| D-056 | Own typed hash router, Android back in `main.ts` | UI | Accepted |
+| D-057 | Typed message dictionary, no i18n library | UI | Accepted |
+| D-058 | No public PWA in v1; Capacitor only | Build | Accepted |
 
 ---
 
@@ -695,3 +699,47 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** 16px is the smallest size at which Devanagari matras stay legible on a 720p panel, and 48px is the platform's own touch guidance. Fewer visible items is an acceptable cost because practice is one question at a time, not a dense list.
 - **Trade-off accepted:** Less information per screen and more scrolling on results and settings. An option row is about 59px tall, so four options plus a question fill most of a small screen.
 - **Revisit when:** Usability testing on the actual test phone shows the density is wrong, or the exam interface needs a different layout.
+
+## D-055: Vite + Svelte 5 SPA, no SvelteKit
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Build
+- **Context:** The app is a single-page Capacitor bundle with hash routes and no server rendering. It must build to a relative-path static `dist/`, start offline, and stay inside the 300 KB compressed-code budget. Svelte was already chosen in D-002; the question is the build and routing layer around it.
+- **Decision:** Build with Vite 8 and Svelte 5 (runes). `vite.config.ts` sets `base: './'` and targets ES2022. Capacitor reads `dist/` through `webDir`. There is no SvelteKit: no adapter, no server routes, no SSR. Theme is applied from IndexedDB at boot, with a synchronous `localStorage` key `cgl.theme` read by an inline script in `index.html` purely as a pre-paint hint (D-053).
+- **Alternatives considered:** SvelteKit with `adapter-static` (file-based routes and conventions, but SSR concepts, a larger dependency graph and a `base`/fallback configuration that earn nothing in a WebView); a hand-rolled build with esbuild and a Svelte plugin (smallest possible output, but re-implements dev server, HMR, asset hashing and CSS handling).
+- **Why:** Vite is the supported default for Svelte 5, produces a hashed static bundle, and adds no runtime. `base: './'` makes the same `dist/` work from the Capacitor origin and from any future sub-path. Skipping SvelteKit removes code and concepts the product cannot use offline. The measured bundle is 55.66 kB gzip JS and 4.05 kB gzip CSS.
+- **Trade-off accepted:** Routing, 404 handling and back-button behaviour are ours to maintain (D-056). A future public web build with prerendered landing pages would need extra work.
+- **Revisit when:** A public web surface needs SEO or server rendering, or the app gains routes that benefit from file-based conventions.
+
+## D-056: Own typed hash router, Android back in `main.ts`
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** Five screens plus a 404 need URLs that survive a WebView reload, work with no server rewrite rule, and give the Android back button a history entry per screen. A router library would be the only runtime dependency added purely for navigation.
+- **Decision:** `src/app/router.ts` exposes pure `parseHash`, `buildHref`, `matchPath` and one DOM subscription, `subscribePath`. Routes are a discriminated union: `#/home`, `#/practice` and `#/practice/:subtopic`, `#/mock/:id`, `#/progress`, `#/settings`, and a renderable `not-found`. Unknown shapes produce `not-found` rather than throwing. The native back listener lives in `main.ts` and calls `history.back()`, exiting only when there is no history left.
+- **Alternatives considered:** `svelte-spa-router` (hash routing, tiny, but string patterns and an untyped route object); hand-writing `hashchange` in each screen (no single source of truth and easy to leak listeners).
+- **Why:** The router is about 100 lines, fully unit-tested, and the route type makes an unhandled screen a compile error at the `switch`. It adds zero bytes of dependency and no API to learn. Android back works because every navigation is a real hash change.
+- **Trade-off accepted:** No nested layouts, route guards or code-splitting helpers come for free; a screen that needs them must add them deliberately. URLs are hash-based, so they are not crawlable.
+- **Revisit when:** Route count or nesting grows enough that hand-written matching becomes error-prone, or deep links from outside the app are required.
+
+## D-057: Typed message dictionary, no i18n library
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** Every screen is bilingual. The app has a fixed, small vocabulary of chrome strings; question text and explanations are already bilingual in the pack. Missing Hindi copy must be a build failure, not an English string leaking into a Hindi screen.
+- **Decision:** `src/ui/i18n/messages.ts` holds an `en` object and a `hi` object typed as `Record<keyof typeof en, string>`. `MessageKey` is derived from the English object, so a missing or extra Hindi key is a TypeScript error. `translate(language, key, vars)` replaces `{name}` placeholders and leaves unknown placeholders visible. Language comes through Svelte context (`provideI18n` / `useI18n`), driven by the settings row. Tests assert both languages define every key, no string is blank, and key Hindi labels contain Devanagari.
+- **Alternatives considered:** `svelte-i18n` (catalogues, plurals and locale loading, but a runtime, async catalogue loading and a store layer for two languages); `@formatjs/intl` (ICU plurals and formatting, but a large dependency and a message compiler for a vocabulary this small).
+- **Why:** Two languages, one screen at a time and no plural rules in the chrome mean the library earns nothing. A typed object gives compile-time completeness and keeps the whole dictionary visible in review. It costs no bytes beyond the strings themselves.
+- **Trade-off accepted:** No ICU plural or date formatting; number and date formatting, when needed, must be written explicitly. Adding a language means adding one complete object.
+- **Revisit when:** A third language, plural-sensitive copy, or translator-owned catalogue files appear.
+
+## D-058: No public PWA in v1; Capacitor only
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Build
+- **Context:** `PROJECT_SPEC.md` §14 left open whether to ship a browser-installable PWA alongside the Android app. The budget is ₹10,000 and the calendar is 12 weeks, with the Play closed test on the critical path (Week 4–6). A second distribution surface brings its own storage-eviction, update and support problems.
+- **Decision:** v1 ships as a Capacitor Android app only. The SPA keeps relative asset paths and hash routes so it remains PWA-compatible if that changes, but no manifest, service worker, install prompt or web support policy is produced or tested in v1. The open question in `PROJECT_SPEC.md` §14 is resolved as "not in v1".
+- **Alternatives considered:** Ship both now (one codebase, broader reach, but a second install path, iOS/Safari storage rules, update prompts and support burden during the exact weeks reserved for content and the closed test); build the PWA first and wrap it later (web iteration is fast, but the WebView target is the product and testing the wrong surface risks shipping a different app).
+- **Why:** The Android app is the funded deliverable and the only surface that can be tested on the target Redmi 9A class phone. Keeping the SPA PWA-compatible costs nothing today and preserves the option. Deferring the manifest and service worker removes a whole class of cache-update bugs from the launch window.
+- **Trade-off accepted:** No browser install, no desktop use and no shareable web link at launch; reach depends on Play Store discovery. A later PWA launch inherits an untested storage model.
+- **Revisit when:** The Play launch is stable and demand for a browser version is demonstrated, or desktop users become a meaningful share of requests.

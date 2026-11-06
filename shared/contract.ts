@@ -279,6 +279,39 @@ export type SyncResponse =
     };
 
 // ---------------------------------------------------------------------------
+// Local preferences (PROJECT_SPEC.md §6, `settings`)
+// ---------------------------------------------------------------------------
+
+export const LANGUAGES = ['en', 'hi'] as const;
+
+/** The two languages every screen and question must support. */
+export type Language = (typeof LANGUAGES)[number];
+
+/** Themes are explicit; a system preference is resolved once at first launch. */
+export type ThemePreference = 'light' | 'dark';
+
+/** One row per device. The server copy is `profiles`. */
+export interface Settings {
+  readonly language: Language;
+  readonly theme: ThemePreference;
+  /** Graded questions per day; separate from the streak rule (D-041). */
+  readonly dailyGoal: number;
+  /** IST calendar day, `YYYY-MM-DD`; null until the student sets it. */
+  readonly examDate: string | null;
+  /** `HH:mm` in IST; null when reminders are off. */
+  readonly reminderTime: string | null;
+}
+
+/** Chosen so a brand-new install is usable without an onboarding screen. */
+export const DEFAULT_SETTINGS: Settings = {
+  language: 'en',
+  theme: 'light',
+  dailyGoal: 10,
+  examDate: null,
+  reminderTime: null,
+};
+
+// ---------------------------------------------------------------------------
 // Pure helpers shared by the app and the server
 // ---------------------------------------------------------------------------
 

@@ -31,7 +31,7 @@ An offline-first, bilingual (Hindi + English) General Awareness practice app for
 | Primary device | Low-end Android (Redmi 9A class), patchy 4G |
 | Languages | Hindi and English from day one |
 | Design load | 1,000 launch users; 1,00,000 users as headroom |
-| Platform | Web app (PWA) packaged with Capacitor for Android; no Electron |
+| Platform | Capacitor Android app (offline-first SPA); no Electron; no public web PWA in v1 (D-058) |
 | Monetisation | Free for the first 6 months |
 | Team | Solo developer, who is also the final question verifier |
 
@@ -153,6 +153,8 @@ All study logic runs on the phone. The CDN delivers content; Supabase stores sma
 Dependency direction: `ui → services/sync → core ← data`. `core/` imports only `core/`, types and pure helpers from `shared/contract.ts`, and pure third-party libraries (`ts-fsrs`); it performs no reads or writes, and repositories do all database work (D-030, D-036, D-037). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
 
 **Step 2 core (completed 2026-11-04 to 2026-11-07):** `shared/contract.ts` holds every boundary type and constant, plus `istDayKey`, `encodeCursor` and `compareCursor`; `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts`, `StreakTracker.ts`, `AdaptiveEngine.ts` and `QuestionPicker.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins, FSRS-7 schedule pins, checkpoint-resume tests, IST streak boundaries, band widening and picker priority/fallback. `tsc --noEmit` and `npm test` both pass. `Question.ts` moves to Step 3 with the content pipeline.
+
+**Step 5 shell (completed 2026-11-07):** Vite 8 + Svelte 5 SPA, no SvelteKit (D-055). `src/main.ts` bootstraps storage, applies the first-run or stored theme, mounts `src/app/App.svelte`, and listens for the native Android back button (D-056). `src/app/router.ts` is a typed hash router over `#/home`, `#/practice`, `#/practice/:subtopic`, `#/mock/:id`, `#/progress`, `#/settings` and a renderable 404. `src/data/database.ts` defines the ten-table Dexie schema; eight repositories (Question, Attempt, Card, Skill, Daily, Pack, Settings, Sync) cover the stores the app reads today. UI chrome is a typed `en`/`hi` dictionary with no i18n library (D-057). Home and Settings render; other routes are placeholders until their steps land. Measured bundle: 55.66 kB gzip JS and 4.05 kB gzip CSS. 329 tests pass.
 
 ---
 
@@ -392,7 +394,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 2 OOP core classes | **Done 2026-11-07** — scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, `AdaptiveEngine`, `QuestionPicker`, tests (142 passing). `Question.ts` moves to Step 3 |
 | 3 Content pipeline | **Done 2026-11-07** — `Question.ts`, strict CSV master validator, pack builder, Ed25519 manifest signing, tests (233 passing). Admin verification UI deferred to Step 7 (D-047..D-050) |
 | 4 UI design system (fonts, colours, components) | **Done 2026-11-07** — tokens, base and component layers, self-hosted Mukta subset, living preview, 47 design-system tests (D-051..D-054) |
-| 5–6 App build | **Next** |
+| 5–6 App build | **Step 5 done 2026-11-07** — Vite + Svelte 5 shell, hash router, Dexie schema and eight repositories, typed bilingual UI, Home + Settings (D-055..D-058, 329 tests). Step 6 (practice service, Practice/feedback screen, pack install) is next |
 | 7 Backend & security | Pending |
 | 8 Polish & launch | Pending |
 
@@ -402,7 +404,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 
 - **Login:** stay Google-only at launch, or also offer phone OTP for students without a Google account? (Currently Google-only + guest mode; OTP costs per SMS.)
 - **Hindi vs English user split:** no reliable public data; collect via the language choice at onboarding.
-- **Web PWA in v1?** The design doc lists "Capacitor app + web PWA"; this spec lists Capacitor only and `flow.md` has no web-specific flow. A public web build is not free — it needs its own OAuth redirect, CSP and service-worker QA. Decide: ship web in v1, or drop it from the doc until after launch.
+- ~~**Web PWA in v1?**~~ **Resolved 2026-11-07 (D-058):** no public web PWA in v1. The app ships as a Capacitor Android build; the SPA keeps relative paths and hash routes so browser support can be added after launch without a rewrite.
 - **Test phone:** is a Redmi 9A class device already owned? It gates the 50 ms target and the ₹1,500 contingency line.
 
 ---
@@ -451,5 +453,6 @@ Resolved by the 2026-11-01 regeneration: the docx's "Capacitor + web PWA" platfo
 
 Still open:
 
-1. Web PWA in v1 is undecided (§14) — decide before Week 4, not before Step 2.
-2. `flow.md` F12 referenced "checkpoints (D-026, if accepted)" after acceptance — corrected.
+1. `flow.md` F12 referenced "checkpoints (D-026, if accepted)" after acceptance — corrected.
+
+Resolved 2026-11-07: web PWA in v1 is dropped (D-058); the platform row, §5 and §14 now agree.

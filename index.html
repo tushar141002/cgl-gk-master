@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#4338ca" />
+    <meta
+      name="description"
+      content="Offline-first SSC CGL General Awareness practice, in Hindi and English."
+    />
+    <title>CGL GK Master</title>
+    <script>
+      /*
+       * Pre-paint theme hint. The authoritative setting lives in IndexedDB, which
+       * is asynchronous, so the shell mirrors it here to avoid a light flash when
+       * the student prefers dark (D-055). Runs before the stylesheet is applied.
+       */
+      try {
+        var hint = localStorage.getItem('cgl.theme');
+        if (hint === 'dark' || hint === 'light') {
+          document.documentElement.setAttribute('data-theme', hint);
+        }
+      } catch (error) {
+        /* storage can be unavailable; light is a safe default */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

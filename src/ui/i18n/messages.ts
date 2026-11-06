@@ -1,0 +1,104 @@
+import type { Language } from '../../../shared/contract';
+
+/**
+ * UI copy for the two languages (D-057).
+ *
+ * Question text and explanations are bilingual in the pack itself; this file is
+ * only chrome. `hi` is typed against the English keys, so a missing translation
+ * is a compile error rather than an English string leaking into Hindi.
+ */
+
+const en = {
+  'app.name': 'CGL GK Master',
+  'nav.primary': 'Primary',
+  'nav.home': 'Home',
+  'nav.practice': 'Practice',
+  'nav.progress': 'Progress',
+  'nav.settings': 'Settings',
+  'home.title': 'Today',
+  'home.subtitle': 'SSC CGL general awareness, in Hindi and English.',
+  'home.goal': 'Daily goal',
+  'home.goalProgress': '{done} of {goal} questions today',
+  'home.streak': 'Day streak',
+  'home.accuracy': 'Accuracy',
+  'home.rating': 'Rating',
+  'home.start': 'Start practice',
+  'home.review': 'Review due cards',
+  'home.empty': 'No questions are installed yet. Practice begins as soon as the first pack is installed.',
+  'offline.message': 'You are offline. Answers are saved on this phone.',
+  'settings.title': 'Settings',
+  'settings.language': 'Language',
+  'settings.theme': 'Theme',
+  'settings.themeLight': 'Light',
+  'settings.themeDark': 'Dark',
+  'settings.note': 'Your choices are saved on this phone and apply immediately.',
+  'settings.saveFailed': 'Could not save that choice. Try again.',
+  'practice.title': 'Practice',
+  'progress.title': 'Progress',
+  'mock.title': 'Mock test',
+  'common.comingSoon': 'This screen arrives in the next build.',
+  'common.backHome': 'Back to Home',
+  'common.retry': 'Retry',
+  'storage.title': 'Storage unavailable',
+  'storage.body': 'CGL GK Master could not open its database. Free some space and try again.',
+  'notFound.title': 'Page not found',
+  'notFound.body': 'This link does not match any screen.',
+} as const;
+
+export type MessageKey = keyof typeof en;
+
+const hi: Record<MessageKey, string> = {
+  'app.name': 'CGL GK Master',
+  'nav.primary': 'मुख्य',
+  'nav.home': 'होम',
+  'nav.practice': 'अभ्यास',
+  'nav.progress': 'प्रगति',
+  'nav.settings': 'सेटिंग्स',
+  'home.title': 'आज',
+  'home.subtitle': 'SSC CGL सामान्य जागरूकता, हिंदी और अंग्रेज़ी में।',
+  'home.goal': 'आज का लक्ष्य',
+  'home.goalProgress': 'आज {goal} में से {done} प्रश्न पूरे',
+  'home.streak': 'लगातार दिन',
+  'home.accuracy': 'सटीकता',
+  'home.rating': 'रेटिंग',
+  'home.start': 'अभ्यास शुरू करें',
+  'home.review': 'दोहराने वाले कार्ड',
+  'home.empty': 'अभी कोई प्रश्न स्थापित नहीं है। पहला पैक आते ही अभ्यास शुरू हो जाएगा।',
+  'offline.message': 'आप ऑफ़लाइन हैं। उत्तर इस फ़ोन पर सुरक्षित रहते हैं।',
+  'settings.title': 'सेटिंग्स',
+  'settings.language': 'भाषा',
+  'settings.theme': 'थीम',
+  'settings.themeLight': 'लाइट',
+  'settings.themeDark': 'डार्क',
+  'settings.note': 'आपकी पसंद इस फ़ोन पर सहेजी जाती है और तुरंत लागू होती है।',
+  'settings.saveFailed': 'यह पसंद सहेजी नहीं जा सकी। फिर कोशिश करें।',
+  'practice.title': 'अभ्यास',
+  'progress.title': 'प्रगति',
+  'mock.title': 'मॉक टेस्ट',
+  'common.comingSoon': 'यह स्क्रीन अगले बिल्ड में आएगी।',
+  'common.backHome': 'होम पर वापस',
+  'common.retry': 'फिर कोशिश करें',
+  'storage.title': 'स्टोरेज उपलब्ध नहीं',
+  'storage.body': 'CGL GK Master अपना डेटाबेस नहीं खोल सका। थोड़ी जगह खाली करके फिर कोशिश करें।',
+  'notFound.title': 'पेज नहीं मिला',
+  'notFound.body': 'यह लिंक किसी स्क्रीन से मेल नहीं खाता।',
+};
+
+export const MESSAGES: Record<Language, Record<MessageKey, string>> = { en, hi };
+
+export type Translate = (key: MessageKey, vars?: Readonly<Record<string, string | number>>) => string;
+
+/** Looks up a key and replaces `{name}` placeholders. Unknown keys are impossible by type. */
+export function translate(
+  language: Language,
+  key: MessageKey,
+  vars?: Readonly<Record<string, string | number>>,
+): string {
+  const template = MESSAGES[language][key];
+  if (vars === undefined) return template;
+
+  return template.replace(/\{(\w+)\}/g, (placeholder: string, name: string) => {
+    const value = vars[name];
+    return value === undefined ? placeholder : String(value);
+  });
+}

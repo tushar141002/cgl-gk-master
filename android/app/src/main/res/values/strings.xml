@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CGL GK Master</string>
+    <string name="title_activity_main">CGL GK Master</string>
+    <string name="package_name">com.cglgkmaster.app</string>
+    <string name="custom_url_scheme">com.cglgkmaster.app</string>
+</resources>

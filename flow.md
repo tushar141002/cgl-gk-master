@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 4 (UI design system) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, and `src/ui/*.css` with the self-hosted Mukta subset (280 tests). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 5 (app shell) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and eight repositories (`src/data/`), and typed bilingual UI copy (329 tests). Screens beyond Home and Settings are placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -19,6 +19,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 3):** `Question.ts` and the content pipeline are real. F5 now names the canonical manifest body; F13 is the offline build that turns the CSV master into signed packs (D-047..D-050).
 >
 > **Updated 2026-11-07 (Step 4):** the UI layers are real: `ui/index.css` imports fonts → tokens → base → components. `ui/preview.html` is the living reference. No screen exists yet, so F1–F12 keep their planned paths; screens must compose the components rather than restyle them (D-051..D-054).
+>
+> **Updated 2026-11-07 (Step 5):** the shell is real. F1 now runs `main.ts › start()` → `app/bootstrap.ts › bootstrap()`. The router, Dexie schema, repositories, i18n and theme helpers have real paths; Home and Settings render, other routes are placeholders until their steps land (D-055..D-058).
 
 ---
 
@@ -50,12 +52,17 @@ file.ts › function()                 one step
 ```
 shared/
   contract.ts                boundary types + constants + istDayKey() / encodeCursor() /
-                             compareCursor(); no I/O, no imports
+                             compareCursor(); settings types (D-055); no I/O, no imports
   canonicalJson.ts           canonical JSON for manifest signatures (D-050); no I/O
+  uuid.ts                    uuidV7() for attempt and device ids (D-011); injected RNG
 
 src/
-  main.ts                    entry point
-  app/App.svelte             root UI component, router
+  main.ts                    entry point: bootstrap, first-run theme, mount, Android back
+  app/
+    App.svelte               root component: route switch, settings save, i18n provider
+    bootstrap.ts             bootstrap(): open DB, ensure settings, mint device id (F1)
+    router.ts                parseHash / buildHref / matchPath / navigate / subscribePath (D-056)
+    NavBar.svelte            four-item bottom navigation
   core/                      pure TypeScript domain classes, no I/O (D-030)
     Attempt.ts               landed: create / from / regrade / toJSON
     EloRating.ts             landed: expectedScore / kFactor / updateSkill /
@@ -67,16 +74,16 @@ src/
     QuestionPicker.ts        landed: pick (due first, random new, D-045..D-046)
     Question.ts              landed: from / issues / isCorrect / localized (D-047..D-049)
   data/
-    database.ts              Dexie schema and open()                  (planned)
-    repositories/            QuestionRepository, AttemptRepository, CardRepository,
-                             SkillRepository, DailyRepository, BookmarkRepository,
-                             CorrectionRepository, ReportRepository, MockRepository
+    database.ts              Dexie schema (10 tables) and openDatabase()   landed
+    repositories/            landed: Question, Attempt, Card, Skill, Daily, Pack,
+                             Settings, Sync. Planned: Bookmark, Correction,
+                             Report, Mock
   services/
     PracticeSession.ts  AuthService.ts  ReminderService.ts  MockService.ts
-    ReportService.ts  AccountService.ts
+    ReportService.ts  AccountService.ts                       (planned)
   sync/
     SyncManager.ts  PackUpdater.ts  ManifestVerifier.ts  CorrectionApplier.ts
-    CheckpointLoader.ts      (D-026)
+    CheckpointLoader.ts      (D-026)                          (planned)
   ui/
     index.css                the only stylesheet the app imports (Step 4)
     tokens.css               colour/type/space/radius/motion tokens, light + dark (D-051..D-054)
@@ -85,7 +92,13 @@ src/
     fonts.css                six @font-face blocks for self-hosted Mukta (D-052)
     fonts/                   subset woff2 files + OFL.txt
     preview.html             living design-system page; open in a browser
-    screens/                 Practice, Mock, Results, ReportError, Settings, ...   (planned)
+    theme.ts                 applyTheme / applyLanguage / theme hint (D-055)
+    icons.ts                 IconName union for the inline Lucide set
+    Icon.svelte              inline SVG icon component
+    i18n/messages.ts         en + hi dictionary, translate()        landed (D-057)
+    i18n/context.ts          provideI18n / useI18n                  landed
+    screens/                 landed: Home, Settings, Placeholder, StorageError
+                             planned: Practice, Mock, Results, Progress, ReportError
 server/
   functions/sync             POST /sync handler
   functions/grade_mock       live mock grading
@@ -94,12 +107,14 @@ server/
 
 tests/
   core/                      Attempt.test.ts, EloRating.test.ts, ... (Vitest, node env)
-  shared/                    canonicalJson.test.ts
+  shared/                    canonicalJson.test.ts, uuid.test.ts
+  app/                       router.test.ts, theme.test.ts, bootstrap.test.ts
+  data/                      repositories.test.ts (fake-indexeddb)
   tools/                     csv.test.ts, master.test.ts, build.test.ts, cli.test.ts,
                              fixtures.ts (in-memory master rows)
   ui/                        tokens.test.ts — WCAG contrast, token discipline, tap targets,
-                             font subset size and licence
-  fixtures/                  elo-golden.json — hand-computed regression pins
+                             font subset size and licence; i18n.test.ts
+  fixtures/                  elo-golden.json, fsrs-golden.json — hand-computed pins
 
 content/
   master/questions.csv       authoritative bank: one row per question (D-047)
@@ -124,7 +139,8 @@ tools/content/               offline build, run with tsx; never imported by the 
 | `data/` | `core/` (types only), `shared/` |
 | `services/` | `core/`, `data/`, `sync/`, `shared/` |
 | `sync/` | `core/`, `data/`, `shared/` |
-| `ui/` | `ui/` (styles and components), `core/` (types only), `services/`, `shared/` |
+| `app/` | `app/`, `ui/`, `data/`, `services/`, `sync/`, `shared/`. The shell is the only place that owns a long-lived database handle. |
+| `ui/` | `ui/` (styles and components), `core/` (types only), `shared/`. Screens receive data and callbacks as props; they never construct a repository. |
 | `tools/content/` | `shared/`, `src/core/Question.ts` (read-only validation), Node built-ins. Never `ui/`, `data/`, `services/`, `sync/`. |
 | `content/` | nothing — CSV data and build output only |
 
@@ -155,18 +171,20 @@ tools/content/               offline build, run with tsx; never imported by the 
 ## F1: App startup (entry point)
 
 ```
-main.ts › bootstrap()
-├─ data/database.ts › openDatabase()                     [DB read]
-├─ services/AuthService.ts › restoreSession()            [DB read]
-├─ sync/PackUpdater.ts › ensureBundledPacks()            [DB write] first launch only
-├─ shared/contract.ts › istDayKey(now)                    pure
-├─ data/repositories/DailyRepository.ts › all()           [DB read]
-├─ core/StreakTracker.ts › evaluate(summaries, todayKey)  pure → {current, doneToday}
-├─ app/App.svelte › mount()                              [UI]
-└─ ⟶ async sync/SyncManager.ts › start()                 → F4, F5
+main.ts › start()                                       [UI]
+├─ app/bootstrap.ts › bootstrap()
+│  ├─ data/database.ts › openDatabase()                  [DB read]
+│  ├─ data/repositories/SettingsRepository.ts › ensure() [DB read/write] first launch only
+│  └─ data/repositories/SyncRepository.ts › ensureDeviceId() [DB read/write] (D-011)
+├─ ui/theme.ts › resolveSystemTheme() / applyTheme() / applyLanguage()   first launch + every boot
+├─ app/App.svelte › mount()                              [UI] (D-055, D-056)
+├─ ⇢ @capacitor/app › backButton listener                native only (D-056)
+├─ ⟵ data/repositories/DailyRepository.ts › all()        [DB read]   (planned, Step 6)
+├─ ⟵ core/StreakTracker.ts › evaluate(summaries, todayKey)  pure → {current, doneToday}  (planned)
+└─ ⟶ async sync/SyncManager.ts › start()                 → F4, F5 (planned)
 ```
 
-**Failure path:** if the database fails to open, show a "Storage unavailable" screen with a retry. Nothing on the network blocks first paint; sync starts only after the UI is mounted.
+**Failure path:** if the database fails to open, `main.ts` mounts `ui/screens/StorageError.svelte` with a retry instead of `App`. Nothing on the network blocks first paint; sync starts only after the UI is mounted. A failed settings write is reported by the shell banner and the DOM is restored to the stored values.
 
 ---
 
