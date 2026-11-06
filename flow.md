@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 3 (content pipeline) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts`, `StreakTracker.ts`, `AdaptiveEngine.ts`, `QuestionPicker.ts`, `Question.ts`, and the `tools/content/` pipeline (233 tests). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 4 (UI design system) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, and `src/ui/*.css` with the self-hosted Mukta subset (280 tests). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -17,6 +17,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 2.4):** `AdaptiveEngine` and `QuestionPicker` are real. F3 shows the widening loop (`targetRange(skill, step)`), the single `pick(dueCards, candidates, recentIds, rng)` call, and the `{ qid, reason } | null` result (D-044..D-046).
 >
 > **Updated 2026-11-07 (Step 3):** `Question.ts` and the content pipeline are real. F5 now names the canonical manifest body; F13 is the offline build that turns the CSV master into signed packs (D-047..D-050).
+>
+> **Updated 2026-11-07 (Step 4):** the UI layers are real: `ui/index.css` imports fonts → tokens → base → components. `ui/preview.html` is the living reference. No screen exists yet, so F1–F12 keep their planned paths; screens must compose the components rather than restyle them (D-051..D-054).
 
 ---
 
@@ -75,7 +77,15 @@ src/
   sync/
     SyncManager.ts  PackUpdater.ts  ManifestVerifier.ts  CorrectionApplier.ts
     CheckpointLoader.ts      (D-026)
-  ui/screens/                Practice, Mock, Results, ReportError, Settings, ...
+  ui/
+    index.css                the only stylesheet the app imports (Step 4)
+    tokens.css               colour/type/space/radius/motion tokens, light + dark (D-051..D-054)
+    base.css                 element defaults, 16px body, focus ring, reduced motion
+    components.css           btn, option, card, chip, field, banner, sheet, nav, ...
+    fonts.css                six @font-face blocks for self-hosted Mukta (D-052)
+    fonts/                   subset woff2 files + OFL.txt
+    preview.html             living design-system page; open in a browser
+    screens/                 Practice, Mock, Results, ReportError, Settings, ...   (planned)
 server/
   functions/sync             POST /sync handler
   functions/grade_mock       live mock grading
@@ -87,6 +97,8 @@ tests/
   shared/                    canonicalJson.test.ts
   tools/                     csv.test.ts, master.test.ts, build.test.ts, cli.test.ts,
                              fixtures.ts (in-memory master rows)
+  ui/                        tokens.test.ts — WCAG contrast, token discipline, tap targets,
+                             font subset size and licence
   fixtures/                  elo-golden.json — hand-computed regression pins
 
 content/
@@ -112,7 +124,7 @@ tools/content/               offline build, run with tsx; never imported by the 
 | `data/` | `core/` (types only), `shared/` |
 | `services/` | `core/`, `data/`, `sync/`, `shared/` |
 | `sync/` | `core/`, `data/`, `shared/` |
-| `ui/` | `core/` (types only), `services/`, `shared/` |
+| `ui/` | `ui/` (styles and components), `core/` (types only), `services/`, `shared/` |
 | `tools/content/` | `shared/`, `src/core/Question.ts` (read-only validation), Node built-ins. Never `ui/`, `data/`, `services/`, `sync/`. |
 | `content/` | nothing — CSV data and build output only |
 

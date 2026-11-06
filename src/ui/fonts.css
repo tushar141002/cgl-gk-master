@@ -1,0 +1,64 @@
+/* Mukta v17 (OFL). Self-hosted, subset for this app; see OFL.txt. */
+/* devanagari */
+@font-face {
+  font-family: 'Mukta';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/mukta-400-devanagari.woff2') format('woff2');
+  unicode-range:
+    U+20, U+A0, U+901-903, U+905-90D, U+90F-911, U+913-928, U+92A-930, U+932-939, U+93C-945, U+947-949,
+    U+94B-94D, U+950, U+960-962, U+964-970, U+20B9;
+}
+/* latin */
+@font-face {
+  font-family: 'Mukta';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/mukta-400-latin.woff2') format('woff2');
+  unicode-range:
+    U+20-7E, U+A0, U+B0-B1, U+BC-BE, U+D7, U+F7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026;
+}
+/* devanagari */
+@font-face {
+  font-family: 'Mukta';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/mukta-600-devanagari.woff2') format('woff2');
+  unicode-range:
+    U+20, U+A0, U+901-903, U+905-90D, U+90F-911, U+913-928, U+92A-930, U+932-939, U+93C-945, U+947-949,
+    U+94B-94D, U+950, U+960-962, U+964-970, U+20B9;
+}
+/* latin */
+@font-face {
+  font-family: 'Mukta';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/mukta-600-latin.woff2') format('woff2');
+  unicode-range:
+    U+20-7E, U+A0, U+B0-B1, U+BC-BE, U+D7, U+F7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026;
+}
+/* devanagari */
+@font-face {
+  font-family: 'Mukta';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/mukta-700-devanagari.woff2') format('woff2');
+  unicode-range:
+    U+20, U+A0, U+901-903, U+905-90D, U+90F-911, U+913-928, U+92A-930, U+932-939, U+93C-945, U+947-949,
+    U+94B-94D, U+950, U+960-962, U+964-970, U+20B9;
+}
+/* latin */
+@font-face {
+  font-family: 'Mukta';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/mukta-700-latin.woff2') format('woff2');
+  unicode-range:
+    U+20-7E, U+A0, U+B0-B1, U+BC-BE, U+D7, U+F7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026;
+}

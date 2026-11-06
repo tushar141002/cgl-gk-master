@@ -89,6 +89,10 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-048 | Assigned-once slug IDs, never reused | Content | Accepted |
 | D-049 | Difficulty maps to Elo seeds 1100/1200/1300 | Content | Accepted |
 | D-050 | Ed25519 signs canonical JSON of version, generatedAt, packs | Security | Accepted |
+| D-051 | CSS tokens plus scoped CSS; no utility framework | UI | Accepted |
+| D-052 | Mukta, self-hosted and subset, for both scripts | UI | Accepted |
+| D-053 | Deep indigo accent; feedback colours stay semantic | UI | Accepted |
+| D-054 | Comfortable density: 16px body, 48px targets | UI | Accepted |
 
 ---
 
@@ -647,3 +651,47 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** One file, deterministic bytes and one implementation on both sides. Rejecting floats removes the last formatting ambiguity, and the canonicalizer is small enough to port if a non-JavaScript client ever needs it. Tests sign in memory and verify with the matching public key; no private key is committed.
 - **Trade-off accepted:** The canonicalizer must stay byte-identical across every client, and floats cannot be added to the manifest without a format change. A valid old manifest can be replayed unless the app also enforces a monotonic `version`; that check is a client rule, not something the signature provides.
 - **Revisit when:** Another language needs to verify manifests, or the manifest needs nested non-integer data.
+
+## D-051: Styling is CSS custom properties plus scoped CSS, not Tailwind
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** Step 5 builds roughly fifteen screens for a Redmi 9A class phone under a 300 KB compressed app-code budget. The UI needs light and dark themes, a Hindi/English switch and one consistent look, but there is no styling layer yet and every future screen has to share it.
+- **Decision:** Four CSS layers in `src/ui/`: `tokens.css` (custom properties for colour, type, 4px spacing, radius, elevation, motion and layout, with dark as an override block), `base.css` (element defaults), `components.css` (documented classes such as `.btn`, `.option`, `.card`) and `index.css` (the single import). Screens compose those classes and may add scoped layout CSS, but a screen may not introduce a colour or a spacing value of its own.
+- **Alternatives considered:** Tailwind CSS v4 (fast utility iteration, but a build plugin, class-heavy markup and a second theming layer on top of tokens); a component library such as Flowbite or Material (pre-built controls, but generic shapes, a large runtime and less control over Devanagari metrics).
+- **Why:** No runtime and no build plugin, which keeps the bundle inside budget. Tokens make dark mode one attribute on `<html>`, and they let `tests/ui/tokens.test.ts` check AA contrast, tap targets and "no hard-coded colours" mechanically. One small vocabulary of components is enough for an app that repeats the same question card hundreds of times.
+- **Trade-off accepted:** More CSS is written by hand, and the team must resist adding a one-off class per screen. Utility classes would make layout tweaks faster but would scatter the decisions the tokens are meant to centralise.
+- **Revisit when:** Screens start duplicating the same layout rules, or a second developer joins and the class vocabulary stops being obvious.
+
+## D-052: Mukta, self-hosted and subset, carries both scripts
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** Every screen mixes English and Hindi, often inside one question card. Students are on patchy 4G and installs must stay small; an extra font request also costs a round trip on first open and fails offline. Devanagari needs taller lines and careful glyph coverage or matras clip.
+- **Decision:** Use Mukta at 400, 600 and 700 for Latin and Devanagari. Self-host the woff2 files in `src/ui/fonts/`, subset them with `fonttools` to the Devanagari and Latin glyphs the app uses, ship one subset per script per weight with `unicode-range`, and load with `font-display: swap`. Six faces total about 196 KB uncompressed. Ship the OFL licence next to the files.
+- **Alternatives considered:** Noto Sans plus Noto Sans Devanagari (broadest coverage and familiar shapes, but two families, two subset pipelines and slightly mismatched Latin/Devanagari metrics); system fonts only (zero bytes, but Devanagari varies by OEM and the same screen looks different on every phone).
+- **Why:** One family means one set of metrics, so a bilingual question does not reflow when the student switches language. Subsetting and self-hosting remove the network from the critical path and keep the whole font payload smaller than one unsubsetted Devanagari weight. Mukta is designed for Indian scripts and has an OFL licence that allows embedding.
+- **Trade-off accepted:** Subsetting is a manual step; a glyph outside the subset falls back to a system font. Adding new characters or a new weight means re-running the subset. The build does not yet automate the subset, so the generated files are committed.
+- **Revisit when:** Content needs glyphs outside the subset, a third script appears, or the subset can be produced automatically in the build.
+
+## D-053: Deep indigo accent; feedback colours stay semantic
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** The answer-option row is the most-used control. Its correct state is green and its wrong state is red, so the brand accent must never be confused with either, and it must pass AA on cheap LCD panels in both themes.
+- **Decision:** Accent `#4338ca` on light neutrals and `#a5b4fc` on dark neutrals, with white or near-black text on filled accent. Green, red, amber and blue are reserved for correct, wrong, warning and info. Every text pair used by a component is asserted at 4.5:1 and the strong border at 3:1 by `tests/ui/tokens.test.ts`.
+- **Alternatives considered:** Saffron/amber (warmer and more local in feel, but needs dark text on filled buttons, competes with the warning state and loses contrast more easily on budget screens); teal (distinct from feedback colours, but reads as "info" and is harder to separate from the blue info banner).
+- **Why:** Indigo is far from both green and red in hue and in luminance, so a selected option, a link and a primary button never look like a verdict. The contrast test makes the AA claim executable instead of aspirational.
+- **Trade-off accepted:** The palette is deliberately restrained and carries less regional character than saffron; personality has to come from type, spacing and copy. Dark mode uses a lighter accent, so the two themes do not share one literal accent value.
+- **Revisit when:** Brand work defines an identity, or device testing shows the accent is hard to distinguish outdoors.
+
+## D-054: Comfortable density: 16px body, 48px targets
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** UI
+- **Context:** The target phone is a Redmi 9A class device held in one hand, often used while travelling. Questions and four options must be readable in Devanagari, and a mis-tap on an option changes the answer the student is graded on.
+- **Decision:** Body text 16px with 1.6 line-height and 1.75 for Hindi, a 4px spacing grid, a single 640px reading column, 48px minimum interactive height (64px bottom nav), 2px borders on options and a 16px gutter. The preview and the token tests pin these values.
+- **Alternatives considered:** Compact 14px body with 44px targets (more content above the fold, but smaller Devanagari, more mis-taps and below Android's 48dp guidance); extra-large 18px body with 56px targets (easier to read, but one question plus four options would not fit on a 5.5-inch screen without scrolling).
+- **Why:** 16px is the smallest size at which Devanagari matras stay legible on a 720p panel, and 48px is the platform's own touch guidance. Fewer visible items is an acceptable cost because practice is one question at a time, not a dense list.
+- **Trade-off accepted:** Less information per screen and more scrolling on results and settings. An option row is about 59px tall, so four options plus a question fill most of a small screen.
+- **Revisit when:** Usability testing on the actual test phone shows the density is wrong, or the exam interface needs a different layout.

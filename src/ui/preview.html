@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Living design system for CGL GK Master: tokens, type, components, light and dark."
+    />
+    <title>CGL GK Master — design system</title>
+    <link rel="stylesheet" href="./index.css" />
+    <style>
+      /* Preview chrome only. Never imported by the app. */
+      .preview-bar {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-sticky);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--gutter);
+        background: var(--color-surface);
+        border-bottom: var(--border-width) solid var(--color-border);
+      }
+
+      .preview-bar__title {
+        flex: 1 1 12rem;
+        font-weight: var(--weight-bold);
+      }
+
+      .section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        padding-block: var(--space-6);
+        border-bottom: var(--border-width) solid var(--color-border);
+      }
+
+      .section:last-child {
+        border-bottom: 0;
+      }
+
+      .section__note {
+        max-width: 42rem;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+      }
+
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+        gap: var(--space-3);
+      }
+
+      .swatch {
+        overflow: hidden;
+        border: var(--border-width) solid var(--color-border);
+        border-radius: var(--radius-md);
+      }
+
+      .swatch__chip {
+        height: 3.5rem;
+      }
+
+      .swatch__label {
+        display: block;
+        padding: var(--space-2) var(--space-3);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
+        background: var(--color-surface);
+      }
+
+      .row-grid {
+        display: grid;
+        gap: var(--space-4);
+      }
+
+      @media (min-width: 40rem) {
+        .row-grid--two {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .phone {
+        max-width: 22.5rem;
+        margin-inline: auto;
+        overflow: hidden;
+        background: var(--color-bg);
+        border: var(--border-width-strong) solid var(--color-border-strong);
+        border-radius: var(--radius-xl);
+      }
+
+      .phone .nav-bar {
+        position: static;
+        border-radius: 0;
+      }
+
+      .phone__body {
+        min-height: 12rem;
+        padding: var(--space-5);
+      }
+
+      .tap-demo {
+        display: grid;
+        place-items: center;
+        width: var(--tap-min);
+        height: var(--tap-min);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
+        border: var(--border-width) dashed var(--color-border-strong);
+        border-radius: var(--radius-sm);
+      }
+
+      .type-specimen p {
+        margin-block: var(--space-1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preview-bar">
+      <span class="preview-bar__title">CGL GK Master · design system</span>
+      <div class="segmented" role="group" aria-label="Theme">
+        <button class="segmented__option" type="button" data-set-theme="light" aria-pressed="true">
+          Light
+        </button>
+        <button class="segmented__option" type="button" data-set-theme="dark" aria-pressed="false">
+          Dark
+        </button>
+      </div>
+      <div class="segmented" role="group" aria-label="Preview language">
+        <button class="segmented__option" type="button" data-set-lang="en" aria-pressed="true">EN</button>
+        <button class="segmented__option" type="button" data-set-lang="hi" aria-pressed="false">हिं</button>
+      </div>
+    </div>
+
+    <main class="container">
+      <section class="section">
+        <h1>CGL GK Master</h1>
+        <p class="section__note">
+          One accent, one type family, a 4px spacing grid and 48px targets. Everything on this page is built
+          from <code>tokens.css</code>; open it with DevTools and change a token to see the whole page move.
+          Dark mode is a token override, not a second stylesheet.
+        </p>
+        <div class="row-grid row-grid--two">
+          <div class="card stack">
+            <h2 class="card__title">Type scale</h2>
+            <div class="type-specimen">
+              <h1>30 / 36 · Heading 1</h1>
+              <h2>24 / 28 · Heading 2</h2>
+              <h3>20 / 24 · Heading 3</h3>
+              <h4>18 / 22 · Heading 4</h4>
+              <p>16 / 1.6 · Body text. The quick brown fox jumps over the lazy dog.</p>
+              <p class="card__meta">
+                14 / 1.6 · Meta and labels. <span lang="hi">अनुच्छेद 17 अस्पृश्यता का अंत करता है।</span>
+              </p>
+              <small>12 / 1.6 · Small print and chips.</small>
+            </div>
+          </div>
+          <div class="card stack">
+            <h2 class="card__title">Devanagari at reading size</h2>
+            <p lang="hi" style="font-size: var(--font-size-lg)">
+              संविधान के किस अनुच्छेद में अस्पृश्यता का अंत किया गया है? सही उत्तर चुनिए।
+            </p>
+            <p class="section__note">
+              Hindi runs at 1.75 line-height so matras never collide on a 5.5-inch screen. The same Mukta
+              family sets Latin and Devanagari, so the two languages share metrics and the layout does not
+              jump when the student switches.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Colour</h2>
+        <p class="section__note">
+          Indigo is reserved for actions, focus, streaks and the current tab. Green and red only mean correct
+          and wrong, never decoration. Every pair below is checked for AA contrast by
+          <code>tests/ui/tokens.test.ts</code> in both themes.
+        </p>
+        <div class="swatches">
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-bg)"></div>
+            <span class="swatch__label">--color-bg</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-surface)"></div>
+            <span class="swatch__label">--color-surface</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-surface-2)"></div>
+            <span class="swatch__label">--color-surface-2</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-accent)"></div>
+            <span class="swatch__label">--color-accent</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-text)"></div>
+            <span class="swatch__label">--color-text</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-success)"></div>
+            <span class="swatch__label">--color-success</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-danger)"></div>
+            <span class="swatch__label">--color-danger</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch__chip" style="background: var(--color-warning)"></div>
+            <span class="swatch__label">--color-warning</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Buttons and chips</h2>
+        <p class="section__note">
+          The 48px minimum is the Android touch target, not a style choice. A destructive action gets the only
+          filled red button on the screen.
+        </p>
+        <div class="card stack">
+          <div class="cluster">
+            <button class="btn btn--primary" type="button">Start practice</button>
+            <button class="btn" type="button">Review</button>
+            <button class="btn btn--ghost" type="button">Skip</button>
+            <button class="btn btn--danger" type="button">Delete account</button>
+            <button class="btn btn--primary" type="button" disabled>Disabled</button>
+            <button class="btn btn--icon" type="button" aria-label="Bookmark">
+              <svg
+                aria-hidden="true"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+              </svg>
+            </button>
+          </div>
+          <div class="cluster">
+            <span class="chip">History</span>
+            <span class="chip chip--accent">Medium</span>
+            <span class="chip chip--success">Verified</span>
+            <span class="chip chip--warning">Needs review</span>
+            <span class="chip chip--danger">Reported</span>
+            <button class="chip chip--action" type="button">Filter</button>
+          </div>
+          <button class="btn btn--primary btn--block" type="button">Continue</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Answer options</h2>
+        <p class="section__note">
+          The most-tapped component in the app. A 2px border, a letter badge, and a verdict word so
+          correctness never depends on colour alone. After answering, the other options dim instead of
+          disappearing, so the student can still read them.
+        </p>
+        <div class="row-grid row-grid--two">
+          <article class="card stack">
+            <div class="cluster">
+              <span class="chip">Polity</span>
+              <span class="chip chip--accent">Easy</span>
+            </div>
+            <h3 class="card__title">Which Article abolishes untouchability?</h3>
+            <div class="stack stack--tight" role="group" aria-label="Options">
+              <button class="option" type="button" aria-pressed="false">
+                <span class="option__key">A</span>
+                <span class="option__text">Article 14</span>
+              </button>
+              <button class="option option--selected" type="button" aria-pressed="true">
+                <span class="option__key">B</span>
+                <span class="option__text">Article 15</span>
+              </button>
+              <button class="option" type="button" aria-pressed="false">
+                <span class="option__key">C</span>
+                <span class="option__text">Article 16</span>
+              </button>
+              <button class="option" type="button" aria-pressed="false">
+                <span class="option__key">D</span>
+                <span class="option__text">Article 17</span>
+              </button>
+            </div>
+          </article>
+          <article class="card stack">
+            <div class="cluster">
+              <span class="chip">Polity</span>
+              <span class="chip chip--success">Correct</span>
+            </div>
+            <h3 class="card__title">Which Article abolishes untouchability?</h3>
+            <div class="stack stack--tight" role="group" aria-label="Answered options">
+              <button class="option option--dim" type="button" disabled>
+                <span class="option__key">A</span>
+                <span class="option__text">Article 14</span>
+              </button>
+              <button class="option option--wrong" type="button" disabled>
+                <span class="option__key">B</span>
+                <span class="option__text">Article 15</span>
+                <span class="option__verdict">Your answer</span>
+              </button>
+              <button class="option option--dim" type="button" disabled>
+                <span class="option__key">C</span>
+                <span class="option__text">Article 16</span>
+              </button>
+              <button class="option option--correct" type="button" disabled>
+                <span class="option__key">D</span>
+                <span class="option__text">Article 17</span>
+                <span class="option__verdict">Correct</span>
+              </button>
+            </div>
+            <button class="btn btn--primary btn--block" type="button">Next question</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Progress, stats and lists</h2>
+        <div class="row-grid row-grid--two">
+          <div class="card stack">
+            <div class="cluster" style="justify-content: space-between">
+              <span class="card__meta">Daily goal</span>
+              <span class="card__meta">7 / 10</span>
+            </div>
+            <div
+              class="progress"
+              role="progressbar"
+              aria-label="Daily goal"
+              aria-valuemin="0"
+              aria-valuemax="10"
+              aria-valuenow="7"
+            >
+              <div class="progress__bar" style="--progress: 70%"></div>
+            </div>
+            <div class="cluster">
+              <div class="stat">
+                <span class="stat__value">12</span>
+                <span class="stat__label">Day streak</span>
+              </div>
+              <div class="stat">
+                <span class="stat__value">68%</span>
+                <span class="stat__label">Accuracy</span>
+              </div>
+              <div class="stat">
+                <span class="stat__value">1,284</span>
+                <span class="stat__label">Rating</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <ul class="list">
+              <li class="list__row">
+                <span class="list__label">History · Ancient India</span>
+                <span class="list__meta">142 q</span>
+              </li>
+              <li class="list__row">
+                <span class="list__label">Polity · Fundamental Rights</span>
+                <span class="list__meta">96 q</span>
+              </li>
+              <li class="list__row">
+                <span class="list__label">Geography · Indian Geography</span>
+                <span class="list__meta">74 q</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Fields and feedback</h2>
+        <div class="row-grid row-grid--two">
+          <div class="card stack">
+            <label class="field">
+              <span class="field__label">Daily goal</span>
+              <input class="input" type="number" value="10" min="1" max="50" />
+              <span class="field__hint">Questions per day. You can change this any time.</span>
+            </label>
+            <label class="field">
+              <span class="field__label">Display name</span>
+              <input class="input" type="text" placeholder="Your name" value="" />
+              <span class="field__error">Name cannot be empty.</span>
+            </label>
+          </div>
+          <div class="stack">
+            <div class="banner banner--info">Offline. Answers will sync when you reconnect.</div>
+            <div class="banner banner--success">Answer key verified against the 2023 paper.</div>
+            <div class="banner banner--warning">This question has a pending report.</div>
+            <div class="banner banner--danger">Could not update packs. Keeping the installed set.</div>
+            <div class="toast">
+              <strong>Saved.</strong>
+              <span>Bookmarked for review.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Sheet, skeleton and navigation</h2>
+        <p class="section__note">
+          Loading uses a skeleton with the same box as the content it replaces, so the page does not jump. The
+          bottom nav is 64px plus the system safe-area inset.
+        </p>
+        <div class="row-grid row-grid--two">
+          <div class="sheet sheet--inline stack">
+            <div class="sheet__handle"></div>
+            <h3 class="card__title">End this practice session?</h3>
+            <p class="section__note">Your answers are already saved on this phone.</p>
+            <div class="card__footer">
+              <button class="btn btn--primary" type="button">End session</button>
+              <button class="btn btn--ghost" type="button">Keep going</button>
+            </div>
+          </div>
+          <div class="card stack">
+            <div class="skeleton" style="width: 60%; height: 1.5rem"></div>
+            <div class="skeleton" style="height: 1rem"></div>
+            <div class="skeleton" style="width: 85%; height: 1rem"></div>
+            <div class="skeleton" style="height: 3rem; margin-top: var(--space-2)"></div>
+            <div class="skeleton" style="height: 3rem"></div>
+            <div class="cluster">
+              <span class="tap-demo">48</span>
+              <span class="card__meta">Minimum tap target, 48 × 48px.</span>
+            </div>
+          </div>
+        </div>
+        <div class="phone" style="margin-top: var(--space-4)">
+          <div class="phone__body stack">
+            <h3 class="card__title">Today</h3>
+            <p class="card__meta">7 of 10 questions · 12-day streak</p>
+            <div class="progress progress--thin">
+              <div class="progress__bar" style="--progress: 70%"></div>
+            </div>
+          </div>
+          <nav class="nav-bar" aria-label="Primary">
+            <a class="nav-bar__item" href="#0" aria-current="page">
+              <svg
+                class="nav-bar__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+                <path
+                  d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                />
+              </svg>
+              Home
+            </a>
+            <a class="nav-bar__item" href="#0">
+              <svg
+                class="nav-bar__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 7v14" />
+                <path
+                  d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
+                />
+              </svg>
+              Practice
+            </a>
+            <a class="nav-bar__item" href="#0">
+              <svg
+                class="nav-bar__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                <path d="M18 17V9" />
+                <path d="M13 17V5" />
+                <path d="M8 17v-3" />
+              </svg>
+              Progress
+            </a>
+            <a class="nav-bar__item" href="#0">
+              <svg
+                class="nav-bar__icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+                />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              Settings
+            </a>
+          </nav>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Empty state</h2>
+        <div class="card">
+          <div class="empty">
+            <h3 class="empty__title">Nothing due today</h3>
+            <p>Your reviews are done. Practice a new sub-topic to keep going.</p>
+            <button class="btn btn--primary" type="button">Practice something new</button>
+          </div>
+        </div>
+        <p class="section__note">
+          Fonts: Mukta v17, SIL Open Font License, subset to the Devanagari and Latin glyphs this app uses
+          (~196 KB for six faces). Licence text ships at
+          <code>src/ui/fonts/OFL.txt</code>.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const setPressed = (attr, value) => {
+        for (const button of document.querySelectorAll(`[${attr}]`)) {
+          button.setAttribute('aria-pressed', String(button.getAttribute(attr) === value));
+        }
+      };
+
+      document.querySelectorAll('[data-set-theme]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const theme = button.getAttribute('data-set-theme');
+          document.documentElement.setAttribute('data-theme', theme);
+          setPressed('data-set-theme', theme);
+        });
+      });
+
+      document.querySelectorAll('[data-set-lang]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const lang = button.getAttribute('data-set-lang');
+          document.documentElement.setAttribute('lang', lang);
+          setPressed('data-set-lang', lang);
+        });
+      });
+
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        setPressed('data-set-theme', 'dark');
+      }
+    </script>
+  </body>
+</html>

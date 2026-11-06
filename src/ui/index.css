@@ -1,0 +1,12 @@
+/**
+ * The only stylesheet the app imports: `import './ui/index.css'`.
+ *
+ * Order matters: fonts and tokens must be defined before base and components
+ * read them. The preview page imports this file too, so what the founder
+ * reviews is exactly what ships.
+ */
+
+@import './fonts.css';
+@import './tokens.css';
+@import './base.css';
+@import './components.css';

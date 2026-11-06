@@ -321,16 +321,30 @@ npm run content:build    -- --key ../cgl-keys/ed25519-private.pem \
 
 ---
 
-## 11. UI direction (to be finalised in the UI design step)
+## 11. UI design system (locked 2026-11-07)
+
+Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a browser and use the light/dark and EN/HI toggles). Contrast, tap targets, token discipline and the font subset are pinned by `tests/ui/tokens.test.ts`; Lighthouse on the preview scores 1.0 for accessibility.
 
 - Clean and minimalist; looks hand-designed, not "vibe-coded".
 - One accent colour, consistent spacing grid, clear type hierarchy.
 - No gradients, glows, or glassmorphism.
-- Icons from a clean set (Lucide) instead of emoji.
+- Icons from a clean set (Lucide) as inline SVG instead of emoji.
 - Body text (questions, explanations) **left-aligned, not justified**: justified text creates uneven gaps on narrow screens, especially in Hindi. Centre only short elements (scores, headings, result screens).
-- Fonts with strong Devanagari + Latin support: **Mukta** or **Hind**, or **Noto Sans + Noto Sans Devanagari**. Self-hosted and subset for speed.
 - Light and dark mode; Hindi/English toggle; large tap targets.
-- Each main element (streak, question card, mock timer, etc.) gets its own focused design prompt.
+
+**Layers** (the app imports `ui/index.css` only):
+
+- `tokens.css` — colour (light and dark), type, 4px spacing grid, radius, elevation, motion, layout. A screen reads tokens; it never hard-codes a colour.
+- `base.css` — element defaults: 16px body at 1.6 line-height (1.75 for Hindi), focus ring, reduced-motion rule.
+- `components.css` — `btn`, `option`, `card`, `chip`, `field`/`input`, `banner`, `sheet`, `toast`, `nav-bar`, `progress`, `stat`, `list`, `skeleton`, `empty`, `segmented`.
+- `fonts.css` + `fonts/` — self-hosted Mukta.
+
+**Locked decisions:**
+
+- **Styling:** CSS custom properties plus per-component scoped CSS. No Tailwind, no runtime CSS-in-JS (D-051).
+- **Type:** Mukta 400/600/700 for both scripts; self-hosted, subset to the glyphs the app uses; two subsets per weight; ~196 KB for six woff2 faces; OFL shipped. No Google Fonts request at runtime (D-052).
+- **Colour:** deep indigo accent on neutral grey; green/red/amber/blue reserved for answer feedback and system messages (D-053).
+- **Density:** 16px body, 4px grid, 640px reading column, 48px minimum targets, 64px bottom nav, 2px option borders (D-054).
 
 ---
 
@@ -377,8 +391,8 @@ npm run content:build    -- --key ../cgl-keys/ed25519-private.pem \
 | 1.6 External review (second pass) | Done. D-026 to D-031 accepted |
 | 2 OOP core classes | **Done 2026-11-07** — scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, `AdaptiveEngine`, `QuestionPicker`, tests (142 passing). `Question.ts` moves to Step 3 |
 | 3 Content pipeline | **Done 2026-11-07** — `Question.ts`, strict CSV master validator, pack builder, Ed25519 manifest signing, tests (233 passing). Admin verification UI deferred to Step 7 (D-047..D-050) |
-| 4 UI design system (fonts, colours, components) | **Next** |
-| 5–6 App build | Pending |
+| 4 UI design system (fonts, colours, components) | **Done 2026-11-07** — tokens, base and component layers, self-hosted Mukta subset, living preview, 47 design-system tests (D-051..D-054) |
+| 5–6 App build | **Next** |
 | 7 Backend & security | Pending |
 | 8 Polish & launch | Pending |
 
