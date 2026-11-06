@@ -13,11 +13,15 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "npm run typecheck && npm run test"
+    "verify": "npm run typecheck && npm run test",
+    "content:validate": "tsx tools/content/cli.ts validate",
+    "content:build": "tsx tools/content/cli.ts build",
+    "content:keygen": "tsx tools/content/cli.ts keygen"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
   },

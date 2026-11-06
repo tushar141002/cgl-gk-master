@@ -53,8 +53,17 @@ export type Cursor = string;
 // ---------------------------------------------------------------------------
 
 /** The seven sections in PROJECT_SPEC.md §2. v1 ships the first three. */
-export type SectionId =
-  'history' | 'geography' | 'polity' | 'economy' | 'science' | 'static-gk' | 'current-affairs';
+export const SECTION_IDS = [
+  'history',
+  'geography',
+  'polity',
+  'economy',
+  'science',
+  'static-gk',
+  'current-affairs',
+] as const;
+
+export type SectionId = (typeof SECTION_IDS)[number];
 
 export type OptionIndex = 0 | 1 | 2 | 3;
 

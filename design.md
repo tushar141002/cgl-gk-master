@@ -85,6 +85,10 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-044 | Fixed ±100 Elo band, widening ×2 to the full scale | Product | Accepted |
 | D-045 | Reviews by earliest due; new questions random; recent filters new only | Product | Accepted |
 | D-046 | Recent window is 30; all-recent falls back instead of dead-ending | Product | Accepted |
+| D-047 | CSV master is the authoring source; one row per question | Content | Accepted |
+| D-048 | Assigned-once slug IDs, never reused | Content | Accepted |
+| D-049 | Difficulty maps to Elo seeds 1100/1200/1300 | Content | Accepted |
+| D-050 | Ed25519 signs canonical JSON of version, generatedAt, packs | Security | Accepted |
 
 ---
 
@@ -599,3 +603,47 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** Practising a recent question is better than a dead end, and the fallback keeps the "finished" signal honest: it now means the bank is genuinely empty. Thirty answers is roughly three daily goals, long enough that a repeat feels rare in a normal sub-topic.
 - **Trade-off accepted:** A student with a tiny sub-topic may see the same question again sooner than 30 answers. The window is a caller convention rather than a constant enforced by the picker, so the value must stay in sync with `PracticeSession`.
 - **Revisit when:** Pack sizes per sub-topic make 30 too long or too short, or the UI needs to distinguish "all seen recently" from "nothing left".
+
+## D-047: CSV master is the authoring source; one row per question
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** Around 2,000 questions must be authored and verified by one founder over nine weeks (PROJECT_SPEC.md section 10). The spec defines the verification workflow and the pack format but not where questions live before they are packed. Whatever format is chosen becomes the place the founder spends 30-40 minutes every day, and it must survive a backend that does not exist yet.
+- **Decision:** `content/master/questions.csv` is the authoring source: one row per question, with flat columns for the English and Hindi text, source metadata, answer, difficulty, status and verification time. `npm run content:build` validates the file and converts only `verified` rows into pack JSON plus a signed manifest. `content/sample/questions.csv` is the four-row fixture used by the pipeline tests.
+- **Alternatives considered:** Hand-written JSON packs (schema-exact, but unreadable at 2,000 rows and painful to filter or bulk-edit); an admin database first (the eventual single source of truth, but the backend is Step 7 and would block all authoring); one CSV per section (fewer merge conflicts, but three files, three commands and more tooling for a solo author).
+- **Why:** A spreadsheet is the fastest editing surface the founder already knows, filters by `status` and `subtopic`, and diffs readably in git. The build re-validates every row against the same `Question` rules the app uses, so the CSV remains a draft format rather than a second contract. No dependency is added.
+- **Trade-off accepted:** Long rows and a wide, exact header; moving a column breaks parsing. Google Sheets exports need quoting discipline, and two people editing the same file will conflict. Rich formatting, images and formulas are lost.
+- **Revisit when:** A second author edits in parallel, or the admin verification UI becomes the source of truth; then the CSV becomes an import/export format instead.
+
+## D-048: Assigned-once slug IDs, never reused
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** Attempts store `qid` forever and corrections key answer versions by `id` + `v` (D-022). The id therefore has to be stable across every rebuild of a pack, and support has to be able to read it from a screenshot, a sync log or a report row. The id also has to survive two authors creating rows in parallel without a central counter.
+- **Decision:** Every question gets a human-readable slug of the form `section-topic-NNNN`, for example `polity-fr-0007`. It is assigned once, is unique across the whole bank, is never reused after retirement, and may not be renamed. Duplicate ids are a build error, not a warning. `Question` enforces the lowercase slug shape; `validateMaster` enforces uniqueness.
+- **Alternatives considered:** UUID v4 (collision-free, but unreadable in logs and impossible to quote over the phone); auto-increment integers (compact, but require a coordinator and collide when two CSV branches allocate the same next number); section-relative integers without a topic segment (shorter, but impossible to tell what a row is about from the id alone).
+- **Why:** A slug is readable in a report, stable across pack versions and cheap to check. Uniqueness is checked by the build rather than trusted, because a copy-pasted row is the most likely authoring mistake.
+- **Trade-off accepted:** Numbering is manual, so gaps and accidental duplicates can appear; the build catches duplicates but cannot catch a skipped or reused-but-different id. Renaming is forbidden even to fix a typo.
+- **Revisit when:** The admin UI mints ids automatically, or the bank grows past the point where manual numbering is comfortable.
+
+## D-049: Difficulty maps to Elo seeds 1100/1200/1300
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** Every question needs an `eloSeed` so adaptive practice can start before the server has calibration data. The author can judge a question's difficulty but cannot invent a rating, and D-044 bands a new student at +/-100 around the default 1200. A seed outside that band would make some questions invisible at launch.
+- **Decision:** The author marks a question `easy`, `medium` or `hard`. The build maps those to 1100, 1200 and 1300 respectively. All three seeds sit inside the initial +/-100 band, so a new student can be served any difficulty level from the first session. The mapping lives in one table, tested at the boundaries.
+- **Alternatives considered:** A single seed of 1200 for every question (simplest, but throws away the author's judgement and makes the first week feel flat); a five-level scale (more nuance, but authors disagree more and the extra mapping has to be tuned); no seed and wait for server calibration (correct eventually, but blocks launch and makes offline first practice impossible).
+- **Why:** Three levels are a judgement an author can make consistently without training. A 200-point spread is meaningful against a +/-100 band, and one frozen table is easy to test and explain.
+- **Trade-off accepted:** Difficulty labels are subjective and coarse; a mislabelled question starts up to 100 Elo off. All new questions start within one band, so the adaptive range only widens through actual attempts.
+- **Revisit when:** Calibration data shows the author labels are systematically biased, or the band widens enough that a three-level seed is too coarse.
+
+## D-050: Ed25519 signs canonical JSON of version, generatedAt, packs
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Security
+- **Context:** D-025 requires every manifest to be Ed25519-signed, but never defines the bytes that are signed. JSON key order and whitespace are not stable across serializers, and the app must be able to verify a manifest it downloaded without trusting any formatting choice made by the build.
+- **Decision:** The signature covers `canonicalJson({ version, generatedAt, packs })`: object keys sorted, no whitespace, strings escaped with `JSON.stringify`, and numbers restricted to safe integers. The `signature` field itself is excluded and stays inside `manifest.json`. `shared/canonicalJson.ts` is the single implementation, used by the build now and by the app's verifier later. The build key is generated outside the repository (`npm run content:keygen`), and `*.pem` is gitignored.
+- **Alternatives considered:** Sign the exact bytes of `manifest.json` and ship a detached `manifest.sig` (no canonicalizer, but two files per update and verification breaks if anything reformats the manifest); sign only the pack hashes (detects pack tampering but not a rolled-back version or timestamp); use JWS (standard envelope, but more parsing and base64url handling for no benefit here).
+- **Why:** One file, deterministic bytes and one implementation on both sides. Rejecting floats removes the last formatting ambiguity, and the canonicalizer is small enough to port if a non-JavaScript client ever needs it. Tests sign in memory and verify with the matching public key; no private key is committed.
+- **Trade-off accepted:** The canonicalizer must stay byte-identical across every client, and floats cannot be added to the manifest without a format change. A valid old manifest can be replayed unless the app also enforces a monotonic `version`; that check is a client rule, not something the signature provides.
+- **Revisit when:** Another language needs to verify manifests, or the manifest needs nested non-integer data.

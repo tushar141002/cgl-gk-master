@@ -203,7 +203,7 @@ The attempt log is the single source of truth. FSRS card state and Elo ratings a
 ```
 manifest.json
 { version, generatedAt,
-  signature,                    // Ed25519, verified by the app
+  signature,                    // Ed25519 over canonicalJson({version, generatedAt, packs}), D-050
   packs: [{ id, section, subtopic, kind: "evergreen" | "current-affairs",
             version, sha256, url, count, bytes }] }
 
@@ -308,6 +308,17 @@ response
 4. Approved questions publish in the next signed pack.
 5. "Report error" reports are triaged within 48 hours; confirmed errors go through the correction path.
 
+**Implemented in Step 3 (2026-11-07):** `content/master/questions.csv` is the authoring source — one row per question, flat English/Hindi and workflow columns (D-047). Ids are assigned-once slugs such as `polity-fr-0007` (D-048); authors mark `easy`, `medium` or `hard`, mapped to Elo seeds 1100/1200/1300 (D-049).
+
+```sh
+npm run content:validate -- --input content/sample/questions.csv --verbose
+npm run content:keygen   -- --out ../cgl-keys
+npm run content:build    -- --key ../cgl-keys/ed25519-private.pem \
+                            --url-base https://cdn.example.com/packs
+```
+
+`validate` is strict on `verified` rows and warns on drafts. `build` writes one pack per subtopic plus `manifest.json`; a pack version moves only when its questions change, and the file name carries the sha256 prefix so a changed pack cannot be served from a stale cache. The manifest signature covers the canonical JSON of `{ version, generatedAt, packs }` (D-050), and `shared/canonicalJson.ts` is the implementation the app will use. Private keys are generated outside the repository and `*.pem` is gitignored. The admin verification UI is deferred to the backend step; until then the CSV `status` column is the review queue.
+
 ---
 
 ## 11. UI direction (to be finalised in the UI design step)
@@ -365,8 +376,8 @@ response
 | 1.5 Data contract | Done |
 | 1.6 External review (second pass) | Done. D-026 to D-031 accepted |
 | 2 OOP core classes | **Done 2026-11-07** — scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, `AdaptiveEngine`, `QuestionPicker`, tests (142 passing). `Question.ts` moves to Step 3 |
-| 3 Content pipeline | **Next** — `Question.ts`, pack format, import and verification |
-| 4 UI design system (fonts, colours, components) | Pending |
+| 3 Content pipeline | **Done 2026-11-07** — `Question.ts`, strict CSV master validator, pack builder, Ed25519 manifest signing, tests (233 passing). Admin verification UI deferred to Step 7 (D-047..D-050) |
+| 4 UI design system (fonts, colours, components) | **Next** |
 | 5–6 App build | Pending |
 | 7 Backend & security | Pending |
 | 8 Polish & launch | Pending |

@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 2 (OOP core) is complete. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts`, `StreakTracker.ts`, `AdaptiveEngine.ts`, `QuestionPicker.ts` (plus `tests/core/*.test.ts` and the fixtures). `Question.ts` moves to Step 3 with the content pipeline; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 3 (content pipeline) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts`, `StreakTracker.ts`, `AdaptiveEngine.ts`, `QuestionPicker.ts`, `Question.ts`, and the `tools/content/` pipeline (233 tests). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -15,6 +15,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 2.3):** `StreakTracker` is real. F1 derives the streak from all daily rows instead of one summary; F2 names `apply(attempt, todaySummary)`; F10 uses `goalMet(todaySummary, settings.dailyGoal)` (D-041..D-043).
 >
 > **Updated 2026-11-07 (Step 2.4):** `AdaptiveEngine` and `QuestionPicker` are real. F3 shows the widening loop (`targetRange(skill, step)`), the single `pick(dueCards, candidates, recentIds, rng)` call, and the `{ qid, reason } | null` result (D-044..D-046).
+>
+> **Updated 2026-11-07 (Step 3):** `Question.ts` and the content pipeline are real. F5 now names the canonical manifest body; F13 is the offline build that turns the CSV master into signed packs (D-047..D-050).
 
 ---
 
@@ -47,6 +49,7 @@ file.ts › function()                 one step
 shared/
   contract.ts                boundary types + constants + istDayKey() / encodeCursor() /
                              compareCursor(); no I/O, no imports
+  canonicalJson.ts           canonical JSON for manifest signatures (D-050); no I/O
 
 src/
   main.ts                    entry point
@@ -60,7 +63,7 @@ src/
     StreakTracker.ts         landed: apply / evaluate / goalMet (IST days, D-041..D-043)
     AdaptiveEngine.ts        landed: targetRange (band + widening, D-044)
     QuestionPicker.ts        landed: pick (due first, random new, D-045..D-046)
-    Question.ts                                                     (Step 3)
+    Question.ts              landed: from / issues / isCorrect / localized (D-047..D-049)
   data/
     database.ts              Dexie schema and open()                  (planned)
     repositories/            QuestionRepository, AttemptRepository, CardRepository,
@@ -80,8 +83,24 @@ server/
   jobs/nightly_compaction    inbox → stats + immutable daily log files (D-027)
 
 tests/
-  core/                      Attempt.test.ts, EloRating.test.ts, … (Vitest, node env)
+  core/                      Attempt.test.ts, EloRating.test.ts, ... (Vitest, node env)
+  shared/                    canonicalJson.test.ts
+  tools/                     csv.test.ts, master.test.ts, build.test.ts, cli.test.ts,
+                             fixtures.ts (in-memory master rows)
   fixtures/                  elo-golden.json — hand-computed regression pins
+
+content/
+  master/questions.csv       authoritative bank: one row per question (D-047)
+  sample/questions.csv       four-row pipeline fixture (3 verified, 1 draft)
+  packs.lock.json            written by the first build; commit it so versions persist
+  dist/                      build output (gitignored)
+
+tools/content/               offline build, run with tsx; never imported by the app
+  csv.ts                     strict RFC 4180 reader
+  master.ts                  COLUMNS, statuses, difficulty seeds, validateMaster
+  build.ts                   buildContent / writeBuild / lock
+  signing.ts                 Ed25519 sign, verify and keygen
+  cli.ts                     validate / build / keygen entry point (F13)
 ```
 
 **Dependency direction (explicit, see D-030 and D-036):**
@@ -94,6 +113,8 @@ tests/
 | `services/` | `core/`, `data/`, `sync/`, `shared/` |
 | `sync/` | `core/`, `data/`, `shared/` |
 | `ui/` | `core/` (types only), `services/`, `shared/` |
+| `tools/content/` | `shared/`, `src/core/Question.ts` (read-only validation), Node built-ins. Never `ui/`, `data/`, `services/`, `sync/`. |
+| `content/` | nothing — CSV data and build output only |
 
 **`core/` performs no writes.** Any flow step marked `[DB write]` belongs to a repository, never to a `core/` class.
 
@@ -115,6 +136,7 @@ tests/
 | F10 | Streak reminder | Daily, at the student's chosen time |
 | F11 | Report a question error | "Report error" tapped |
 | F12 | Delete account | Confirmed in Settings |
+| F13 | Build and publish content packs | Developer runs the content CLI |
 
 ---
 
@@ -216,7 +238,7 @@ sync/SyncManager.ts › runOnce()
 ```
 sync/PackUpdater.ts › checkForUpdates()
 ├─ ⟶ GET manifest.json                                     [network]
-├─ sync/ManifestVerifier.ts › verify(manifest)             Ed25519, see D-025
+├─ sync/ManifestVerifier.ts › verify(manifest)             Ed25519 over canonicalJson(body), D-025/D-050
 ├─ sync/PackUpdater.ts › diff(manifest, localPacks)        pure
 └─ for each changed pack:
    ├─ ⟶ GET pack file                                      [network]
@@ -346,3 +368,39 @@ ui/screens/Settings.svelte › confirmDelete()
 
 Promised in the feature list and required by the DPDP Act: deletion must be complete, including object storage — deleting the auth user alone leaves the log files behind.
 **Failure path:** if the server call fails, do **not** wipe local data; show the error and retry. Local wipe happens only after the server confirms, otherwise the account becomes undeletable while its data still exists.
+
+---
+
+## F13: Build and publish content packs (developer, offline)
+
+```
+npm run content:validate -- [--input <csv>] [--verbose]
+└─ tools/content/cli.ts › main(['validate', ...])
+   ├─ tools/content/csv.ts › parseCsv(text)                     strict; no network
+   └─ tools/content/master.ts › validateMaster(table)
+      └─ src/core/Question.ts › Question.issues(record)         same rules as the app
+         → report { rows, counts, errors, warnings, questions }
+
+npm run content:build -- --key <pem> --url-base <https> [options]
+└─ tools/content/cli.ts › main(['build', ...])
+   ├─ tools/content/build.ts › readLock(path)                    previous versions or null
+   ├─ tools/content/master.ts › validateMaster(table)            fail on any error
+   ├─ tools/content/build.ts › buildContent(table, options)
+   │  ├─ group verified questions by packId; sort ids; bump a version only when
+   │  │  the content hash changed (D-047/D-048)
+   │  ├─ hash pack bytes → sha256 → fileName <id>-v<n>-<hash12>.json
+   │  ├─ shared/canonicalJson.ts › canonicalJson(body)           pure
+   │  ├─ tools/content/signing.ts › signBytes(canonical body, key) → base64 (D-050)
+   │  └─ → { packs, manifest, lock }
+   ├─ tools/content/build.ts › writeBuild(result, out)           manifest.json + pack files
+   └─ tools/content/build.ts › writeLock(result.lock, path)
+```
+
+Only `verified` rows are packed; `draft` and `rejected` rows may be incomplete and produce warnings instead of errors (D-047). A blank or duplicate id, an unknown status, and every issue on a verified row are errors. The build stops before writing anything if the report has an error, so a failed run leaves the previous manifest and lock untouched.
+
+`--generated-at <iso>` makes the manifest reproducible; `CGL_SIGNING_KEY` and `CGL_PACK_URL_BASE` replace the two required options. The key is generated outside the repository, and `*.pem` is gitignored. `content/packs.lock.json` is committed so a pack version moves only when its questions change, while the URL always carries the byte hash so a changed file cannot be served from a stale CDN cache.
+
+**Failure path:** a CSV parse error, a validation error, a missing key or a non-https URL exits non-zero with the offending line and leaves `<out>/` and the lock unchanged. No network is touched. The app verifies the same canonical bytes in F5; if verification fails it discards the manifest and keeps the installed packs.
+
+**Deferred:** the admin verification UI (Step 7) will call the same `validateMaster` and `buildContent`. Until then the CSV `status` column is the review queue.
+
