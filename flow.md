@@ -2,13 +2,15 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts`, `src/core/ReviewScheduler.ts` (plus `tests/core/*.test.ts` and the fixtures). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts`, `src/core/ReviewScheduler.ts`, `src/core/Replayer.ts` (plus `tests/core/*.test.ts` and the fixtures). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
 > **Updated 2026-11-04 (Step 2.0):** folder map includes `shared/` and `tests/`; import matrix allows `core/` → `shared/` types only (D-036); F2 now names the real `Attempt.create(question, chosen, ms, ctx)` and `updateSkill(skill, questionRating, outcome)` signatures.
 >
 > **Updated 2026-11-04 (Step 2.1):** `ReviewScheduler` is real and synchronous; F2 calls `review(cardState, outcome, now, examDeadline)` and caps the due date at the exam (D-037).
+>
+> **Updated 2026-11-07 (Step 2.2):** `Replayer` is real. F6 now re-grades through the corrected index and rebuilds; F7 names `rebuild(attempts, checkpoint, index)`; the checkpoint cursor is the `"<at>:<id>"` tuple (D-038..D-040). F2 also states where a new card comes from.
 
 ---
 
@@ -39,7 +41,8 @@ file.ts › function()                 one step
 
 ```
 shared/
-  contract.ts                boundary types + constants + istDayKey(); no I/O, no imports
+  contract.ts                boundary types + constants + istDayKey() / encodeCursor() /
+                             compareCursor(); no I/O, no imports
 
 src/
   main.ts                    entry point
@@ -49,8 +52,9 @@ src/
     EloRating.ts             landed: expectedScore / kFactor / updateSkill /
                              updateQuestionRating / newSkill
     ReviewScheduler.ts       landed: newCard / review (FSRS-7, sync preset, D-037)
+    Replayer.ts              landed: rebuild / regrade (checkpoint replay, D-038..D-040)
     Question.ts  AdaptiveEngine.ts  QuestionPicker.ts
-    StreakTracker.ts  Replayer.ts                                    (planned)
+    StreakTracker.ts                                                 (planned)
   data/
     database.ts              Dexie schema and open()                  (planned)
     repositories/            QuestionRepository, AttemptRepository, CardRepository,
@@ -144,7 +148,7 @@ ui/screens/Practice.svelte › onOptionTap(index)
    └─ → F3
 ```
 
-`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022). `ReviewScheduler.review` calls the FSRS-7 preset synchronously (correct → `Good`, wrong → `Again`), and clamps the new due date to `examDeadline` without touching stability (D-037).
+`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022). `ReviewScheduler.review` calls the FSRS-7 preset synchronously (correct → `Good`, wrong → `Again`), and clamps the new due date to `examDeadline` without touching stability (D-037). `cardState` comes from `CardRepository.get(qid)`; when the question has never been served, `PracticeSession` creates it with `ReviewScheduler.newCard(qid, now)` before the review, so a skip stores a fresh card that is still due rather than advancing anything.
 
 **Why one transaction:** five separate writes cost far more than one commit on a Redmi 9A class device, and either everything is saved or nothing is.
 **Ordering:** render the next question optimistically and let the transaction commit behind it; never block the tap on the commit. Flush any in-flight transaction on `onPause` so a backgrounded app cannot lose an answer.
@@ -217,15 +221,18 @@ sync/CorrectionApplier.ts › apply(corrections)
 └─ for each correction:
    ├─ data/repositories/CorrectionRepository.ts › put()              [DB write]
    ├─ data/repositories/AttemptRepository.ts › byQuestion(qid)       [DB read]
-   ├─ core/Replayer.ts › regrade(attempts, newAnswer)                pure
-   │  └─ per attempt: core/Attempt.ts › Attempt.regrade(newAnswer)    pure
-   ├─ ⟦ txn ⟧ data/repositories/{Card,Skill}Repository.ts › put()    [DB write]
+   ├─ data/repositories/AttemptRepository.ts › all()                 [DB read]
+   ├─ core/Replayer.ts › regrade(byQuestion, newAnswer)   pure → {attempts, changed}
+   ├─ core/Replayer.ts › rebuild(all, checkpoint, correctedIndex) pure → {cards, skills}
+   ├─ ⟦ txn ⟧ data/repositories/{Card,Skill}Repository.ts › putAll() [DB write]
    └─ return { changedCount }  → services/ raises an event, ui shows the banner   [UI]
 ```
 
 `sync/` may not import `ui/`, so the applier returns a count and the UI reacts to it.
 
-See D-022. The original attempts are never edited; only derived state is recomputed.
+See D-022, D-038 and D-039. `regrade` produces the corrected view and the count for the banner; it writes nothing, because attempts are append-only. `rebuild` then re-derives cards and skills with the corrected answer key in the index. The original attempts are never edited; only derived state is recomputed.
+
+**Checkpoint limit:** an attempt already folded into the newest checkpoint cannot be re-graded on a phone that has pruned; the server must republish the checkpoint. Corrections target recent questions in practice, and the banner says when history is incomplete.
 
 **Ordering rule:** the local `corrections` row is written *before* the pack is re-downloaded, and it overrides the answer key for **grading** from that moment on. The question **display** updates when the corrected pack lands. Without this rule, a student who answers the question between the correction sync and the pack download is graded against a key we already know is wrong.
 
@@ -239,11 +246,11 @@ services/AuthService.ts › signInWithGoogle()                        [network]
 └─ new device?
    ├─ ⟶ download checkpoint + log files newer than the checkpoint   [network]
    ├─ data/repositories/AttemptRepository.ts › mergeAll()           [DB write]
-   ├─ core/Replayer.ts › rebuild(attempts, checkpoint)  pure → {cards, skills}
+   ├─ core/Replayer.ts › rebuild(attempts, checkpoint, index)  pure → {cards, skills}
    └─ data/repositories/{Card,Skill}Repository.ts › putAll()        [DB write]
 ```
 
-See D-016 and D-026. Merge = combine both logs, de-duplicate by attempt ID, sort by `at`, replay from the newest checkpoint. Replaying the full log is not required once a checkpoint exists.
+See D-016, D-026, D-038 and D-040. Merge = combine both logs, de-duplicate by attempt ID, sort by `(at, id)`, and keep only attempts strictly after the checkpoint cursor (a `"<at>:<id>"` tuple). Replaying the full log is not required once a checkpoint exists. The `ReplayIndex` is assembled from the `questions` store and `question_corrections`; `rating` is `Question.eloSeed`, fixed for the replay.
 **Failure path:** if a log file fails to download, keep what merged, mark history incomplete in `syncMeta`, and retry on the next sync. Never wipe local attempts on a failed rebuild.
 
 ---

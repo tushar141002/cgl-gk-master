@@ -152,7 +152,7 @@ All study logic runs on the phone. The CDN delivers content; Supabase stores sma
 
 Dependency direction: `ui → services/sync → core ← data`. `core/` imports only `core/`, types and pure helpers from `shared/contract.ts`, and pure third-party libraries (`ts-fsrs`); it performs no reads or writes, and repositories do all database work (D-030, D-036, D-037). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
 
-**Step 2.0 scaffold (landed 2026-11-04):** `shared/contract.ts` holds every boundary type and constant; `src/core/Attempt.ts`, `src/core/EloRating.ts` and `src/core/ReviewScheduler.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins and FSRS-7 schedule pins. `tsc --noEmit` and `npm test` both pass. The remaining core classes are listed in the step tracker.
+**Step 2 core (landed 2026-11-04 to 2026-11-07):** `shared/contract.ts` holds every boundary type and constant, plus `istDayKey`, `encodeCursor` and `compareCursor`; `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts` and `Replayer.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins, FSRS-7 schedule pins and checkpoint-resume tests. `tsc --noEmit` and `npm test` both pass. The remaining core classes are listed in the step tracker.
 
 ---
 
@@ -183,7 +183,7 @@ The attempt log is the single source of truth. FSRS card state and Elo ratings a
 | attempt_inbox | userId, batchId, attempts, receivedAt | New attempts; emptied nightly |
 | attempt logs (storage) | users/<id>/<yyyy-mm-dd>.gz, one immutable file per day, compact encoding | Full history after the newest checkpoint (D-027) |
 | daily_stats | userId, date, attempted, correct, ms, bySection | Multi-device streaks; derived on the server from attempts only (D-028); monthly roll-up after 4 months |
-| checkpoints | userId, cursor, cardStates, skills, istDailyTotals, createdAt | Replay start point; written before any prune (D-026) |
+| checkpoints | userId, cursor (`"<at>:<id>"`), cardStates, skills, istDailyTotals, createdAt | Replay start point; written before any prune (D-026, D-040) |
 | question_stats | qid, attempts, correct, avgMs, elo | Difficulty calibration, nightly |
 | sync_batches | userId, batchId, receivedAt | Ignores duplicate retries |
 | question_corrections | id, qid, fromVersion, toVersion, oldAnswer, newAnswer, reason, correctedAt | Append-only |
@@ -243,6 +243,8 @@ response
 
 `reports` is new (F11). There is no client `daily` field (D-028): the server derives `daily_stats` from `attempts` alone: the IST day comes from `at` when it is not in the future and not older than 30 days, otherwise from `receivedAt`.
 
+`cursor` is the `"<at>:<id>"` replay position of the last attempt the client has folded in (D-040); the response's `newCursor` is the newest position the server has accepted.
+
 ---
 
 ## 8. Sync and corrections
@@ -250,7 +252,7 @@ response
 1. **Answer:** one IndexedDB transaction saves the attempt, updates FSRS and Elo, updates today's summary, marks it unsynced.
 2. **Sync:** on app open, every 5 minutes in use, and on background. Duplicates ignored by `batchId`.
 3. **Nightly job:** updates `question_stats`, writes each student's attempts to immutable **daily** log files (D-027), updates `daily_stats` from the attempts themselves (D-028), writes a checkpoint **before** any prune (D-026), and empties `attempt_inbox`. Must be idempotent.
-4. **New or second device:** download the newest checkpoint and the log files after it, merge with local attempts, de-duplicate, sort by time, replay from the checkpoint (D-026).
+4. **New or second device:** download the newest checkpoint and the log files after it, merge with local attempts, de-duplicate by attempt ID, sort by `(at, id)`, and replay from the checkpoint cursor (D-026, D-038, D-040).
 5. **Content updates:** check the signed manifest; re-download only changed packs; reject anything unsigned or with a bad hash.
 6. **Guest mode:** all local; first sign-in uploads the local log.
 7. **Reminders:** local notification at the chosen time if today's streak isn't done.
@@ -360,7 +362,7 @@ response
 | External review fixes | Done |
 | 1.5 Data contract | Done |
 | 1.6 External review (second pass) | Done. D-026 to D-031 accepted |
-| 2 OOP core classes | **In progress** — 2.0 scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, tests done (2026-11-04). Next: `Replayer`, `StreakTracker`, `QuestionPicker`, `AdaptiveEngine` |
+| 2 OOP core classes | **In progress** — 2.0 scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, tests done (2026-11-07). Next: `StreakTracker`, `QuestionPicker`, `AdaptiveEngine` |
 | 3 Content pipeline | Pending |
 | 4 UI design system (fonts, colours, components) | Pending |
 | 5–6 App build | Pending |

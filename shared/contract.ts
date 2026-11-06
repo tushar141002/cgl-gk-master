@@ -2,9 +2,9 @@
  * CGL GK Master — data contract.
  *
  * Every type here is plain data that crosses a boundary: IndexedDB, the /sync
- * endpoint, a signed pack file, or the admin site. There is no behaviour and no
- * imports in this file, so it can be used unchanged by the phone app, the admin
- * bundle and the server functions.
+ * endpoint, a signed pack file, or the admin site. There is no I/O and no state
+ * here — only plain data, constants and a few pure helpers — so it can be used
+ * unchanged by the phone app, the admin bundle and the server functions.
  *
  * Shapes mirror PROJECT_SPEC.md §6 (data model) and §7 (data contract). If a
  * field changes here it changes everywhere at once — that is the point of the
@@ -39,6 +39,14 @@ export type DeviceId = string;
 export type AttemptId = string;
 export type BatchId = string;
 export type MockId = string;
+
+/**
+ * A position in the attempt log, encoded as `"<at>:<id>"` — the timestamp and
+ * attempt id of the last attempt included. Replay compares it as a tuple, so
+ * two attempts at the same millisecond cannot be dropped or applied twice
+ * (D-040).
+ */
+export type Cursor = string;
 
 // ---------------------------------------------------------------------------
 // Questions and packs
@@ -197,7 +205,8 @@ export interface DailySummary {
  * recorded after `cursor`.
  */
 export interface Checkpoint {
-  readonly cursor: string;
+  /** Position of the last attempt folded into this checkpoint. */
+  readonly cursor: Cursor;
   readonly cardStates: readonly CardState[];
   readonly skills: readonly Skill[];
   readonly istDailyTotals: readonly DailySummary[];
@@ -242,7 +251,7 @@ export interface QuestionReport {
 export interface SyncBatch {
   readonly batchId: BatchId;
   readonly deviceId: DeviceId;
-  readonly cursor: string | null;
+  readonly cursor: Cursor | null;
   readonly attempts: readonly AttemptRecord[];
   readonly reports: readonly QuestionReport[];
 }
@@ -272,4 +281,43 @@ export type SyncResponse =
  */
 export function istDayKey(at: number): string {
   return new Date(at + IST_OFFSET_MINUTES * 60_000).toISOString().slice(0, 10);
+}
+
+/**
+ * The replay position of one attempt. The attempt id must be a UUID v7 with no
+ * colon, so the encoding stays parseable without escaping (D-040).
+ */
+export function encodeCursor(at: number, id: AttemptId): Cursor {
+  if (!Number.isInteger(at) || at < 0) {
+    throw new RangeError(`cursor timestamp must be a non-negative integer (got ${String(at)})`);
+  }
+  if (id.length === 0) throw new RangeError('cursor attempt id must not be empty');
+  if (id.includes(':')) throw new RangeError('cursor attempt id must not contain ":"');
+  return `${at}:${id}`;
+}
+
+/**
+ * Orders two cursors in replay order: by `at`, then by attempt id. Returns a
+ * negative number when `a` comes first, 0 when they are the same position, and
+ * a positive number when `b` comes first.
+ */
+export function compareCursor(a: Cursor, b: Cursor): number {
+  const [aAt, aId] = splitCursor(a);
+  const [bAt, bId] = splitCursor(b);
+  if (aAt !== bAt) return aAt < bAt ? -1 : 1;
+  if (aId === bId) return 0;
+  return aId < bId ? -1 : 1;
+}
+
+function splitCursor(cursor: Cursor): readonly [number, string] {
+  const colon = cursor.indexOf(':');
+  if (colon <= 0 || colon === cursor.length - 1) {
+    throw new RangeError(`invalid cursor "${cursor}"; expected "<at>:<id>"`);
+  }
+  const atText = cursor.slice(0, colon);
+  const id = cursor.slice(colon + 1);
+  if (!/^\d+$/.test(atText)) {
+    throw new RangeError(`invalid cursor "${cursor}"; the timestamp must be digits`);
+  }
+  return [Number(atText), id];
 }

@@ -1,0 +1,9 @@
+# Keep the working tree in LF on every platform; Prettier checks LF.
+* text=auto eol=lf
+
+# Binary assets must never be normalised.
+*.docx binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.webp binary

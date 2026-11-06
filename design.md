@@ -76,6 +76,9 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-035 | Toolchain: strict tsc + Vitest + Prettier, no ESLint yet | Build | Accepted |
 | D-036 | `core/` may import `shared/` types and pure helpers | Architecture | Accepted |
 | D-037 | FSRS integration: ts-fsrs v6 / FSRS-7, synchronous preset, binary grading | Architecture | Accepted |
+| D-038 | Replay takes an injected `ReplayIndex`; attempts stay lean | Data | Accepted |
+| D-039 | Replay re-derives correctness from the versioned answer key | Data | Accepted |
+| D-040 | Checkpoint cursor is `"<at>:<id>"`, compared as a tuple | Data | Accepted |
 
 ---
 
@@ -491,3 +494,36 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** The call stays synchronous and deterministic, so it is safe inside the transaction and testable with fixed timestamps. The composed preset produces output identical to `await DefaultScheduler({ enableFuzz: false })` (verified before writing the wrapper), so we keep the supported algorithm without its async loader. Pinning the exact output means a model or weight change fails a test instead of silently rewriting every existing card.
 - **Trade-off accepted:** We replicate the preset configuration, so a `ts-fsrs` upgrade that changes defaults will not reach us automatically; the locked version plus golden pins make the change deliberate. Binary grading discards the `Hard`/`Easy` distinction and any response-time signal, and a wrong answer always schedules the full relearning step. The library also adds a runtime dependency to a 300 KB budget; the actual compressed cost is measured when the Vite build exists (Week 5-6).
 - **Revisit when:** Upgrading `ts-fsrs` or changing the model version; when response time or a confidence control should influence the grade; or if the production bundle or the test phone's WebView cannot carry the library.
+
+## D-038: Replay takes an injected `ReplayIndex`; attempts stay lean
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** `Replayer` has to rebuild Elo, which needs each question's sub-topic and difficulty rating. `AttemptRecord` deliberately carries neither — it holds only `qid` and `qv`, so the log stays small (D-027) and a correction to question metadata does not have to rewrite history. `core/` may not read the question store (D-030, D-036), so the facts have to arrive as plain data.
+- **Decision:** `Replayer.rebuild(attempts, checkpoint, index, options?)`, where `ReplayIndex` is a `ReadonlyMap<QuestionId, ReplayQuestion>` and `ReplayQuestion = { subtopicId, rating, answersByVersion }`. The caller assembles it from the `questions` store plus `question_corrections`; `rating` is `Question.eloSeed` and stays fixed for the whole replay. A question missing from the index still rebuilds its FSRS card but contributes no Elo.
+- **Alternatives considered:** Denormalise `subtopicId` and the rating into every `AttemptRecord` (self-contained logs, but a contract change, a larger log per answer, and later metadata corrections never reach old attempts); pass repository objects or a read callback into `core/` (reverses the dependency direction and makes replay untestable without a database); rebuild only on the server (a new device or an offline phone could not recover its state).
+- **Why:** The boundary contract does not change, the same index feeds `regrade` and the correction path, and tests pass a literal `Map`. It keeps the rule that the log is the source of truth and question metadata is an input to interpretation, not part of the record.
+- **Trade-off accepted:** Every caller must build the map. Fixing the rating at `eloSeed` means replay ignores later server calibration; two devices on the same pack agree, but a republished `eloSeed` changes what a rebuild produces.
+- **Revisit when:** Packs start shipping per-question calibrated difficulty that must be snapshotted per attempt, or assembling the index costs more than the replay itself.
+
+## D-039: Replay re-derives correctness from the versioned answer key
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** D-022 requires past attempts to be re-graded when a published key is corrected, but the attempt log is append-only and original attempts are never edited. The stored `correct` flag records what the student was told at the time, which is exactly the value that must change in derived state after a correction.
+- **Decision:** Replay derives the outcome itself: `chosen === null` is always a skip; otherwise it looks up `answersByVersion.get(qv)` and uses `chosen === key`, falling back to the stored `correct` when that version has no key. `Replayer.regrade(attempts, newAnswer)` returns a corrected view plus the number of changed verdicts for the banner; `rebuild` with the corrected index is what moves cards and skills.
+- **Alternatives considered:** Trust the stored `correct` flag and apply corrections through a separate overlay threaded into every replay (simple replay, but every caller must remember the overlay and a new device that forgets it disagrees with the corrected phone); trust only the key and drop the flag (retired questions become ungradable and old logs lose their record of what the student saw); rewrite the attempts (breaks append-only, D-016 and D-022).
+- **Why:** A correction takes effect on the next rebuild with no special case, and two devices with the same pack and correction rows reach the same state. The stored flag stays the historical record for analytics and the "you answered" view.
+- **Trade-off accepted:** A stale or wrong index silently re-grades history. The fallback means a retired question keeps its original verdict, so its Elo contribution can disagree with current data. Attempts already folded into a checkpoint are not re-graded until the server republishes that checkpoint.
+- **Revisit when:** Corrections must reach attempts older than the newest checkpoint, or packs stop shipping versioned answer keys.
+
+## D-040: Checkpoint cursor is `"<at>:<id>"`, compared as a tuple
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** `Checkpoint.cursor` was typed as a `string` with no defined meaning. Replay must resume exactly once: a loose boundary double-applies an attempt (inflating reps and Elo) or drops one (losing history), and both are silent. Two attempts can share a millisecond, so a timestamp alone is ambiguous, and the cursor attempt itself may have been pruned.
+- **Decision:** A cursor is `"<at>:<id>"`. `encodeCursor` and `compareCursor` live in `shared/contract.ts`; `Checkpoint.cursor` and `SyncBatch.cursor` use the `Cursor` alias. Replay de-duplicates by attempt id, sorts by `(at, id)`, and includes only attempts strictly after the checkpoint cursor.
+- **Alternatives considered:** Cursor is the last attempt id, with a fallback to `at > checkpoint.createdAt` when it has been pruned (no new helpers, but the fallback can drop or double-apply attempts at the boundary); a bare timestamp (simplest, loses attempts in the same millisecond); a server-assigned sequence number (exact, but the phone cannot compute or compare it offline).
+- **Why:** The position is exact at ties, survives a pruned cursor attempt, and both the phone and the server can compute it from the log alone. Tests pin the boundary cases: equal timestamps ordered by id, the cursor attempt excluded, and a checkpoint with no following attempts.
+- **Trade-off accepted:** An invented string format that every writer must use correctly. A late-synced attempt whose `at` is at or before the cursor is excluded, because there is no sequence number to place it; that is the same clock-skew boundary the daily log files already accept.
+- **Revisit when:** Sync gains a server-assigned monotonic sequence or per-user offsets, or clock skew between devices shows up in real logs.
