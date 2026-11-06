@@ -1,0 +1,18 @@
+{
+  "_comment": "Regression pins. Values were derived from the documented formula and checked by hand; see design.md D-033 (K schedules). Ratings are rounded to 2dp at the boundary.",
+  "skill": [
+    { "student": 1200, "question": 1200, "outcome": "correct", "attempts": 0, "elo": 1215, "attemptCount": 1 },
+    { "student": 1200, "question": 1200, "outcome": "wrong", "attempts": 0, "elo": 1175, "attemptCount": 1 },
+    { "student": 1400, "question": 1200, "outcome": "correct", "attempts": 0, "elo": 1407.21, "attemptCount": 1 },
+    { "student": 1200, "question": 1600, "outcome": "wrong", "attempts": 50, "elo": 1192.36, "attemptCount": 51 },
+    { "student": 1000, "question": 1000, "outcome": "wrong", "attempts": 100, "elo": 988.33, "attemptCount": 101 },
+    { "student": 1200, "question": 1200, "outcome": "skip", "attempts": 10, "elo": 1200, "attemptCount": 10 },
+    { "student": 605, "question": 2200, "outcome": "wrong", "attempts": 0, "elo": 600, "attemptCount": 1 }
+  ],
+  "question": [
+    { "current": 1200, "student": 1200, "outcome": "correct", "attempts": 0, "elo": 1191 },
+    { "current": 1200, "student": 1200, "outcome": "wrong", "attempts": 0, "elo": 1215 },
+    { "current": 1200, "student": 1400, "outcome": "correct", "attempts": 30, "elo": 1197.3 },
+    { "current": 2000, "student": 1200, "outcome": "correct", "attempts": 0, "elo": 1982.18 }
+  ]
+}

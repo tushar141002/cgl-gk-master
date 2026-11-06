@@ -1,0 +1,324 @@
+# flow.md — Code Execution Flow
+
+How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
+
+> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts` (plus `tests/core/*.test.ts` and `tests/fixtures/elo-golden.json`). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+>
+> **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
+>
+> **Updated 2026-11-04 (Step 2.0):** folder map includes `shared/` and `tests/`; import matrix allows `core/` → `shared/` types only (D-036); F2 now names the real `Attempt.create(question, chosen, ms, ctx)` and `updateSkill(skill, questionRating, outcome)` signatures.
+
+---
+
+## Rules for humans and AI agents
+
+1. **Update this file in the same commit as any change that alters a flow**: a new entry point, a function added to or removed from a chain, a changed call order, or a new async boundary.
+2. **Use real `path/file.ts › function()` names** exactly as they appear in code. If a name changes, update every flow that uses it.
+3. **Mark side effects** on each step: `[DB read]`, `[DB write]`, `[network]`, `[UI]`, `[notification]`.
+4. **Mark async boundaries** with `⟶ async` and transactions with `⟦ txn ⟧ … ⟦ /txn ⟧`.
+5. **Write the failure path** under each flow: what happens if a step throws or the network is down.
+6. **Keep each flow short.** If a chain goes deeper than 4 levels, link to a sub-flow instead of nesting further.
+7. **If a flow change came from a decision, reference it** (for example "see D-016" in `design.md`).
+
+### Notation
+
+```
+file.ts › function()                 one step
+├─ file.ts › child()                 called by the step above, in order
+│  └─ file.ts › grandchild()
+└─ file.ts › nextChild()
+⟦ txn ⟧ … ⟦ /txn ⟧                    one IndexedDB transaction
+⟶ async                              runs later / in background
+```
+
+---
+
+## Folder map
+
+```
+shared/
+  contract.ts                boundary types + constants + istDayKey(); no I/O, no imports
+
+src/
+  main.ts                    entry point
+  app/App.svelte             root UI component, router
+  core/                      pure TypeScript domain classes, no I/O (D-030)
+    Attempt.ts               landed: create / from / regrade / toJSON
+    EloRating.ts             landed: expectedScore / kFactor / updateSkill /
+                             updateQuestionRating / newSkill
+    Question.ts  AdaptiveEngine.ts  ReviewScheduler.ts  QuestionPicker.ts
+    StreakTracker.ts  Replayer.ts                                    (planned)
+  data/
+    database.ts              Dexie schema and open()                  (planned)
+    repositories/            QuestionRepository, AttemptRepository, CardRepository,
+                             SkillRepository, DailyRepository, BookmarkRepository,
+                             CorrectionRepository, ReportRepository, MockRepository
+  services/
+    PracticeSession.ts  AuthService.ts  ReminderService.ts  MockService.ts
+    ReportService.ts  AccountService.ts
+  sync/
+    SyncManager.ts  PackUpdater.ts  ManifestVerifier.ts  CorrectionApplier.ts
+    CheckpointLoader.ts      (D-026)
+  ui/screens/                Practice, Mock, Results, ReportError, Settings, ...
+server/
+  functions/sync             POST /sync handler
+  functions/grade_mock       live mock grading
+  functions/delete_user      account deletion cascade (F12)
+  jobs/nightly_compaction    inbox → stats + immutable daily log files (D-027)
+
+tests/
+  core/                      Attempt.test.ts, EloRating.test.ts, … (Vitest, node env)
+  fixtures/                  elo-golden.json — hand-computed regression pins
+```
+
+**Dependency direction (explicit, see D-030 and D-036):**
+
+| Directory | May import from |
+|---|---|
+| `shared/` | nothing — plain data, constants and tiny pure helpers only |
+| `core/` | `core/`, `shared/` (types and pure helpers only). Never `ui/`, `data/`, `sync/`, `services/`. |
+| `data/` | `core/` (types only), `shared/` |
+| `services/` | `core/`, `data/`, `sync/`, `shared/` |
+| `sync/` | `core/`, `data/`, `shared/` |
+| `ui/` | `core/` (types only), `services/`, `shared/` |
+
+**`core/` performs no writes.** Any flow step marked `[DB write]` belongs to a repository, never to a `core/` class.
+
+---
+
+## Flow index
+
+| ID | Flow | Trigger |
+|---|---|---|
+| F1 | App startup | App launched |
+| F2 | Answer a question (hot path) | Student taps an option |
+| F3 | Pick the next question | After F2, or practice starts |
+| F4 | Background sync | Open, every 5 min, app backgrounded |
+| F5 | Question pack update | During F1 and F4 |
+| F6 | Apply an answer-key correction | Sync response contains corrections |
+| F7 | Sign-in and history rebuild | Guest signs in, or new device |
+| F8 | Live mock | Student starts a scheduled mock |
+| F9 | Nightly compaction (server) | Scheduled job |
+| F10 | Streak reminder | Daily, at the student's chosen time |
+| F11 | Report a question error | "Report error" tapped |
+| F12 | Delete account | Confirmed in Settings |
+
+---
+
+## F1: App startup (entry point)
+
+```
+main.ts › bootstrap()
+├─ data/database.ts › openDatabase()                     [DB read]
+├─ services/AuthService.ts › restoreSession()            [DB read]
+├─ sync/PackUpdater.ts › ensureBundledPacks()            [DB write] first launch only
+├─ data/repositories/DailyRepository.ts › today()         [DB read]
+├─ core/StreakTracker.ts › evaluate(todaySummary)         pure
+├─ app/App.svelte › mount()                              [UI]
+└─ ⟶ async sync/SyncManager.ts › start()                 → F4, F5
+```
+
+**Failure path:** if the database fails to open, show a "Storage unavailable" screen with a retry. Nothing on the network blocks first paint; sync starts only after the UI is mounted.
+
+---
+
+## F2: Answer a question (hot path, < 50 ms)
+
+```
+ui/screens/Practice.svelte › onOptionTap(index)
+└─ services/PracticeSession.ts › submitAnswer(index)
+   ├─ core/Attempt.ts › Attempt.create(question, chosen, ms, ctx)  pure
+   ├─ ⟦ txn ⟧
+   │  ├─ data/repositories/AttemptRepository.ts › append()          [DB write]
+   │  ├─ core/ReviewScheduler.ts › review(cardState, attempt)       pure
+   │  ├─ data/repositories/CardRepository.ts › put()                [DB write]
+   │  ├─ core/EloRating.ts › updateSkill(skill, questionRating, outcome) pure
+   │  ├─ data/repositories/SkillRepository.ts › put()               [DB write]
+   │  ├─ core/StreakTracker.ts › apply(attempt, todaySummary)       pure
+   │  └─ data/repositories/DailyRepository.ts › put()               [DB write]
+   │  ⟦ /txn ⟧
+   ├─ ui/screens/Practice.svelte › showFeedback()                   [UI]
+   └─ → F3
+```
+
+`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022).
+
+**Why one transaction:** five separate writes cost far more than one commit on a Redmi 9A class device, and either everything is saved or nothing is.
+**Ordering:** render the next question optimistically and let the transaction commit behind it; never block the tap on the commit. Flush any in-flight transaction on `onPause` so a backgrounded app cannot lose an answer.
+**Failure path:** if the transaction fails, nothing is saved, the attempt object is kept in memory and retried with the same UUID (idempotent), and an error is reported to Sentry. The UI shows "Couldn't save, retrying" — the attempt is not silently lost.
+
+---
+
+## F3: Pick the next question
+
+```
+services/PracticeSession.ts › next()
+├─ data/repositories/CardRepository.ts › dueCards()                  [DB read]
+├─ data/repositories/SkillRepository.ts › get(subtopic)              [DB read]
+├─ core/AdaptiveEngine.ts › targetRange(skill)                       pure
+├─ data/repositories/QuestionRepository.ts › candidates(range)       [DB read]
+└─ core/QuestionPicker.ts › pick(dueCards, candidates, recentIds)    pure
+```
+
+`PracticeSession` does the reads and hands plain data to `QuestionPicker`, so `core/` never imports `data/` (D-030).
+
+Order of preference: due revision cards first, then a new question within ±1 difficulty band of the student's rating, avoiding recently seen ones.
+**Failure path:** if no candidate exists, widen the range; if still none, show "You've finished this sub-topic".
+
+---
+
+## F4: Background sync
+
+```
+sync/SyncManager.ts › runOnce()
+├─ data/repositories/AttemptRepository.ts › unsynced(limit 200)    [DB read]
+├─ data/repositories/ReportRepository.ts › pending(limit 20)        [DB read]
+├─ sync/SyncManager.ts › buildBatch()                              pure
+├─ ⟶ POST /sync  → server/functions/sync                          [network]
+│  ├─ dedupe by batchId (sync_batches)
+│  ├─ insert attempt_inbox + question_reports
+│  ├─ derive daily_stats from the attempts (D-028)
+│  └─ return { newCursor, corrections }
+├─ data/repositories/AttemptRepository.ts › markSynced(ids)        [DB write]
+├─ data/repositories/ReportRepository.ts › markSent(ids)           [DB write]
+├─ sync/CorrectionApplier.ts › apply(corrections)                  → F6
+└─ sync/PackUpdater.ts › checkForUpdates()                         → F5
+```
+
+**Payload:** attempts plus `reports[]` (F11). No client-computed `daily` aggregates — the server derives them (D-028).
+**Failure path:** on network error, keep attempts unsynced and retry with backoff. Retries are safe because the server ignores duplicate `batchId`s (see D-009, D-023). A partial success never happens: the transaction either accepts the batch or not.
+
+---
+
+## F5: Question pack update
+
+```
+sync/PackUpdater.ts › checkForUpdates()
+├─ ⟶ GET manifest.json                                     [network]
+├─ sync/ManifestVerifier.ts › verify(manifest)             Ed25519, see D-025
+├─ sync/PackUpdater.ts › diff(manifest, localPacks)        pure
+└─ for each changed pack:
+   ├─ ⟶ GET pack file                                      [network]
+   ├─ sync/PackUpdater.ts › checkSha256()
+   └─ data/repositories/QuestionRepository.ts › replacePack()   [DB write]
+```
+
+**Failure path:** if the signature or hash fails, discard the download, keep the old pack, report to Sentry. Never install an unverified pack.
+
+---
+
+## F6: Apply an answer-key correction
+
+```
+sync/CorrectionApplier.ts › apply(corrections)
+└─ for each correction:
+   ├─ data/repositories/CorrectionRepository.ts › put()              [DB write]
+   ├─ data/repositories/AttemptRepository.ts › byQuestion(qid)       [DB read]
+   ├─ core/Replayer.ts › regrade(attempts, newAnswer)                pure
+   │  └─ per attempt: core/Attempt.ts › Attempt.regrade(newAnswer)    pure
+   ├─ ⟦ txn ⟧ data/repositories/{Card,Skill}Repository.ts › put()    [DB write]
+   └─ return { changedCount }  → services/ raises an event, ui shows the banner   [UI]
+```
+
+`sync/` may not import `ui/`, so the applier returns a count and the UI reacts to it.
+
+See D-022. The original attempts are never edited; only derived state is recomputed.
+
+**Ordering rule:** the local `corrections` row is written *before* the pack is re-downloaded, and it overrides the answer key for **grading** from that moment on. The question **display** updates when the corrected pack lands. Without this rule, a student who answers the question between the correction sync and the pack download is graded against a key we already know is wrong.
+
+---
+
+## F7: Sign-in and history rebuild
+
+```
+services/AuthService.ts › signInWithGoogle()                        [network]
+├─ guest with local data?  → SyncManager.uploadAll()                → F4
+└─ new device?
+   ├─ ⟶ download checkpoint + log files newer than the checkpoint   [network]
+   ├─ data/repositories/AttemptRepository.ts › mergeAll()           [DB write]
+   ├─ core/Replayer.ts › rebuild(attempts, checkpoint)  pure → {cards, skills}
+   └─ data/repositories/{Card,Skill}Repository.ts › putAll()        [DB write]
+```
+
+See D-016 and D-026. Merge = combine both logs, de-duplicate by attempt ID, sort by `at`, replay from the newest checkpoint. Replaying the full log is not required once a checkpoint exists.
+**Failure path:** if a log file fails to download, keep what merged, mark history incomplete in `syncMeta`, and retry on the next sync. Never wipe local attempts on a failed rebuild.
+
+---
+
+## F8: Live mock
+
+```
+ui/screens/Mock.svelte › start()
+└─ services/MockService.ts › startSession(mockId)
+   ├─ ⟶ RPC start_mock → server records startedAt, returns questions without answers   [network]
+   ├─ data/repositories/MockRepository.ts › saveSession(questions, ttl)   [DB write]
+   ├─ … student answers locally, no grading on device …
+   └─ ⟶ RPC grade_mock(answers)                                    [network]
+      └─ server: time-window check, speed check, grade, store score, update leaderboard
+```
+
+See D-029. Mock questions are saved locally with a TTL and cleared on successful submit, so a phone call or a 4G drop does not end the session; reopening resumes while the window is open. Mock questions are never written to the `questions` store, so they do not enter the offline practice bank.
+**Failure path:** answers are saved locally during the test; if submission fails, retry until the window closes. A session that never submits is graded as abandoned, not as zero.
+**Offline edge:** if the network is down when the student opens a mock, the mock cannot start (questions live on the server). The UI says so before the tap, not after.
+
+---
+
+## F9: Nightly compaction (server)
+
+```
+server/jobs/nightly_compaction › run()
+├─ read attempt_inbox
+├─ update question_stats (attempts, correct, avgMs, elo)
+├─ write one immutable file per user per day (users/<id>/<yyyy-mm-dd>.gz)   D-027
+├─ if due, write a checkpoint row (cursor, cardStates, skills)              D-026
+├─ recompute daily_stats from attempts, not from client aggregates          D-028
+└─ delete processed inbox rows
+```
+
+See D-023, D-026, D-027, D-028. Must be idempotent: running it twice must not double-count and must not rewrite an existing day file. Daily files are immutable by construction; a failed run loses at most one day, which the next run re-derives from the inbox.
+
+---
+
+## F10: Streak reminder
+
+```
+services/ReminderService.ts › schedule(reminderTime)                        [notification]
+└─ at reminder time:
+   ├─ data/repositories/DailyRepository.ts › today()                        [DB read]
+   ├─ core/StreakTracker.ts › isDoneToday(todaySummary, settings)           pure
+   └─ if false → show local notification                                    [notification]
+```
+
+See D-024. Rescheduled whenever F2 completes today's goal or settings change.
+
+---
+
+## F11: Report an error on a question
+
+```
+ui/screens/ReportError.svelte › submit(reason)
+└─ services/ReportService.ts › report(qid, qv, reason)
+   ├─ data/repositories/ReportRepository.ts › queue()               [DB write]
+   └─ ⟶ next sync batch: reports[] → question_reports              [network]
+```
+
+Queued offline and sent with the next sync batch, so reporting never fails on patchy 4G. Requires one contract addition: a `reports: [{ qid, qv, reason, at }]` array (max 20 per batch) in the sync payload.
+**Failure path:** stays queued; a report is never dropped silently. Duplicate reports for the same question version are collapsed on the device.
+
+---
+
+## F12: Delete account
+
+```
+ui/screens/Settings.svelte › confirmDelete()
+└─ services/AccountService.ts › deleteAccount()
+   ├─ ⟶ RPC delete_user()                                          [network]
+   │  └─ server: delete daily_stats, question_reports, mock_answers,
+   │     mock_sessions, attempt_inbox, sync_batches, checkpoints,
+   │     profiles, log files under users/<id>/, then the auth user
+   ├─ data/database.ts › wipeLocal()                                [DB write]
+   └─ sync/SyncManager.ts › stop()
+```
+
+Promised in the feature list and required by the DPDP Act: deletion must be complete, including object storage — deleting the auth user alone leaves the log files behind.
+**Failure path:** if the server call fails, do **not** wipe local data; show the error and retry. Local wipe happens only after the server confirms, otherwise the account becomes undeletable while its data still exists.

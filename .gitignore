@@ -1,0 +1,24 @@
+node_modules/
+coverage/
+dist/
+build/
+*.log
+.env
+.env.*
+!.env.example
+
+# Capacitor / Android build output (Week 4 onward)
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.aab
+*.apk
+*.keystore
+*.jks
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
