@@ -79,6 +79,9 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-038 | Replay takes an injected `ReplayIndex`; attempts stay lean | Data | Accepted |
 | D-039 | Replay re-derives correctness from the versioned answer key | Data | Accepted |
 | D-040 | Checkpoint cursor is `"<at>:<id>"`, compared as a tuple | Data | Accepted |
+| D-041 | A streak day needs one graded answer; `dailyGoal` is separate | Product | Accepted |
+| D-042 | Derive the streak from daily summaries, no extra store | Data | Accepted |
+| D-043 | Skips do not count in daily counters | Data | Accepted |
 
 ---
 
@@ -527,3 +530,36 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** The position is exact at ties, survives a pruned cursor attempt, and both the phone and the server can compute it from the log alone. Tests pin the boundary cases: equal timestamps ordered by id, the cursor attempt excluded, and a checkpoint with no following attempts.
 - **Trade-off accepted:** An invented string format that every writer must use correctly. A late-synced attempt whose `at` is at or before the cursor is excluded, because there is no sequence number to place it; that is the same clock-skew boundary the daily log files already accept.
 - **Revisit when:** Sync gains a server-assigned monotonic sequence or per-user offsets, or clock skew between devices shows up in real logs.
+
+## D-041: A streak day needs one graded answer; `dailyGoal` is separate
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Product
+- **Context:** `PROJECT_SPEC.md` promises streaks, a configurable `dailyGoal` (default 10) and a reminder "if today's streak isn't done", but never defines what completes a day. `DailySummary` has no goal field, and F10 passes settings while F1 evaluates a summary. Skips are already excluded from derived state (D-034), so they cannot complete a day either.
+- **Decision:** A day completes the streak when it has **at least one graded answer** in IST. The streak is independent of `dailyGoal`; the goal is a progress target shown as `attempted / goal`, and the reminder fires while `goalMet(todaySummary, dailyGoal)` is false. Default goal stays 10.
+- **Alternatives considered:** Require `dailyGoal` graded answers for the streak (stronger habit target, but raising the goal retroactively breaks past days unless the goal used each day is snapshotted in `DailySummary`, and lowering it makes old days count); count any attempt including skips (contradicts D-034 and lets a student hold a streak without answering); fix the threshold at 10 and drop the setting (less flexible, one more constant to explain).
+- **Why:** One real answer is a forgiving daily habit, needs no contract change, and keeps the goal a preference that can change without rewriting history. The reminder still pushes toward the goal, so the app is not encouraging a token answer.
+- **Trade-off accepted:** A single question keeps the streak, which can feel cheap; the reminder may keep firing after the streak is safe but before the goal is met, which is intentional but must be worded clearly in the UI.
+- **Revisit when:** Retention data shows one-answer days dominate, or the product wants the streak to mean the full daily goal; then snapshot the goal per day in `DailySummary` before changing the rule.
+
+## D-042: Derive the streak from daily summaries, no extra store
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** The data model has no streak field. D-030 already fixes `StreakTracker.apply(attempt, todaySummary) → DailySummary`, so `apply` only maintains daily counters. A separate `streak` row would be derived state that has to be synced, repaired after a correction and kept consistent with the attempt log — exactly the class of bug D-016 and D-026 exist to avoid.
+- **Decision:** `StreakTracker.evaluate(summaries, todayKey)` derives `{ current, doneToday }` by scanning the `dailySummary` rows backwards from today (or yesterday when today is not done yet). No new store, no migration, no sync payload. `current` is the run of consecutive days with `attempted > 0`.
+- **Alternatives considered:** Persist `StreakState { current, lastActiveDay }` in a new store (O(1) reads, but another derived value that can drift and must be merged across devices); compute from the full attempt log (heavier and duplicates the server's `daily_stats` derivation, D-028); compute only on the server and sync it (breaks the offline-first rule and the home screen's first paint).
+- **Why:** The daily rows are already the local source for streaks and charts, the scan is at most a few hundred entries, and the server can derive the same number from `daily_stats` with the same rule. A missed write cannot desync a derived value because there is nothing extra to keep in sync.
+- **Trade-off accepted:** The streak is bounded by local retention (about 12 months), and there is no "best streak" until one is derived separately. `evaluate` is O(days), which is irrelevant at this scale.
+- **Revisit when:** Local daily rows are pruned below realistic streak lengths, or a best-streak or calendar heatmap needs history beyond the retained window.
+
+## D-043: Skips do not count in daily counters
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** `DailySummary` holds `attempted`, `correct` and `ms`, and accuracy is `correct / attempted`. A skip is logged for analytics but is a no-op for Elo and FSRS (D-034), and D-041 excludes it from the streak. If a skip also increments `attempted`, the accuracy of a student who skips hard questions falls even though they never answered them.
+- **Decision:** `StreakTracker.apply` ignores a skip entirely: `attempted`, `correct` and `ms` are unchanged. A skip on a day with no row still creates a zero row, so the day exists without counting. Skips remain in the attempt log for time-on-task analysis later.
+- **Alternatives considered:** Count the skip in `attempted` and `ms` but exclude it from the streak and accuracy (needs a separate `graded`/`skipped` split in `DailySummary`, a contract change and a migration); count everything (accuracy and average time become misleading); drop skips from the log (loses the signal that a question is confusing).
+- **Why:** Accuracy and average time stay honest, the streak rule has one definition, and no new field is needed. The attempt log still records the skip with its duration if the product later wants it.
+- **Trade-off accepted:** Time spent reading a question before skipping is not counted as practice time. A skip-only day writes a zero row and breaks the streak, which is the intended behaviour.
+- **Revisit when:** Time-on-task becomes a product metric, in which case add a `skipped` counter and a `skippedMs` field instead of overloading `attempted`.

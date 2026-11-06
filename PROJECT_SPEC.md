@@ -152,7 +152,7 @@ All study logic runs on the phone. The CDN delivers content; Supabase stores sma
 
 Dependency direction: `ui → services/sync → core ← data`. `core/` imports only `core/`, types and pure helpers from `shared/contract.ts`, and pure third-party libraries (`ts-fsrs`); it performs no reads or writes, and repositories do all database work (D-030, D-036, D-037). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
 
-**Step 2 core (landed 2026-11-04 to 2026-11-07):** `shared/contract.ts` holds every boundary type and constant, plus `istDayKey`, `encodeCursor` and `compareCursor`; `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts` and `Replayer.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins, FSRS-7 schedule pins and checkpoint-resume tests. `tsc --noEmit` and `npm test` both pass. The remaining core classes are listed in the step tracker.
+**Step 2 core (landed 2026-11-04 to 2026-11-07):** `shared/contract.ts` holds every boundary type and constant, plus `istDayKey`, `encodeCursor` and `compareCursor`; `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts` and `StreakTracker.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins, FSRS-7 schedule pins, checkpoint-resume tests and IST streak boundaries. `tsc --noEmit` and `npm test` both pass. The remaining core classes are listed in the step tracker.
 
 ---
 
@@ -171,7 +171,7 @@ The attempt log is the single source of truth. FSRS card state and Elo ratings a
 | skills | subtopicId, elo, attemptCount | Elo rating, derived |
 | corrections | qid, toVersion, seen | Corrected-question notes |
 | bookmarks | qid, createdAt | Saved questions |
-| dailySummary | date, attempted, correct, ms | Streak and charts |
+| dailySummary | date, attempted (graded only), correct, ms | Streak and charts (D-041..D-043) |
 | settings | language, theme, dailyGoal, examDate, reminderTime | Preferences |
 | syncMeta | deviceId, cursor, lastSyncAt | Sync bookkeeping |
 
@@ -257,6 +257,8 @@ response
 6. **Guest mode:** all local; first sign-in uploads the local log.
 7. **Reminders:** local notification at the chosen time if today's streak isn't done.
 8. **Streak day boundary:** Indian Standard Time.
+
+**Streak rule:** a day counts when it has at least one graded (non-skip) answer; `dailyGoal` is a separate target that drives the reminder, and skips change neither the counters nor the streak (D-041..D-043). The streak is derived from `dailySummary` at startup, not stored separately (D-042).
 
 **Correction path:** a wrong key is republished as `v + 1` with an append-only `question_corrections` row. On next sync, each phone re-grades past attempts on that question, replays FSRS and Elo for it, and shows a note plus banner. The server re-grades affected `mock_answers` and updates the leaderboard. Original attempts are never edited. If the correction arrives before the corrected pack, the local `corrections` row overrides the answer key for grading immediately; the question display updates when the pack lands (F6).
 
@@ -362,7 +364,7 @@ response
 | External review fixes | Done |
 | 1.5 Data contract | Done |
 | 1.6 External review (second pass) | Done. D-026 to D-031 accepted |
-| 2 OOP core classes | **In progress** — 2.0 scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, tests done (2026-11-07). Next: `StreakTracker`, `QuestionPicker`, `AdaptiveEngine` |
+| 2 OOP core classes | **In progress** — 2.0 scaffold, `Attempt`, `EloRating`, `ReviewScheduler`, `Replayer`, `StreakTracker`, tests done (2026-11-07). Next: `QuestionPicker`, `AdaptiveEngine` |
 | 3 Content pipeline | Pending |
 | 4 UI design system (fonts, colours, components) | Pending |
 | 5–6 App build | Pending |

@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts`, `src/core/ReviewScheduler.ts`, `src/core/Replayer.ts` (plus `tests/core/*.test.ts` and the fixtures). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 2 (OOP core) is in progress. **Landed and tested:** `shared/contract.ts`, `src/core/Attempt.ts`, `src/core/EloRating.ts`, `src/core/ReviewScheduler.ts`, `src/core/Replayer.ts`, `src/core/StreakTracker.ts` (plus `tests/core/*.test.ts` and the fixtures). Everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -11,6 +11,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-04 (Step 2.1):** `ReviewScheduler` is real and synchronous; F2 calls `review(cardState, outcome, now, examDeadline)` and caps the due date at the exam (D-037).
 >
 > **Updated 2026-11-07 (Step 2.2):** `Replayer` is real. F6 now re-grades through the corrected index and rebuilds; F7 names `rebuild(attempts, checkpoint, index)`; the checkpoint cursor is the `"<at>:<id>"` tuple (D-038..D-040). F2 also states where a new card comes from.
+>
+> **Updated 2026-11-07 (Step 2.3):** `StreakTracker` is real. F1 derives the streak from all daily rows instead of one summary; F2 names `apply(attempt, todaySummary)`; F10 uses `goalMet(todaySummary, settings.dailyGoal)` (D-041..D-043).
 
 ---
 
@@ -53,8 +55,8 @@ src/
                              updateQuestionRating / newSkill
     ReviewScheduler.ts       landed: newCard / review (FSRS-7, sync preset, D-037)
     Replayer.ts              landed: rebuild / regrade (checkpoint replay, D-038..D-040)
-    Question.ts  AdaptiveEngine.ts  QuestionPicker.ts
-    StreakTracker.ts                                                 (planned)
+    StreakTracker.ts         landed: apply / evaluate / goalMet (IST days, D-041..D-043)
+    Question.ts  AdaptiveEngine.ts  QuestionPicker.ts                (planned)
   data/
     database.ts              Dexie schema and open()                  (planned)
     repositories/            QuestionRepository, AttemptRepository, CardRepository,
@@ -119,8 +121,9 @@ main.ts › bootstrap()
 ├─ data/database.ts › openDatabase()                     [DB read]
 ├─ services/AuthService.ts › restoreSession()            [DB read]
 ├─ sync/PackUpdater.ts › ensureBundledPacks()            [DB write] first launch only
-├─ data/repositories/DailyRepository.ts › today()         [DB read]
-├─ core/StreakTracker.ts › evaluate(todaySummary)         pure
+├─ shared/contract.ts › istDayKey(now)                    pure
+├─ data/repositories/DailyRepository.ts › all()           [DB read]
+├─ core/StreakTracker.ts › evaluate(summaries, todayKey)  pure → {current, doneToday}
 ├─ app/App.svelte › mount()                              [UI]
 └─ ⟶ async sync/SyncManager.ts › start()                 → F4, F5
 ```
@@ -148,7 +151,7 @@ ui/screens/Practice.svelte › onOptionTap(index)
    └─ → F3
 ```
 
-`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022). `ReviewScheduler.review` calls the FSRS-7 preset synchronously (correct → `Good`, wrong → `Again`), and clamps the new due date to `examDeadline` without touching stability (D-037). `cardState` comes from `CardRepository.get(qid)`; when the question has never been served, `PracticeSession` creates it with `ReviewScheduler.newCard(qid, now)` before the review, so a skip stores a fresh card that is still due rather than advancing anything.
+`outcome` is `'correct' | 'wrong' | 'skip'`, derived from `Attempt.record.correct` (`skip` when `chosen === null`). A skip is logged but is a no-op for Elo and FSRS (D-034). `Attempt.create` captures `qid` and the question version `qv` so a later correction can re-grade against the right key (D-022). `ReviewScheduler.review` calls the FSRS-7 preset synchronously (correct → `Good`, wrong → `Again`), and clamps the new due date to `examDeadline` without touching stability (D-037). `cardState` comes from `CardRepository.get(qid)`; when the question has never been served, `PracticeSession` creates it with `ReviewScheduler.newCard(qid, now)` before the review, so a skip stores a fresh card that is still due rather than advancing anything. `StreakTracker.apply(attempt, todaySummary)` returns the day's updated counters and starts the row when `todaySummary` is null; a skip leaves `attempted`, `correct` and `ms` unchanged, so it cannot complete the streak (D-041, D-043).
 
 **Why one transaction:** five separate writes cost far more than one commit on a Redmi 9A class device, and either everything is saved or nothing is.
 **Ordering:** render the next question optimistically and let the transaction commit behind it; never block the tap on the commit. Flush any in-flight transaction on `onPause` so a backgrounded app cannot lose an answer.
@@ -295,11 +298,11 @@ See D-023, D-026, D-027, D-028. Must be idempotent: running it twice must not do
 services/ReminderService.ts › schedule(reminderTime)                        [notification]
 └─ at reminder time:
    ├─ data/repositories/DailyRepository.ts › today()                        [DB read]
-   ├─ core/StreakTracker.ts › isDoneToday(todaySummary, settings)           pure
+   ├─ core/StreakTracker.ts › goalMet(todaySummary, settings.dailyGoal)     pure
    └─ if false → show local notification                                    [notification]
 ```
 
-See D-024. Rescheduled whenever F2 completes today's goal or settings change.
+See D-024 and D-041. The reminder keeps firing until the daily goal is met, even when the streak is already safe; it is rescheduled whenever F2 changes today's summary or settings change.
 
 ---
 
