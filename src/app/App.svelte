@@ -1,10 +1,14 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
+  import { Capacitor } from '@capacitor/core';
   import type { Settings } from '../../shared/contract';
+  import { appConfig } from '../config';
   import type { AppDatabase } from '../data/database';
   import { SettingsRepository } from '../data/repositories/SettingsRepository';
   import { ProgressService } from '../services/ProgressService';
   import { PracticeService } from '../services/PracticeService';
+  import { AccountMismatchError, type AuthState } from '../services/AuthService';
+  import { HistoryError } from '../services/HistoryService';
   import { examDeadlineFrom } from '../services/examDeadline';
   import { PackInstaller } from '../sync/PackInstaller';
   import { CONTENT_PUBLIC_KEY } from '../sync/contentPublicKey';
@@ -17,6 +21,7 @@
   import PracticeRoute from './PracticeRoute.svelte';
   import NavBar from './NavBar.svelte';
   import { currentPath, matchPath, subscribePath, type Route } from './router';
+  import { createSyncRuntime } from './syncRuntime';
 
   let { db, initialSettings, deviceId }: { db: AppDatabase; initialSettings: Settings; deviceId: string } =
     $props();
@@ -34,6 +39,20 @@
     { publicKeyPem: CONTENT_PUBLIC_KEY },
   );
 
+  /**
+   * Null on a guest-only build (no Supabase URL/key at compile time), so every
+   * account action is hidden instead of failing at runtime (D-073, D-075).
+   */
+  const runtime = untrack(() =>
+    createSyncRuntime({
+      db,
+      deviceId,
+      config: appConfig(),
+      examDeadline: examDeadlineFrom(initialSettings.examDate),
+      native: Capacitor.isNativePlatform(),
+    }),
+  );
+
   let settings = $state<Settings>(untrack(() => initialSettings));
   let path = $state(currentPath());
   let online = $state(true);
@@ -41,6 +60,11 @@
   let contentState = $state<'preparing' | 'ready' | 'failed'>('preparing');
   /** Bumped after a successful install so mounted routes re-read the bank. */
   let contentVersion = $state(0);
+  let account = $state<AuthState>({ status: 'guest', userId: null, email: null });
+  let accountBusy = $state(false);
+  let accountProblem = $state<'mismatch' | 'failed' | null>(null);
+  /** The account whose log has already been uploaded and pulled this session. */
+  let handledUser: string | null = null;
 
   const route = $derived(matchPath(path));
   const titleKey = $derived(titleKeyFor(route));
@@ -66,14 +90,95 @@
     globalThis.addEventListener('online', syncOnline);
     globalThis.addEventListener('offline', syncOnline);
 
+    const stopAuth =
+      runtime === null
+        ? null
+        : runtime.auth.subscribe((state) => {
+            account = state;
+            if (state.status === 'signed-in' && state.userId !== null) {
+              if (handledUser !== state.userId) {
+                handledUser = state.userId;
+                void syncAfterSignIn(state.userId);
+              }
+            } else {
+              handledUser = null;
+            }
+          });
+
+    if (runtime !== null) {
+      void runtime.auth.load(globalThis.location.href).finally(() => {
+        runtime.scheduler.start();
+      });
+    }
+
     void installContent();
 
     return () => {
       stopRouter();
+      runtime?.scheduler.stop();
+      stopAuth?.();
       globalThis.removeEventListener('online', syncOnline);
       globalThis.removeEventListener('offline', syncOnline);
     };
   });
+
+  /**
+   * First sync after sign-in (F7, D-074): upload whatever the guest recorded,
+   * then download the account's log. Derived state is rebuilt once by the pull;
+   * a failure leaves the scheduler to retry with its own backoff.
+   */
+  async function syncAfterSignIn(userId: string): Promise<void> {
+    if (runtime === null) return;
+
+    accountBusy = true;
+    accountProblem = null;
+    console.info(`signed in as ${userId}`);
+
+    try {
+      await runtime.sync.uploadAll({ allowEmpty: true });
+    } catch (error) {
+      console.warn('could not upload local history', error);
+    }
+
+    try {
+      const summary = await runtime.history.pull();
+      if (summary.inserted > 0) contentVersion += 1;
+    } catch (error) {
+      if (!(error instanceof HistoryError) || error.code !== 'unauthenticated') {
+        console.warn('could not download history', error);
+      }
+    } finally {
+      accountBusy = false;
+      void runtime.scheduler.runNow('manual');
+    }
+  }
+
+  async function signIn(): Promise<void> {
+    if (runtime === null) return;
+
+    accountBusy = true;
+    accountProblem = null;
+    try {
+      await runtime.auth.signIn();
+      // `syncAfterSignIn` owns `accountBusy` from here.
+    } catch (error) {
+      accountBusy = false;
+      accountProblem = error instanceof AccountMismatchError ? 'mismatch' : 'failed';
+      console.warn('sign-in failed', error);
+    }
+  }
+
+  async function signOut(): Promise<void> {
+    if (runtime === null) return;
+
+    accountBusy = true;
+    try {
+      await runtime.auth.signOut();
+      accountProblem = null;
+    } finally {
+      accountBusy = false;
+    }
+  }
 
   /**
    * Installs the packs shipped in the APK (D-059). It runs after first paint
@@ -179,7 +284,16 @@
     {:else if route.name === 'progress'}
       <Placeholder titleKey="progress.title" />
     {:else if route.name === 'settings'}
-      <SettingsScreen {settings} onchange={(patch) => void save(patch)} />
+      <SettingsScreen
+        {settings}
+        onchange={(patch) => void save(patch)}
+        {account}
+        {accountBusy}
+        {accountProblem}
+        canSignIn={runtime !== null}
+        onSignIn={() => void signIn()}
+        onSignOut={() => void signOut()}
+      />
     {:else}
       <Placeholder titleKey="notFound.title" noteKey="notFound.body" />
     {/if}

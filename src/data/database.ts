@@ -88,6 +88,16 @@ export interface SyncMetaRow {
   readonly lastSyncAt: number | null;
   /** Absent on rows written before Step 7B; read as null. */
   readonly pendingBatch?: PendingBatch | null;
+  /**
+   * The first account that adopted this device (D-075). Absent on rows written
+   * before Step 7C. A different account is refused rather than mixing logs.
+   */
+  readonly accountId?: string | null;
+  /**
+   * Position of the last attempt folded in from the server (F7). Null means the
+   * next pull is a full history download. Absent on rows written before 7C.
+   */
+  readonly historyCursor?: Cursor | null;
 }
 
 export class AppDatabase extends Dexie {

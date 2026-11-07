@@ -1,14 +1,14 @@
 # CGL GK Master — Project Spec
 
 **Last updated:** 2026-11-07
-**Status:** Steps 1–6 are complete; Step 7A (sync backend) and Step 7B (client sync) landed on 2026-11-07. The migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` are written and exercised against the real SQL in PGlite; the client `SyncManager` pins each batch, drives the retry curve and folds corrections in. Auth wiring, the sync timer and the nightly archive remain (§5, §13, D-063..D-072).
+**Status:** Steps 1–6 and 7A–7C are complete. Step 7A wrote and tested the server migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` in PGlite; Step 7B gave the client pinned batch retries, a report queue and correction rebuilds; Step 7C adds Google sign-in through a small GoTrue PKCE client, the five-minute sync scheduler and the paged history pull. Staging account deletion, live mocks and the nightly archive remain (§5, §13, D-063..D-076).
 
 This is the single source of truth for what we are building and why. Companion files:
 
 | File | Purpose |
 |---|---|
 | `PROJECT_SPEC.md` | This file: what we are building, the full approved design |
-| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-046) |
+| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-076) |
 | `flow.md` | Code execution flows: entry points and call order between files |
 | `REVIEW-2026-11-01.md` | Step 1.6 external review: findings, open questions, what changed |
 
@@ -145,12 +145,13 @@ All study logic runs on the phone. The CDN delivers content; Supabase stores sma
 | Local storage | IndexedDB via Dexie |
 | Android packaging | Capacitor |
 | Backend | Supabase (Postgres, Google auth, Row-Level Security, storage) |
+| Auth client | Small in-app GoTrue PKCE client, no `supabase-js` (D-073) |
 | File delivery | Cloudflare Pages / CDN |
 | Revision algorithm | FSRS-7 via `ts-fsrs` v6, synchronous preset, fuzzing off (D-037) |
 | Question generation | Claude API (Batch API, smaller model for drafts) |
 | Monitoring | Sentry free tier |
 
-Dependency direction: `ui → services/sync → core ← data`. `core/` imports only `core/`, types and pure helpers from `shared/contract.ts`, and pure third-party libraries (`ts-fsrs`); it performs no reads or writes, and repositories do all database work (D-030, D-036, D-037). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
+Dependency direction: `ui → services/sync/auth → core ← data`. `core/` imports only `core/`, types and pure helpers from `shared/contract.ts`, and pure third-party libraries (`ts-fsrs`); it performs no reads or writes, and repositories do all database work (D-030, D-036, D-037). `shared/contract.ts` is plain data shared by the app, the admin bundle and the server functions.
 
 **Step 2 core (completed 2026-11-04 to 2026-11-07):** `shared/contract.ts` holds every boundary type and constant, plus `istDayKey`, `encodeCursor` and `compareCursor`; `src/core/Attempt.ts`, `EloRating.ts`, `ReviewScheduler.ts`, `Replayer.ts`, `StreakTracker.ts`, `AdaptiveEngine.ts` and `QuestionPicker.ts` are implemented and unit-tested with Vitest, including hand-computed Elo pins, FSRS-7 schedule pins, checkpoint-resume tests, IST streak boundaries, band widening and picker priority/fallback. `tsc --noEmit` and `npm test` both pass. `Question.ts` moves to Step 3 with the content pipeline.
 
@@ -161,6 +162,8 @@ Dependency direction: `ui → services/sync → core ← data`. `core/` imports 
 **Step 7A sync backend (completed 2026-11-07):** `supabase/migrations/` defines `profiles`, `sync_state`, `sync_batches`, `attempt_inbox` (one row per attempt, D-063), `daily_stats`, `question_stats`, `checkpoints`, `question_corrections` and `question_reports`, with indexes, Row-Level Security for `authenticated` and no access for `anon`. `apply_sync_batch(jsonb)` is the only write path: one transaction validates the batch, returns a stored response for a repeated `batchId`, dedupes attempts by primary key, updates aggregates (D-064, D-065, D-067) and returns `SyncResponse`. `sync_pull(text, integer)` pages the log for a new device (F7). `compact_sync_inbox(interval)` prunes only behind a checkpoint (D-066). `supabase/functions/sync/index.ts` is a thin Deno adapter. 38 new tests boot Postgres in WASM through `@electric-sql/pglite` and run the migrations unchanged, including RLS as a non-owner (D-068); 388 tests pass.
 
 **Step 7B client sync (completed 2026-11-07):** `src/sync/SyncManager.ts` sends unsynced attempts and queued reports in one batch at a time (200 attempts, 20 reports), records the server cursor and folds corrections in. The batch id and its exact contents are pinned in `syncMeta.pendingBatch` before the request, so a retry after a lost response or an app restart resends the same set and receives the server's stored response (D-067, D-070). `src/sync/SyncTransport.ts` is the only file that touches `fetch`, the URL and the token (D-069); `src/sync/backoff.ts` doubles 1 s → 5 min with jitter and honours `retryAfterMs`. Report taps live in a new `reports` table, Dexie schema v2, keyed `[qid+qv+reason]` (D-071). `src/sync/CorrectionApplier.ts` stores a batch of corrections and rebuilds cards/skills once with a corrected index; `PracticeService.answer` grades against `CorrectionRepository.answerFor` from the moment the row lands (D-072). 58 new tests cover replies, retries, pinning, corrections, the transport and the queue; 446 tests pass. The sync timer and the real access token are Step 7C.
+
+**Step 7C auth and scheduler (completed 2026-11-07):** `src/auth/` is a small GoTrue client instead of `supabase-js`: S256 PKCE with a random `state`, an `OAuthBrowser` seam (Capacitor Browser + the `com.cglgkmaster.app://auth-callback` deep link on Android, a page redirect on the web), a session in `localStorage` and a 10-minute pending verifier in `sessionStorage` (D-073). `src/services/AuthService.ts` restores the session, refreshes single-flight 60 s before expiry, claims the device for one account and refuses a second with a clear message (D-075). `src/services/HistoryService.ts` pages `sync_pull` from `syncMeta.historyCursor`, merges by attempt id, rebuilds derived state once and advances the cursor only after a complete pull (D-074). `src/services/SyncScheduler.ts` owns the five-minute timer, `online`/visibility wakes, auth/offline gating and `retryInMs` scheduling, with one run in flight (D-076); `App.svelte` only starts and stops it. `android/app/src/main/AndroidManifest.xml` gains the VIEW/BROWSABLE intent filter, and `.env.example` documents `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `VITE_AUTH_REDIRECT_URL`. 95 new tests cover PKCE (including the RFC 7636 vector), the GoTrue client, token stores, auth orchestration, paging, the pull transport and the scheduler; 541 tests pass. Measured bundle: 88.59 kB gzip JS and 4.05 kB gzip CSS. The OAuth round trip and token refresh still need a staging Supabase project; the Gradle build still needs a JDK and Android SDK.
 
 ---
 
@@ -181,7 +184,7 @@ The attempt log is the single source of truth. FSRS card state and Elo ratings a
 | bookmarks | qid, createdAt | Saved questions |
 | dailySummary | date, attempted (graded only), correct, ms | Streak and charts (D-041..D-043) |
 | settings | language, theme, dailyGoal, examDate, reminderTime | Preferences |
-| syncMeta | deviceId, cursor, lastSyncAt, pendingBatch | Sync bookkeeping; `pendingBatch` pins an in-flight batch (D-070) |
+| syncMeta | deviceId, cursor, lastSyncAt, pendingBatch, accountId, historyCursor | Sync bookkeeping; `pendingBatch` pins an in-flight batch (D-070), `accountId` binds the phone to one account (D-075), `historyCursor` is the last pulled position (D-074) |
 | reports | [qid+qv+reason], at, sent | Offline "Report an error" queue, Dexie v2 (D-071) |
 
 ### On the server (Supabase)
@@ -263,18 +266,18 @@ RPC sync_pull(after cursor | null, limit 1..500)
   nextCursor, hasMore }
 ```
 
-Used by a new or second device to merge history from the newest checkpoint onward. At-least-once: the client dedupes by attempt id and sorts by `(at, id)`.
+Used by a new or second device to merge history. `after` is `syncMeta.historyCursor` (null on the first sign-in, which means a full pull). The client pages until `hasMore` is false, merges by attempt id, sorts by `(at, id)` and rebuilds derived state once; the cursor advances only after the last page, so a failed page is re-fetched and deduped rather than restarting the account. At-least-once: the client dedupes by attempt id. Checkpoints are not written yet; 7A-2 will let the pull start from a checkpoint plus the tail (D-074).
 
 ---
 
 ## 8. Sync and corrections
 
 1. **Answer:** one IndexedDB transaction saves the attempt, updates FSRS and Elo, updates today's summary, marks it unsynced.
-2. **Sync:** on app open, every 5 minutes in use, and on background. Duplicates ignored by `batchId`; a repeated batch returns the stored response (D-067), and `daily_stats`/`question_stats` derive inside the same transaction (D-065).
+2. **Sync:** on app open, every 5 minutes in use, and on foreground/online wake (D-009, D-076). A guest or offline device skips the request but keeps the timer. Duplicates ignored by `batchId`; a repeated batch returns the stored response (D-067), and `daily_stats`/`question_stats` derive inside the same transaction (D-065).
 3. **Nightly job:** writes each student's attempts to immutable **daily** log files (D-027), writes a checkpoint **before** any prune (D-026), calibrates `question_stats.elo`, and prunes only attempts a checkpoint already covers (D-066). Must be idempotent.
-4. **New or second device:** download the newest checkpoint and the log files after it, merge with local attempts, de-duplicate by attempt ID, sort by `(at, id)`, and replay from the checkpoint cursor (D-026, D-038, D-040).
+4. **New or second device:** upload the local log, then page `sync_pull` from `historyCursor`, merge with local attempts, de-duplicate by attempt ID, sort by `(at, id)`, and replay the full log once. The cursor advances only after a complete pull; checkpoints make the pull cheaper in 7A-2 (D-074).
 5. **Content updates:** check the signed manifest; re-download only changed packs; reject anything unsigned or with a bad hash.
-6. **Guest mode:** all local; first sign-in uploads the local log.
+6. **Guest mode:** all local; the first sign-in uploads the local log, then downloads the account's history. `syncMeta.accountId` binds the phone to that account, and a different account is refused until the app data is cleared (D-075).
 7. **Reminders:** local notification at the chosen time if today's streak isn't done.
 8. **Streak day boundary:** Indian Standard Time.
 
@@ -292,6 +295,8 @@ Used by a new or second device to merge history from the newest checkpoint onwar
 | Fake app clones | Play Store only, verified app-to-domain link, in-app "Official links" page |
 | Email spoofing | SPF, DKIM, DMARC on the domain |
 | Account takeover | 1-hour tokens, rotating refresh tokens, strict CSP |
+| Session storage | WebView `localStorage` for the session, `sessionStorage` for the PKCE verifier with a 10-minute TTL; no third-party script on the auth path (D-073) |
+| Account mixing | One Google account per device; a second account is refused until the app data is cleared (D-075) |
 | XSS | Questions rendered as plain text only; strict CSP |
 | Score cheating | Leaderboard only from server-graded live mocks |
 | Data access abuse | Row-Level Security on every table |
@@ -413,7 +418,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 3 Content pipeline | **Done 2026-11-07** — `Question.ts`, strict CSV master validator, pack builder, Ed25519 manifest signing, tests (233 passing). Admin verification UI deferred to Step 7 (D-047..D-050) |
 | 4 UI design system (fonts, colours, components) | **Done 2026-11-07** — tokens, base and component layers, self-hosted Mukta subset, living preview, 47 design-system tests (D-051..D-054) |
 | 5–6 App build | **Done 2026-11-07** — Step 5: Vite + Svelte 5 shell, hash router, Dexie schema and eight repositories, typed bilingual UI, Home + Settings (D-055..D-058). Step 6: signed bundled pack install, single-transaction answer cycle, due-first picker, sub-topic chooser and practice/feedback screen (D-059..D-062, 350 tests) |
-| 7 Backend & security | **7A + 7B done 2026-11-07** — migrations, RLS, `apply_sync_batch`, `sync_pull`, `compact_sync_inbox`, thin `/sync` Edge adapter, 38 PGlite tests (D-063..D-068). Client `SyncManager` with pinned retries, transport seam, report queue and correction rebuild, 58 client tests in total (D-069..D-072). Pending: 7C auth + sync timer/history pull, 7D security finish, 7E live mocks, 7A-2 archive + checkpoints |
+| 7 Backend & security | **7A + 7B + 7C done 2026-11-07** — migrations, RLS, `apply_sync_batch`, `sync_pull`, `compact_sync_inbox`, thin `/sync` Edge adapter, 38 PGlite tests (D-063..D-068). Client `SyncManager` with pinned retries, transport seam, report queue and correction rebuild (D-069..D-072). PKCE sign-in, session refresh, account claim, five-minute scheduler and paged history pull, 95 more tests (D-073..D-076). Pending: 7D security finish + account deletion, 7E live mocks, 7A-2 archive + checkpoints |
 | 8 Polish & launch | Pending |
 
 ---

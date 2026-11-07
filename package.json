@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
     "@capacitor/core": "^8.6.0",
     "dexie": "^4.4.7",
     "svelte": "^5.57.3",

@@ -22,6 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- The OAuth callback returns to the app, not to a browser tab (D-073). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.cglgkmaster.app" android:host="auth-callback" />
+            </intent-filter>
+
         </activity>
 
         <provider

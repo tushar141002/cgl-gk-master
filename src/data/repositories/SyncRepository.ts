@@ -61,4 +61,34 @@ export class SyncRepository {
     }
     await this.db.syncMeta.put({ ...existing, pendingBatch: batch });
   }
+
+  /**
+   * Binds this device to an account (D-075). The first sign-in adopts the
+   * device; after that a different account is refused so one student's log
+   * cannot be uploaded into another account.
+   */
+  async claimAccount(userId: string): Promise<'claimed' | 'ok' | 'mismatch'> {
+    return this.db.transaction('rw', this.db.syncMeta, async () => {
+      const existing = await this.db.syncMeta.get(ROW_ID);
+      if (existing === undefined) {
+        throw new Error('cannot claim an account before ensureDeviceId');
+      }
+
+      const owner = existing.accountId ?? null;
+      if (owner === null) {
+        await this.db.syncMeta.put({ ...existing, accountId: userId });
+        return 'claimed';
+      }
+      return owner === userId ? 'ok' : 'mismatch';
+    });
+  }
+
+  /** Advances the pull position only after a complete history download (F7). */
+  async setHistoryCursor(cursor: Cursor | null): Promise<void> {
+    const existing = await this.db.syncMeta.get(ROW_ID);
+    if (existing === undefined) {
+      throw new Error('cannot record a history cursor before ensureDeviceId');
+    }
+    await this.db.syncMeta.put({ ...existing, historyCursor: cursor });
+  }
 }

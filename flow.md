@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 7B (client sync) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and the repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer and the client sync manager (`src/sync/`), the practice and progress services (`src/services/`), the backend migrations and tests (`supabase/`, `tests/server/`) and the Home/chooser/practice screens. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 7C (auth, sync timer and history pull) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and the repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer, client sync and the auth/history/scheduler seams (`src/auth/`, `src/sync/`, `src/services/`), the backend migrations and tests (`supabase/`, `tests/server/`) and the Home/chooser/practice screens. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -27,6 +27,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 7A):** the server half of F4 is real. `supabase/migrations/` defines the tables, RLS, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox`; `supabase/functions/sync/index.ts` is the thin `/sync` adapter. F9 now runs `compact_sync_inbox()` and the archive half is still planned as 7A-2. The client `SyncManager` and the checkpoint loader are 7B/7C (D-063..D-068).
 >
 > **Updated 2026-11-07 (Step 7B):** the client half of F4 is real. `sync/SyncManager.ts` pins a batch, sends it through `sync/SyncTransport.ts`, records the cursor and folds corrections in through `sync/CorrectionApplier.ts`; F11's queue is `data/repositories/ReportRepository.ts` in a new `reports` table (Dexie v2). F6 is now one transaction and `PracticeService.answer` grades against a stored correction; the timer/backoff caller and the real token are 7C (D-069..D-072).
+>
+> **Updated 2026-11-07 (Step 7C):** F1 creates the runtime and starts the scheduler after `auth.load`; F4 runs through `services/SyncScheduler.ts` with a real bearer token, a five-minute timer, wake signals and retry scheduling; F7 is the real PKCE sign-in, account claim, upload-then-pull and single rebuild (D-073..D-076).
 
 ---
 
@@ -64,9 +66,19 @@ shared/
 
 src/
   main.ts                    entry point: bootstrap, first-run theme, mount, Android back
+  config.ts                  readConfig() / appConfig(): Supabase URL, anon key, redirect
+                             URL; missing values make the build guest-only (D-073)
+  auth/                      GoTrue and PKCE seams, no UI (D-073)
+    pkce.ts                  verifier / S256 challenge / state / authorize URL / callback parse
+    GoTrueClient.ts          exchangeCode / refresh / logout over injected fetch + clock
+    TokenStore.ts            session in localStorage; memory fallback
+    PendingAuthStore.ts      verifier + state in sessionStorage, 10-minute TTL
+    OAuthBrowser.ts          Capacitor Browser + app deep link; window redirect on web
   app/
     App.svelte               root component: route switch, settings save, i18n provider,
-                             content install state (F1)
+                             content install state, account card, runtime + scheduler (F1)
+    syncRuntime.ts           composition root: auth, transports, SyncManager, HistoryService,
+                             SyncScheduler; null for a guest-only build (F1, F7)
     HomeRoute.svelte         loads ProgressService.overview(), renders Home
     PracticeRoute.svelte     chooser/session state, timing and callbacks (F2, F3)
     bootstrap.ts             bootstrap(): open DB, ensure settings, mint device id (F1)
@@ -91,15 +103,22 @@ src/
     PracticeService.ts       landed: next / answer (one transaction, D-060, D-072)
     ProgressService.ts       landed: overview / topics for Home and the chooser
     examDeadline.ts          landed: examDeadlineFrom(examDate)
-    AuthService.ts  ReminderService.ts  MockService.ts
+    AuthService.ts           landed: sign-in, session restore, single-flight refresh,
+                             account claim, sign-out (F7, D-073, D-075)
+    HistoryService.ts        landed: paged sync_pull, merge, one rebuild, cursor (F7, D-074)
+    SyncScheduler.ts         landed: 5-minute timer, wake signals, retry and auth gate (D-076)
+    ReminderService.ts  MockService.ts
     ReportService.ts  AccountService.ts                       (planned)
   sync/
     PackInstaller.ts         landed: verify manifest + hash, replace packs (D-059)
     contentPublicKey.ts      landed: pinned Ed25519 public key
     SyncManager.ts           landed: runOnce / uploadAll, pinned retry, corrections
                              (D-069..D-072)
-    SyncTransport.ts         landed: SyncTransport seam + HttpSyncTransport (D-069)
+    SyncTransport.ts         landed: SyncTransport + HttpSyncTransport; PullTransport +
+                             HttpPullTransport (D-069 amendment, D-074)
     CorrectionApplier.ts     landed: one-transaction correction fold (F6, D-072)
+    derived.ts               landed: shared replay index + rebuild of cardState, skills,
+                             dailySummary (F6, F7)
     backoff.ts               landed: retryDelay() doubling, jitter, server hint
     PackUpdater.ts  ManifestVerifier.ts  CheckpointLoader.ts     (planned)
   ui/
@@ -132,10 +151,15 @@ supabase/
 tests/
   core/                      Attempt.test.ts, EloRating.test.ts, ... (Vitest, node env)
   shared/                    canonicalJson.test.ts, uuid.test.ts
-  app/                       router.test.ts, theme.test.ts, bootstrap.test.ts
-  data/                      repositories.test.ts (fake-indexeddb, schema v2 reports)
+  app/                       router.test.ts, theme.test.ts, bootstrap.test.ts,
+                             config.test.ts
+  auth/                      pkce.test.ts (RFC 7636 vector), GoTrueClient.test.ts,
+                             TokenStore.test.ts
+  data/                      repositories.test.ts (fake-indexeddb, schema v2 reports,
+                             account claim and history cursor)
   sync/                      SyncManager.test.ts, CorrectionApplier.test.ts,
-                             HttpSyncTransport.test.ts, backoff.test.ts
+                             HttpSyncTransport.test.ts, PullTransport.test.ts,
+                             backoff.test.ts
   tools/                     csv.test.ts, master.test.ts, build.test.ts, cli.test.ts,
                              fixtures.ts (in-memory master rows)
   ui/                        tokens.test.ts — WCAG contrast, token discipline, tap targets,
@@ -143,6 +167,9 @@ tests/
   server/                    harness.ts (PGlite boots the real migrations), sql/auth-shim.sql,
                              SyncBackend.test.ts — acceptance, idempotency, validation, IST
                              days, cursor, corrections, pull, RLS, compaction
+  services/                  PracticeService.test.ts, ExamDeadline.test.ts,
+                             AuthService.test.ts, HistoryService.test.ts,
+                             SyncScheduler.test.ts
   fixtures/                  elo-golden.json, fsrs-golden.json — hand-computed pins
 
 content/
@@ -169,9 +196,11 @@ tools/content/               offline build, run with tsx; never imported by the 
 | `shared/` | nothing — plain data, constants and tiny pure helpers only |
 | `core/` | `core/`, `shared/` (types and pure helpers only), and pure third-party libraries such as `ts-fsrs`. Never `ui/`, `data/`, `sync/`, `services/`. |
 | `data/` | `core/` (types only), `shared/` |
-| `services/` | `core/`, `data/`, `sync/`, `shared/` |
+| `services/` | `core/`, `data/`, `sync/`, `auth/`, `shared/` |
 | `sync/` | `core/`, `data/`, `shared/` |
-| `app/` | `app/`, `ui/`, `data/`, `services/`, `sync/`, `shared/`. The shell is the only place that owns a long-lived database handle. |
+| `auth/` | `auth/`, `shared/` (types only). Never `ui/`, `data/`, `sync/`, `services/`; the GoTrue seam knows no database. |
+| `config.ts` | nothing — reads `import.meta.env` and returns plain data |
+| `app/` | `app/`, `ui/`, `data/`, `services/`, `sync/`, `auth/`, `config.ts`, `shared/`. The shell is the only place that owns a long-lived database handle. |
 | `ui/` | `ui/` (styles and components), `core/` (types only), `shared/`. Screens receive data and callbacks as props; they never construct a repository. |
 | `tools/content/` | `shared/`, `src/core/Question.ts` (read-only validation), Node built-ins. Never `ui/`, `data/`, `services/`, `sync/`. |
 | `content/` | nothing — CSV data and build output only |
@@ -215,15 +244,26 @@ main.ts › start()                                       [UI]
 ├─ app/App.svelte › onMount()
 │  ├─ app/router.ts › subscribePath()                    hash changes → route
 │  ├─ window › online / offline listeners                connectivity banner
+│  ├─ app/syncRuntime.ts › createSyncRuntime()           null on a guest-only build (D-073)
+│  │  ├─ config.ts › appConfig()                          URL + anon key + redirect
+│  │  ├─ auth/GoTrueClient.ts + TokenStore + PendingAuthStore
+│  │  ├─ auth/OAuthBrowser.ts                             Capacitor Browser or window
+│  │  ├─ services/AuthService.ts                          one session, single-flight refresh
+│  │  ├─ sync/SyncTransport.ts › HttpSyncTransport + HttpPullTransport
+│  │  ├─ sync/SyncManager.ts + services/HistoryService.ts
+│  │  └─ services/SyncScheduler.ts                        5-minute timer, wake gating
+│  ├─ services/AuthService.ts › subscribe()               account card state
+│  ├─ services/AuthService.ts › load(location.href)       restore session, finish web callback
+│  │  └─ then services/SyncScheduler.ts › start()         first run + timer (F4)
 │  └─ ⟶ sync/PackInstaller.ts › install()                async, never blocks first paint (D-059)
-│     ├─ ⟶ GET ./packs/manifest.json                     bundled asset
-│     ├─ sync/contentPublicKey.ts › CONTENT_PUBLIC_KEY   pinned Ed25519 key
-│     ├─ verify signature + SHA-256 + core/Question.ts validation
-│     └─ data/repositories/QuestionRepository.ts › replacePack()  [DB write] one transaction
+│        ├─ ⟶ GET ./packs/manifest.json                  bundled asset
+│        ├─ sync/contentPublicKey.ts › CONTENT_PUBLIC_KEY   pinned Ed25519 key
+│        ├─ verify signature + SHA-256 + core/Question.ts validation
+│        └─ data/repositories/QuestionRepository.ts › replacePack()  [DB write] one transaction
 └─ app/HomeRoute.svelte › services/ProgressService.ts › overview()   [DB read]
 ```
 
-**Failure path:** if the database fails to open, `main.ts` mounts `ui/screens/StorageError.svelte` with a retry instead of `App`. Nothing on the network blocks first paint; the bundled install starts after mount and a failure leaves the previous pack in place plus a retry banner in the shell. A failed settings write is reported by the shell banner and the DOM is restored to the stored values. The CDN check (`sync/PackUpdater.ts`) is still planned and will hang off the same verified install path (F5).
+**Failure path:** if the database fails to open, `main.ts` mounts `ui/screens/StorageError.svelte` with a retry instead of `App`. Nothing on the network blocks first paint; the bundled install starts after mount and a failure leaves the previous pack in place plus a retry banner in the shell. A failed settings write is reported by the shell banner and the DOM is restored to the stored values. A build without `VITE_SUPABASE_URL` or the anon key creates no runtime, so practice stays fully local and Settings explains that sign-in is unavailable; a failed session restore leaves the student a guest. The CDN check (`sync/PackUpdater.ts`) is still planned and will hang off the same verified install path (F5).
 
 ---
 
@@ -291,42 +331,47 @@ The band starts at ±100 Elo around `skill.elo`, then widens to ±200 and ±400,
 
 ## F4: Background sync
 
-Landed in 7A (server) and 7B (client). The timer and token source are 7C (D-063..D-072).
+Landed in 7A (server), 7B (client) and 7C (timer, token and pull). D-063..D-076.
 
 ```
-sync/SyncManager.ts › runOnce()                                     landed
-├─ data/repositories/SyncRepository.ts › getMeta()                  [DB read]
-├─ sync/SyncManager.ts › pinnedBatch() | freshBatch()               choose next batch
-│  ├─ pinned: data/repositories/AttemptRepository.ts › byIds(ids)   [DB read]
-│  └─ fresh:  data/repositories/AttemptRepository.ts › unsynced(200) [DB read]
-│              data/repositories/ReportRepository.ts › pending(20)  [DB read]
-├─ data/repositories/SyncRepository.ts › setPending(batch)          [DB write, before send]
-├─ ⟶ sync/SyncTransport.ts › send(batch)                            [network]
-│  └─ sync/SyncTransport.ts › HttpSyncTransport › POST /sync → supabase/functions/sync/index.ts
-│     ├─ method, Bearer header, ≤512 KB body                        landed
-│     └─ ⟶ RPC public.apply_sync_batch(p_batch)                     [DB write]
-│        ├─ insert sync_batches; a repeated batchId returns its stored
-│        │  response and writes nothing                             D-067
-│        ├─ insert attempt_inbox once per (user_id, attempt_id)     D-063
-│        ├─ increment question_stats from the inserted rows only    D-065
-│        ├─ recompute daily_stats for the touched IST days          D-065
-│        ├─ insert question_reports, duplicates ignored             F11
-│        ├─ read corrections since the watermark, advance it        D-067
-│        └─ advance sync_state.last_cursor, store the response
-├─ sync/CorrectionApplier.ts › apply(corrections)                    → F6
-│  └─ before the pin clears, so a crash replays and de-dupes by id
-├─ ⟦ txn ⟧ replay the reply                                          [DB write]
-│  ├─ data/repositories/AttemptRepository.ts › markSynced(ids)
-│  ├─ data/repositories/ReportRepository.ts › markSent(reports)
-│  ├─ data/repositories/SyncRepository.ts › setPending(null)
-│  └─ data/repositories/SyncRepository.ts › setCursor(newCursor, serverTime)
-└─ sync/PackUpdater.ts › checkForUpdates()                           → F5 (planned)
+services/SyncScheduler.ts › start() / runNow(reason)                 landed (D-076)
+├─ gate: AuthService.isSignedIn() and navigator.onLine
+├─ services/AuthService.ts › getAccessToken()                        refresh 60 s before expiry
+├─ sync/SyncManager.ts › runOnce()                                   landed
+│  ├─ data/repositories/SyncRepository.ts › getMeta()                [DB read]
+│  ├─ sync/SyncManager.ts › pinnedBatch() | freshBatch()             choose next batch
+│  │  ├─ pinned: data/repositories/AttemptRepository.ts › byIds(ids) [DB read]
+│  │  └─ fresh:  data/repositories/AttemptRepository.ts › unsynced(200) [DB read]
+│  │              data/repositories/ReportRepository.ts › pending(20)  [DB read]
+│  ├─ data/repositories/SyncRepository.ts › setPending(batch)        [DB write, before send]
+│  ├─ ⟶ sync/SyncTransport.ts › send(batch)                          [network]
+│  │  └─ sync/SyncTransport.ts › HttpSyncTransport › POST /sync → supabase/functions/sync/index.ts
+│  │     ├─ method, Bearer header, ≤512 KB body                      landed
+│  │     └─ ⟶ RPC public.apply_sync_batch(p_batch)                   [DB write]
+│  │        ├─ insert sync_batches; a repeated batchId returns its stored
+│  │        │  response and writes nothing                           D-067
+│  │        ├─ insert attempt_inbox once per (user_id, attempt_id)   D-063
+│  │        ├─ increment question_stats from the inserted rows only  D-065
+│  │        ├─ recompute daily_stats for the touched IST days        D-065
+│  │        ├─ insert question_reports, duplicates ignored           F11
+│  │        ├─ read corrections since the watermark, advance it      D-067
+│  │        └─ advance sync_state.last_cursor, store the response
+│  ├─ sync/CorrectionApplier.ts › apply(corrections)                 → F6
+│  │  └─ before the pin clears, so a crash replays and de-dupes by id
+│  ├─ ⟦ txn ⟧ replay the reply                                       [DB write]
+│  │  ├─ data/repositories/AttemptRepository.ts › markSynced(ids)
+│  │  ├─ data/repositories/ReportRepository.ts › markSent(reports)
+│  │  ├─ data/repositories/SyncRepository.ts › setPending(null)
+│  │  └─ data/repositories/SyncRepository.ts › setCursor(newCursor, serverTime)
+│  └─ sync/PackUpdater.ts › checkForUpdates()                        → F5 (planned)
+└─ services/SyncScheduler.ts › schedule(retryInMs | 5 min)           next run, one at a time
 ```
 
+**Trigger:** `start()` on app open, a five-minute timer while the app is in use, an `online` event, and `visibilitychange` when the app returns to the foreground (D-009, D-076). `wake` and `manual` runs may send an empty batch so corrections and the cursor arrive without a new answer; the five-minute tick does not. Concurrent triggers share the run in flight.
 **Payload:** attempts plus `reports[]` (F11). No client-computed `daily` aggregates — the server derives them (D-028, D-065).
 **Retry state:** the batch is pinned in `syncMeta.pendingBatch` before the request, so a retry — even after a restart — sends the same `batchId` with the same attempt ids and reports and receives the server's stored response (D-067, D-070). A new attempt that arrives meanwhile waits for the next batch. The pin is cleared only on success or a poison rejection (`invalid_batch`, `invalid_json`).
-**Result:** `runOnce` returns `idle | ok | retry{retryInMs} | failed`. Network throw, `timeout`, `sync_failed`, `batch_in_progress` and any `retryAfterMs` are retryable (`sync/backoff.ts` doubles from 1 s to 5 min with jitter); `unauthenticated`, `forbidden` and validation errors are terminal. The caller owns the timer (7C).
-**Failure path:** on network error, keep attempts unsynced and retry the pinned batch with backoff. Retries are safe because a repeated `batchId` returns the stored response (D-067) and a resent attempt is rejected by the inbox primary key (D-063). A partial success never happens: the RPC accepts the batch or raises, and the whole transaction rolls back.
+**Result:** `runOnce` returns `idle | ok | retry{retryInMs} | failed`. Network throw, `timeout`, `sync_failed`, `batch_in_progress` and any `retryAfterMs` are retryable (`sync/backoff.ts` doubles from 1 s to 5 min with jitter); `unauthenticated`, `forbidden` and validation errors are terminal. The scheduler owns the timer: a retryable result schedules `retryInMs`, anything else the regular interval.
+**Failure path:** on network error, keep attempts unsynced and retry the pinned batch with backoff. Retries are safe because a repeated `batchId` returns the stored response (D-067) and a resent attempt is rejected by the inbox primary key (D-063). A partial success never happens: the RPC accepts the batch or raises, and the whole transaction rolls back. A guest or an offline device skips the request but keeps the timer alive, so signing in or coming back online needs no separate path.
 
 ---
 
@@ -382,17 +427,39 @@ See D-022, D-038, D-039 and D-072. The corrected index decides each attempt's ve
 ## F7: Sign-in and history rebuild
 
 ```
-services/AuthService.ts › signInWithGoogle()                        [network]
-├─ guest with local data?  → SyncManager.uploadAll()                → F4
-└─ new device?
-   ├─ ⟶ download checkpoint + log files newer than the checkpoint   [network]
-   ├─ data/repositories/AttemptRepository.ts › mergeAll()           [DB write]
-   ├─ core/Replayer.ts › rebuild(attempts, checkpoint, index)  pure → {cards, skills}
-   └─ data/repositories/{Card,Skill}Repository.ts › putAll()        [DB write]
+ui/screens/Settings.svelte › "Sign in with Google"           [UI]
+└─ app/App.svelte › signIn()
+   └─ services/AuthService.ts › signIn()
+      ├─ auth/pkce.ts › createPkce() + createState()          S256, 48-byte verifier
+      ├─ auth/PendingAuthStore.ts › write()                   sessionStorage, 10-minute TTL
+      ├─ auth/pkce.ts › buildAuthorizeUrl()                   /auth/v1/authorize?provider=google
+      ├─ auth/OAuthBrowser.ts › open() + subscribe()          Custom Tab / page redirect
+      │  └─ callback: com.cglgkmaster.app://auth-callback?code=…&state=…
+      ├─ auth/pkce.ts › parseAuthCallback()                   state must match
+      ├─ auth/GoTrueClient.ts › exchangeCode()                [network]
+      ├─ data/repositories/SyncRepository.ts › claimAccount() [DB read/write] D-075
+      │  └─ mismatch → revoke tokens + AccountMismatchError (Settings asks for a wipe)
+      └─ auth/TokenStore.ts › write()                         localStorage session
+
+then app/App.svelte › syncAfterSignIn(userId)
+├─ sync/SyncManager.ts › uploadAll({ allowEmpty: true })      guest log → server (F4)
+├─ services/HistoryService.ts › pull()                        [network + DB write]
+│  ├─ data/repositories/SyncRepository.ts › getMeta()          historyCursor (null = full pull)
+│  ├─ loop: sync/SyncTransport.ts › HttpPullTransport › POST sync_pull
+│  │        { p_after, p_limit 1..500 } → { attempts, nextCursor, hasMore }
+│  ├─ merge by attempt id; pulled rows stored `synced: 1`
+│  ├─ sync/derived.ts › buildReplayIndex() + replaceDerived()
+│  │  ├─ core/Replayer.ts › rebuild(all, no checkpoint, index)  pure
+│  │  └─ fold dailySummary from the whole log
+│  └─ data/repositories/SyncRepository.ts › setHistoryCursor() only after the last page
+└─ services/SyncScheduler.ts › runNow('manual')               resume the normal timer
 ```
 
-See D-016, D-026, D-038 and D-040. Merge = combine both logs, de-duplicate by attempt ID, sort by `(at, id)`, and keep only attempts strictly after the checkpoint cursor (a `"<at>:<id>"` tuple). Replaying the full log is not required once a checkpoint exists. The `ReplayIndex` is assembled from the `questions` store and `question_corrections`; `rating` is `Question.eloSeed`, fixed for the replay.
-**Failure path:** if a log file fails to download, keep what merged, mark history incomplete in `syncMeta`, and retry on the next sync. Never wipe local attempts on a failed rebuild.
+Sign-in is Google-only via GoTrue on the custom scheme. `auth.load(location.href)` resumes a web redirect; on Android the manifest intent filter delivers the deep link. The local log is uploaded before the first pull, so the same pass returns it marked `synced: 1` (dedupe by attempt id). Derived state is rebuilt once per complete pull, and the attempt log is never edited; stored corrections decide each verdict through `buildReplayIndex` (D-072). Starting from `syncMeta.historyCursor` means the second sign-in downloads only the tail. Checkpoints are not written yet; 7A-2 will let the pull start from a checkpoint plus the tail (D-074).
+
+**Failure path:** a mismatched account or a failed token exchange leaves the student a guest and shows the Settings error, with no batch uploaded. If the upload succeeds but the pull fails, the arrived pages stay merged, the cursor is unchanged and the scheduler retries on its normal timer (D-076). Never wipe local attempts on a failed rebuild.
+
+**Device rule:** `syncMeta.accountId` is claimed by the first account and never changes until the app data is cleared (D-075). Sign-out keeps the claim and the log; signing back into the same account resumes.
 
 ---
 

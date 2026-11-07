@@ -221,6 +221,56 @@ describe('SyncRepository', () => {
       new SyncRepository(db).setPending({ batchId: 'b1', attemptIds: [], reports: [] }),
     ).rejects.toThrow(/ensureDeviceId/);
   });
+
+  it('binds the device to the first account and refuses another (D-075)', async () => {
+    const repo = new SyncRepository(db);
+    await repo.ensureDeviceId(() => 'device-fixed');
+
+    await expect(repo.claimAccount('user-1')).resolves.toBe('claimed');
+    expect((await repo.getMeta())?.accountId).toBe('user-1');
+
+    await expect(repo.claimAccount('user-1')).resolves.toBe('ok');
+    await expect(repo.claimAccount('user-2')).resolves.toBe('mismatch');
+    expect((await repo.getMeta())?.accountId).toBe('user-1');
+  });
+
+  it('keeps the cursor and pinned batch when an account is claimed', async () => {
+    const repo = new SyncRepository(db);
+    await repo.ensureDeviceId(() => 'device-fixed');
+    await repo.setCursor('1:a1', 1_000);
+    const pending = { batchId: 'b1', attemptIds: ['a1'], reports: [] };
+    await repo.setPending(pending);
+
+    await repo.claimAccount('user-1');
+
+    expect(await repo.getMeta()).toMatchObject({
+      cursor: '1:a1',
+      pendingBatch: pending,
+      accountId: 'user-1',
+    });
+  });
+
+  it('refuses an account claim before the device exists', async () => {
+    await expect(new SyncRepository(db).claimAccount('user-1')).rejects.toThrow(/ensureDeviceId/);
+  });
+
+  it('records, advances and clears the history cursor (F7)', async () => {
+    const repo = new SyncRepository(db);
+    await repo.ensureDeviceId(() => 'device-fixed');
+
+    await repo.setHistoryCursor('1700000000000:a1');
+    expect((await repo.getMeta())?.historyCursor).toBe('1700000000000:a1');
+
+    await repo.setHistoryCursor('1700000001000:a2');
+    expect((await repo.getMeta())?.historyCursor).toBe('1700000001000:a2');
+
+    await repo.setHistoryCursor(null);
+    expect((await repo.getMeta())?.historyCursor).toBeNull();
+  });
+
+  it('refuses a history cursor before the device exists', async () => {
+    await expect(new SyncRepository(db).setHistoryCursor('1:a1')).rejects.toThrow(/ensureDeviceId/);
+  });
 });
 
 describe('ReportRepository', () => {

@@ -111,6 +111,10 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-070 | The in-flight batch is pinned before the request; a retry replays it | Sync | Accepted |
 | D-071 | Report taps live in their own table, keyed by question, version and reason | Data | Accepted |
 | D-072 | Corrections are stored first, folded in once and used for grading immediately | Sync | Accepted |
+| D-073 | Hand-rolled minimal GoTrue PKCE client behind `AuthService` | Auth | Accepted |
+| D-074 | History pull pages `sync_pull`; checkpoints wait for 7A-2 | Sync | Accepted |
+| D-075 | One Google account per device; switching needs a data wipe | Auth | Accepted |
+| D-076 | A dedicated `SyncScheduler` owns timing; `App.svelte` only starts it | Sync | Accepted |
 
 ---
 
@@ -877,6 +881,7 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Alternatives considered:** Call `fetch` from `SyncManager` (one fewer file, but auth, URL and retry classification end up in one class and each test mutates globals); inject only `fetch` (narrower, but the manager still owns headers and token lookup, and a fake `Response` cannot easily express "no response at all").
 - **Why:** Retry, pinning and correction handling are tested without a network or a token, and 7C can supply a token source without touching the manager. The untested surface shrinks to one adapter.
 - **Trade-off accepted:** One more interface and a second implementation to keep in step. Until 7C wires a real token, `HttpSyncTransport` is exercised only against a fake `fetch`.
+- **Amendment (2026-11-07, Step 7C):** the history download needs a second endpoint with a different body and paging rule, so `PullTransport.pull(after, limit)` is a second one-method seam beside `send`. `HttpPullTransport` is the only file that knows the `sync_pull` RPC URL; `HistoryService` owns paging and the cursor, for the same reason `SyncManager` owns retries.
 - **Revisit when:** Pull (F7) needs a second transport method, or token refresh grows logic that belongs in a shared client rather than a getter.
 
 ## D-070: The in-flight batch is pinned before the request; a retry replays it
@@ -911,3 +916,47 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** One rebuild covers a whole batch regardless of how many corrections it carries, and the answer key is right at the next tap. The attempt log stays append-only; only derived state moves.
 - **Trade-off accepted:** `changed` counts questions whose verdict flipped, not individual attempts, so the banner wording must say so. A correction whose range spans several versions applies the same new answer to all of them, which is the pack contract's version semantics. Corrections for a question not installed yet are stored and used for grading but skipped by the index until the question arrives.
 - **Revisit when:** 7A-2 checkpoints make a full-log rebuild too expensive on an old device, or corrections arrive in bulk and need an incremental fold.
+
+## D-073: Hand-rolled minimal GoTrue PKCE client behind `AuthService`
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Auth
+- **Context:** F7 needs Google sign-in on Android. `supabase-js` would add its auth, PostgREST and realtime clients to a bundle with a 300 KB compressed ceiling, and its session refresh runs on its own timer and storage layout, which makes the single-flight and mismatch rules hard to test. The app uses exactly three GoTrue calls: exchange a PKCE code, refresh a token, revoke on sign-out.
+- **Decision:** Implement the three calls in `src/auth/GoTrueClient.ts`. PKCE is S256 with a 48-byte verifier and a random `state`; `buildAuthorizeUrl` targets `/auth/v1/authorize?provider=google` and the redirect is the custom scheme `com.cglgkmaster.app://auth-callback`. `OAuthBrowser` is the seam: on Android it opens a Capacitor Browser tab and listens for the app deep link; on the web the page redirects and `auth.load(location.href)` finishes the callback. The session lives in `localStorage`, the pending verifier and state in `sessionStorage` with a 10-minute TTL. `AuthService` owns the current `AuthState`, claims the device on first sign-in (D-075), refreshes single-flight 60 s before expiry, abandons a consent screen after 5 minutes, and makes sign-out best-effort. Fetch, clock, RNG, timers and both stores are injectable.
+- **Alternatives considered:** `supabase-js` (maintained and complete, but adds three clients to the bundle and hides refresh and storage behind its own runtime); a native Google Sign-In plugin (native UX, but still needs a server-side code exchange and adds a plugin to the already unbuildable Gradle setup); the implicit flow (fewer round trips, but tokens arrive in the URL fragment and there is no PKCE).
+- **Why:** The token path is small enough to audit and every branch is testable; the PKCE challenge is pinned against the RFC 7636 Appendix B vector. No third-party script sits between the student and the token.
+- **Trade-off accepted:** We own protocol compatibility with GoTrue, and only Google is supported. The app trusts the WebView's `localStorage`, so a rooted device can read the session; revocation is the only server-side remedy. The whole native round trip is seam-tested only until a Supabase project and a device exist.
+- **Revisit when:** MFA, phone OTP or a second provider is needed, or GoTrue changes the authorize/token contract.
+
+## D-074: History pull pages `sync_pull`; checkpoints wait for 7A-2
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** A new or second device must download the account's attempt log before it can show progress. The server has `sync_pull(after, limit)` but no checkpoint writer yet (7A-2), so a pull cannot start from a snapshot. A single unbounded response would put a whole history in memory and exceed the function timeout; a failed page must not force the student to start over.
+- **Decision:** `PullTransport.pull(after, limit)` posts `{ p_after, p_limit }` to the `sync_pull` RPC. `HistoryService` starts at `syncMeta.historyCursor` (null means a full pull), pages until `hasMore` is false, merges by attempt id, marks pulled rows `synced: 1`, rebuilds cards, skills and daily summaries once, and advances the cursor only after the last page. A failure halfway folds the pages that arrived into the log but keeps the old cursor, so a retry re-fetches them and dedupes locally. The caller uploads the local log before the first pull, so a guest's history is on the server and comes back in the same pass. Page size defaults to 200 and is capped at 500.
+- **Alternatives considered:** Pull from a checkpoint (the intended end state, but there is no checkpoint writer yet and the format would be designed twice); one unbounded call (simplest, but unbounded memory and a likely timeout on a long history); server push (no mobile push infrastructure in v1).
+- **Why:** It works against the server that exists today, keeps every response bounded, and makes a partial failure an inconvenience rather than a restart. One rebuild per pull keeps the cost of a second device acceptable.
+- **Trade-off accepted:** A long history costs several round trips over patchy 4G, and a failure before the first complete pull re-downloads the already-merged pages (they are deduped, not double-counted). Until 7A-2, a very old account can hit the 500-page ceiling and see an error instead of a partial history.
+- **Revisit when:** 7A-2 writes checkpoints; the pull then starts from the newest checkpoint plus the log tail, and this paging path remains the fallback when no checkpoint exists.
+
+## D-075: One Google account per device; switching needs a data wipe
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Auth
+- **Context:** Local attempts carry no account column. If a second Google account signed in on the same phone, the guest log — or the first student's log — would be uploaded into the second account, mixing two people's progress and daily stats. The app cannot tell whose answers an unsynced row belongs to.
+- **Decision:** `syncMeta.accountId` records the first account that signs in. `SyncRepository.claimAccount(userId)` returns `claimed` on the first sign-in, `ok` for the same account and `mismatch` for any other. A mismatch discards the new tokens, revokes them and raises `AccountMismatchError`; Settings tells the student to clear the app's data. Sign-out keeps the claim and the whole local log, so signing back into the same account resumes normally. The in-app wipe and account deletion arrive with F12.
+- **Alternatives considered:** Allow switching (needs an account column on every attempt and a per-account database, a large schema change); wipe automatically on mismatch (destructive without consent); never allow sign-in (safe, but throws away multi-device value).
+- **Why:** A phone is personal in this market, so one account per install matches real use. The check is one row read inside the existing transaction, and a mismatch fails before any batch is uploaded.
+- **Trade-off accepted:** A shared phone cannot host two accounts without clearing app data, and the error message is the only remedy in 7C. A student who signs into the wrong account first must wipe to correct it.
+- **Revisit when:** F12 ships account deletion or one device needs multiple profiles.
+
+## D-076: A dedicated `SyncScheduler` owns timing; `App.svelte` only starts it
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Sync
+- **Context:** D-009 requires a sync on open, every 5 minutes in use and when the app returns to the foreground. Putting `setInterval`, `online` listeners, token gating and retry rescheduling in `App.svelte` makes the most failure-prone logic untestable and lets a second run start while the first is still sending.
+- **Decision:** `src/services/SyncScheduler.ts` owns a 5-minute timer, wake signals, auth/online gating and retry timing. `start()` runs once immediately and subscribes to online/visibility signals through an injected `subscribeWake`; `runNow(reason)` coalesces with any in-flight run; a retryable result schedules `retryInMs`, anything else the regular interval; a guest or offline device skips the request but keeps the timer alive. `start`, `wake` and `manual` may send an empty batch so corrections and the server cursor arrive without a new answer; the five-minute tick does not. `App.svelte` creates the runtime, calls `start()` after `auth.load`, calls `runNow` after the sign-in upload/pull, and `stop()` on unmount.
+- **Alternatives considered:** `setInterval` in the shell (fewer files, but timers, wake listeners and retry state in a component that cannot be unit-tested); sync after every answer (fresher, but too chatty for patchy 4G and adds a request to the 50 ms hot path); native WorkManager (true background sync, but a plugin and build work outside 7C).
+- **Why:** All timing rules fit in one class with injected timers and signals, so the tests run instantly and deterministically. One in-flight promise prevents duplicate batches, and the UI stays a composition root.
+- **Trade-off accepted:** There is no sync while the app is killed; Android may also throttle WebView timers in the background, so "on background" is a best-effort wake, not a guaranteed flush. A device that stays offline keeps a timer that does nothing until the next wake.
+- **Revisit when:** Background delivery is required for reminders or streaks; a WorkManager plugin then owns the schedule and the scheduler keeps the foreground path.
