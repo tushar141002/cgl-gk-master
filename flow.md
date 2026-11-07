@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 8 (first real content batch) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and the repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer, client sync and the auth/history/scheduler seams (`src/auth/`, `src/sync/`, `src/services/`), the backend migrations and tests (`supabase/`, `tests/server/`), the Home/chooser/practice screens and 60 verified bilingual questions in the bundled pack. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 9 (second content batch) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and the repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer, client sync and the auth/history/scheduler seams (`src/auth/`, `src/sync/`, `src/services/`), the backend migrations and tests (`supabase/`, `tests/server/`), the Home/chooser/practice screens, 60 verified bilingual questions in the bundled pack and 300 drafted questions across 12 new sub-topics. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -29,6 +29,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 7B):** the client half of F4 is real. `sync/SyncManager.ts` pins a batch, sends it through `sync/SyncTransport.ts`, records the cursor and folds corrections in through `sync/CorrectionApplier.ts`; F11's queue is `data/repositories/ReportRepository.ts` in a new `reports` table (Dexie v2). F6 is now one transaction and `PracticeService.answer` grades against a stored correction; the timer/backoff caller and the real token are 7C (D-069..D-072).
 >
 > **Updated 2026-11-07 (Step 7C):** F1 creates the runtime and starts the scheduler after `auth.load`; F4 runs through `services/SyncScheduler.ts` with a real bearer token, a five-minute timer, wake signals and retry scheduling; F7 is the real PKCE sign-in, account claim, upload-then-pull and single rebuild (D-073..D-076).
+>
+> **Updated 2026-11-07 (Step 9):** F13 now covers batch 2. The master holds 60 verified and 300 draft rows across 15 sub-topics; `validate` reports all 360, while `build` still emits only the three verified packs, so `public/packs/` and `content/bundled.lock.json` stay at v2 until a draft is promoted (D-078).
 
 ---
 
@@ -176,7 +178,9 @@ tests/
 content/
   master/questions.csv       authoritative bank; batch 1 is 60 verified questions,
                              20 each for polity-fundamental-rights,
-                             history-ancient-india and geography-indian-geography
+                             history-ancient-india and geography-indian-geography;
+                             batch 2 adds 300 draft questions, 25 each in 12 new
+                             sub-topics (D-078)
   sample/questions.csv       four-row pipeline fixture (3 verified, 1 draft)
   bundled.lock.json          lock for the pack shipped inside the APK (D-059)
   packs.lock.json            written by the first CDN build; commit it so versions persist
@@ -579,7 +583,9 @@ npm run content:build -- --key <pem> --url-base <https> [options]
 
 Only `verified` rows are packed; `draft` and `rejected` rows may be incomplete and produce warnings instead of errors (D-047). A blank or duplicate id, an unknown status, a duplicated English question and every issue on a verified row are errors. The build stops before writing anything if the report has an error, so a failed run leaves the previous manifest and lock untouched.
 
-`validate` also prints per-subtopic progress (`verified`, `draft`, `rejected`), so the authoring queue is visible without opening the CSV. `tests/tools/masterFile.test.ts` runs the real master through the same validation on every `npm test`, and `tests/sync/bundledPack.test.ts` verifies and installs `public/packs/` with the pinned key (D-077).
+`validate` also prints per-subtopic progress (`verified`, `draft`, `rejected`), so the authoring queue is visible without opening the CSV. `tests/tools/masterFile.test.ts` runs the real master through the same validation on every `npm test` and asserts lower bounds for the verified and draft batches, and `tests/sync/bundledPack.test.ts` verifies and installs `public/packs/` with the pinned key (D-077, D-078).
+
+Batch 2 adds 300 `draft` rows, so `validate` reports 360 rows across 15 sub-topics while the build still emits the same three verified packs; `public/packs/` and `content/bundled.lock.json` move only when a row is promoted to `verified` (D-078).
 
 `--generated-at <iso>` makes the manifest reproducible; `CGL_SIGNING_KEY` and `CGL_PACK_URL_BASE` replace the two required options. The key is generated outside the repository, and `*.pem` is gitignored. `content/packs.lock.json` is committed so a pack version moves only when its questions change, while the URL always carries the byte hash so a changed file cannot be served from a stale CDN cache.
 

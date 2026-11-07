@@ -1,11 +1,13 @@
-# Content master (Step 3, batch 1 in Step 8)
+# Content master (Step 3; batch 1 in Step 8, batch 2 in Step 9)
 
 The master CSV is the authoring source. The build turns verified rows into
 signed question packs; nothing here ships directly.
 
-- `master/questions.csv` — the real bank. Batch 1 (2026-11-07) has 60 verified
-  questions: 20 each for `polity-fundamental-rights`, `history-ancient-india`
-  and `geography-indian-geography`. They are built into the bundled pack (v2).
+- `master/questions.csv` — the real bank. Batch 1 (Step 8, 2026-11-07) has 60
+  verified questions: 20 each for `polity-fundamental-rights`,
+  `history-ancient-india` and `geography-indian-geography`; they are built into
+  the bundled pack (v2). Batch 2 (Step 9, 2026-11-07) adds 300 `status=draft`
+  questions, 25 each in 12 new sub-topics (D-078). Drafts are not packed.
 - `sample/questions.csv` — four fake rows used to exercise the pipeline.
 - `packs.lock.json` — created by the first real CDN build; commit it so pack
   versions and hashes survive between builds.
@@ -63,6 +65,33 @@ error on a verified row and a warning while both rows are drafts.
   version bump, not a silent edit.
 - `validate` prints progress per subtopic. Use `--verbose` to see every
   warning on a draft.
+
+## Batch 2 rules (D-078)
+
+- 300 rows are `status=draft`, 25 each in `polity-constitution-basics`,
+  `polity-union-executive`, `polity-parliament`, `polity-judiciary`,
+  `polity-federalism-local`, `history-medieval-india`, `history-modern-india`,
+  `history-national-movement`, `history-art-culture`,
+  `geography-physical-india`, `geography-rivers-lakes` and
+  `geography-climate-soils-agriculture`.
+- IDs use the assigned-once prefixes `polity-const`, `polity-exec`,
+  `polity-parl`, `polity-jud`, `polity-fed`, `history-medieval`,
+  `history-modern`, `history-national`, `history-art`, `geography-physical`,
+  `geography-rivers` and `geography-climate`, numbered `0001..0025`. Do not
+  renumber a row; a correction bumps `v` instead.
+- Every row is bilingual `practice` content with four distinct options, an
+  explanation in each language, a difficulty and an official portal link
+  (`india.gov.in`, `sansad.in`, `main.sci.gov.in`, `presidentofindia.nic.in`,
+  `panchayat.gov.in`, `ignca.gov.in`, `asi.nic.in`, `nationalarchives.nic.in`,
+  `amritmahotsav.nic.in`, `mausam.imd.gov.in` or `surveyofindia.gov.in`).
+- Correct answers were rotated to position `index % 4` when the batch was
+  authored, so the letters cycle A/B/C/D. This is a static arrangement, not
+  runtime shuffling (D-032); `answer` still names the printed position.
+- Drafts are not packed until the founder verifies them. Promote a row by
+  checking it against its source, setting `status=verified` and filling
+  `verified_at`; then rebuild the bundled pack.
+- Batch 2 is checked for duplicate English questions against itself and against
+  all 60 verified rows. `validate` repeats that check on every run.
 
 ## Commands
 
@@ -130,7 +159,9 @@ moves that pack's version and the app re-grades past attempts on the next sync
 ## Guard tests
 
 `npm test` runs two checks on this directory: `tests/tools/masterFile.test.ts`
-validates the real master, and `tests/sync/bundledPack.test.ts` verifies the
+validates the real master (currently at least 60 verified and 300 draft rows
+across the 15 sub-topics), and `tests/sync/bundledPack.test.ts` verifies the
 signature on `public/packs/manifest.json` with the pinned key and installs all
 three packs. Rebuild `public/packs/` and update `bundled.lock.json` whenever the
-master changes, or those tests fail.
+set of verified rows changes — adding drafts does not change the pack, so batch
+2 left both untouched.
