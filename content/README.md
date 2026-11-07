@@ -1,4 +1,4 @@
-# Content master (Step 3; batch 1 in Step 8, batch 2 in Step 9)
+# Content master (Step 3; batch 1 in Step 8, batch 2 in Step 9, review in Step 10)
 
 The master CSV is the authoring source. The build turns verified rows into
 signed question packs; nothing here ships directly.
@@ -13,6 +13,8 @@ signed question packs; nothing here ships directly.
   versions and hashes survive between builds.
 - `bundled.lock.json` — lock for the pack shipped inside the APK; the build
   writes both the lock and the signed files under `public/packs/` (D-059).
+- `review/` — exported review sheets with `decision`/`note` columns; fill one,
+  run `content:promote`, then re-export before the next slice (D-079).
 
 The target is about 2,000 verified questions across History, Polity and
 Geography before launch. At 30–40 verified rows a day that is roughly 57 days,
@@ -87,11 +89,48 @@ error on a verified row and a warning while both rows are drafts.
 - Correct answers were rotated to position `index % 4` when the batch was
   authored, so the letters cycle A/B/C/D. This is a static arrangement, not
   runtime shuffling (D-032); `answer` still names the printed position.
-- Drafts are not packed until the founder verifies them. Promote a row by
-  checking it against its source, setting `status=verified` and filling
-  `verified_at`; then rebuild the bundled pack.
+- Drafts are not packed until the founder verifies them. Do not edit
+  `status`/`verified_at` by hand for a reviewed row; export a sheet, mark a
+  decision and run `content:promote` (D-079). Then rebuild the bundled pack.
 - Batch 2 is checked for duplicate English questions against itself and against
   all 60 verified rows. `validate` repeats that check on every run.
+
+## Review and promotion (D-079)
+
+Do not edit `status` or `verified_at` by hand for a reviewed row. The sheet is
+the audit trail and `promote` is the only writer.
+
+1. Export a slice:
+
+   ```sh
+   npm run content:review -- --status draft --out content/review/draft-review.csv
+   npm run content:review -- --status draft --subtopic polity-parliament \
+     --out content/review/polity-parliament.csv --force
+   ```
+
+   `--status` is `draft` (default), `verified`, `rejected` or `all`. A sheet
+   that already exists is kept unless you pass `--force`.
+
+2. Fill `decision` with `approve`, `reject` or `fix`. Leave it blank to defer.
+   `reject` and `fix` need a short `note`; `approve` does not.
+
+3. Apply it:
+
+   ```sh
+   npm run content:promote -- --review content/review/draft-review.csv \
+     --subtopic polity-parliament --at 2026-11-07T00:00:00.000Z
+   ```
+
+   - `approve` → `status=verified`, `verified_at` stamped.
+   - `reject` → `status=rejected`, `verified_at` cleared.
+   - `fix` and blank → row untouched; `fix` notes print as a queue.
+   - A sheet whose `status`, `answer`, `source_url` or `en_q` no longer matches
+     the master is refused; re-export instead of editing the master to match.
+   - `--dry-run` prints the summary without writing. Promotion validates the
+     whole master first and writes atomically.
+
+4. Rebuild the pack as a separate step, then commit the master, the review
+   sheets and the lock together. Promotion never rebuilds on its own.
 
 ## Commands
 
@@ -99,6 +138,10 @@ error on a verified row and a warning while both rows are drafts.
 # Check structure and see what still needs work
 npm run content:validate
 npm run content:validate -- --input content/sample/questions.csv --verbose
+
+# Review and promote a slice (D-079)
+npm run content:review -- --status draft --out content/review/draft-review.csv
+npm run content:promote -- --review content/review/draft-review.csv --subtopic polity-parliament
 
 # Generate the signing key once, outside this repository
 npm run content:keygen -- --out ../cgl-keys

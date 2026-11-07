@@ -4,7 +4,10 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Manifest } from '../../shared/contract';
 import { main, type CliIO } from '../../tools/content/cli';
+import { parseCsv, writeCsv } from '../../tools/content/csv';
+import { COLUMNS } from '../../tools/content/master';
 import { verifyManifest } from '../../tools/content/signing';
+import { masterTable, statusRow } from './fixtures';
 
 const SAMPLE = join(process.cwd(), 'content', 'sample', 'questions.csv');
 
@@ -202,5 +205,58 @@ describe('content CLI', () => {
 
     expect(code).toBe(0);
     expect(messages.join('\n')).toContain('Built 3 pack(s)');
+  });
+
+  it('exports a review sheet, promotes an approval and refuses to overwrite the sheet', async () => {
+    const master = join(repo, 'master.csv');
+    const sheetPath = join(repo, 'review', 'draft-review.csv');
+    const table = masterTable([
+      statusRow('draft', { id: 'polity-fr-0002', en_q: 'Who is the head of state?' }, 2),
+      statusRow('draft', { id: 'polity-fr-0003', en_q: 'Who presides over the Rajya Sabha?' }, 3),
+    ]);
+    await writeFile(
+      master,
+      writeCsv(
+        [...COLUMNS],
+        table.rows.map((row) => row.values),
+      ),
+      'utf8',
+    );
+
+    messages = [];
+    io = capture(messages);
+    const reviewed = await main(['review', '--input', master, '--out', sheetPath], io, repo);
+    expect(reviewed).toBe(0);
+    expect(messages.join('\n')).toContain('Wrote 2 row(s)');
+
+    const sheet = parseCsv(await readFile(sheetPath, 'utf8'));
+    const filled = sheet.rows.map((row) => ({
+      ...row.values,
+      decision: row.values.id === 'polity-fr-0002' ? 'approve' : '',
+    }));
+    await writeFile(sheetPath, writeCsv(sheet.header, filled), 'utf8');
+
+    messages = [];
+    io = capture(messages);
+    const promoted = await main(
+      ['promote', '--review', sheetPath, '--input', master, '--at', '2026-11-07T12:00:00.000Z'],
+      io,
+      repo,
+    );
+    expect(promoted).toBe(0);
+    expect(messages.join('\n')).toContain('Wrote 1 status change(s)');
+
+    const after = parseCsv(await readFile(master, 'utf8'));
+    const approved = after.rows.find((row) => row.values.id === 'polity-fr-0002')!;
+    const untouched = after.rows.find((row) => row.values.id === 'polity-fr-0003')!;
+    expect(approved.values.status).toBe('verified');
+    expect(approved.values.verified_at).toBe('2026-11-07T12:00:00.000Z');
+    expect(untouched.values.status).toBe('draft');
+
+    messages = [];
+    io = capture(messages);
+    const again = await main(['review', '--input', master, '--out', sheetPath], io, repo);
+    expect(again).toBe(1);
+    expect(messages.join('\n')).toContain('already exists');
   });
 });

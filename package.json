@@ -20,6 +20,8 @@
     "format:check": "prettier --check .",
     "verify": "npm run typecheck && npm run test && npm run build",
     "content:validate": "tsx tools/content/cli.ts validate",
+    "content:review": "tsx tools/content/cli.ts review",
+    "content:promote": "tsx tools/content/cli.ts promote",
     "content:build": "tsx tools/content/cli.ts build",
     "content:keygen": "tsx tools/content/cli.ts keygen"
   },

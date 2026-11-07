@@ -1,10 +1,12 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { buildContent, readLock, writeBuild, writeLock } from './build';
-import { parseCsv } from './csv';
+import { parseCsv, writeCsv } from './csv';
 import { ContentError, validateMaster } from './master';
+import { buildReviewSheet, type ReviewStatus } from './review';
+import { promote } from './promote';
 import { generateSigningKeyPair, signBytes } from './signing';
 
 const DEFAULTS = {
@@ -17,16 +19,24 @@ const USAGE = `CGL GK Master content pipeline
 
 Usage:
   npm run content:validate -- [--input <file>] [--verbose]
+  npm run content:review   -- [--status draft|verified|rejected|all] [--subtopic <slug>] [--out <file>] [--force]
+  npm run content:promote  -- --review <sheet.csv> [--input <master>] [--subtopic <slug>] [--at <iso>] [--dry-run]
   npm run content:build    -- --key <private.pem> --url-base <https://...> [options]
   npm run content:keygen   -- --out <directory outside this repository>
 
 Options:
   --input <file>          Master CSV (default: ${DEFAULTS.input})
-  --out <dir>             Build output directory (default: ${DEFAULTS.out})
+  --review <file>         Filled review sheet for \`promote\`
+  --status <status>       Review rows: draft, verified, rejected or all (default: draft)
+  --subtopic <slug>       Limit review or promotion to one sub-topic
+  --out <dir|file>        Build output directory or review sheet path
   --lock <file>           Pack lock file (default: ${DEFAULTS.lock})
   --key <file>            Ed25519 private key in PEM; or set CGL_SIGNING_KEY
   --url-base <url>        CDN base for pack URLs; or set CGL_PACK_URL_BASE
   --generated-at <iso>    Manifest timestamp, for reproducible builds
+  --at <iso>              Verification timestamp for promoted rows (default: now)
+  --force                 Overwrite an existing review sheet
+  --dry-run               Report what \`promote\` would change without writing
   --verbose               Show every warning and error
   --help, -h              Show this text
 `;
@@ -60,9 +70,15 @@ export async function main(
         input: { type: 'string' },
         out: { type: 'string' },
         lock: { type: 'string' },
+        review: { type: 'string' },
+        status: { type: 'string' },
+        subtopic: { type: 'string' },
         key: { type: 'string' },
         'url-base': { type: 'string' },
         'generated-at': { type: 'string' },
+        at: { type: 'string' },
+        force: { type: 'boolean', default: false },
+        'dry-run': { type: 'boolean', default: false },
         verbose: { type: 'boolean', default: false },
         help: { type: 'boolean', short: 'h', default: false },
       },
@@ -93,6 +109,10 @@ export async function main(
     switch (command) {
       case 'validate':
         return await runValidate(parsed.values, io, cwd, verbose);
+      case 'review':
+        return await runReview(parsed.values, io, cwd);
+      case 'promote':
+        return await runPromote(parsed.values, io, cwd, verbose);
       case 'build':
         return await runBuild(parsed.values, io, cwd, verbose);
       case 'keygen':
@@ -134,6 +154,118 @@ async function runValidate(values: Values, io: CliIO, cwd: string, verbose: bool
       : `Master is valid for building; ${report.warnings.length} warning(s) are on drafts.`,
   );
   return 0;
+}
+
+async function runReview(values: Values, io: CliIO, cwd: string): Promise<number> {
+  const input = resolve(cwd, stringValue(values.input) ?? DEFAULTS.input);
+  const status = (stringValue(values.status) ?? 'draft') as ReviewStatus;
+  const subtopic = stringValue(values.subtopic);
+  const out = resolve(cwd, stringValue(values.out) ?? `content/review/${status}-review.csv`);
+
+  const table = parseCsv(await readText(input, 'master'));
+  const sheet = buildReviewSheet(table, {
+    status,
+    ...(subtopic === undefined ? {} : { subtopic }),
+  });
+
+  if (values.force !== true && (await exists(out))) {
+    throw new ContentError(`review sheet "${out}" already exists; pass --force to overwrite it`);
+  }
+
+  await mkdir(dirname(out), { recursive: true });
+  await writeFile(out, writeCsv(sheet.header, sheet.rows, { bom: true }), 'utf8');
+
+  io.out(`Wrote ${sheet.rows.length} row(s) to ${out}`);
+  io.out(
+    `Selected: verified ${sheet.counts.verified}, draft ${sheet.counts.draft}, rejected ${sheet.counts.rejected}`,
+  );
+  io.out('Fill the decision column with approve, reject or fix; reject and fix need a note.');
+  io.out(`Next: npm run content:promote -- --review ${relative(cwd, out)}`);
+  return 0;
+}
+
+async function runPromote(values: Values, io: CliIO, cwd: string, verbose: boolean): Promise<number> {
+  const input = resolve(cwd, stringValue(values.input) ?? DEFAULTS.input);
+  const reviewOption = stringValue(values.review);
+  if (reviewOption === undefined || reviewOption.trim() === '') {
+    throw new ContentError('promote requires --review <sheet.csv> from `content:review`');
+  }
+  const reviewPath = resolve(cwd, reviewOption);
+  const subtopic = stringValue(values.subtopic);
+  const at = stringValue(values.at) ?? new Date().toISOString();
+  const dryRun = values['dry-run'] === true;
+
+  const table = parseCsv(await readText(input, 'master'));
+  const sheet = parseCsv(await readText(reviewPath, 'review sheet'));
+  const summary = promote(table, sheet, { at, ...(subtopic === undefined ? {} : { subtopic }) });
+
+  io.out(
+    `Approved ${summary.approved}, rejected ${summary.rejected}, fix ${summary.fix.length}, ` +
+      `pending ${summary.pending}${summary.ignored === 0 ? '' : `, ignored ${summary.ignored}`}`,
+  );
+  printReviewSubtopics(summary.perSubtopic, io.out);
+  if (summary.fix.length > 0) {
+    io.out('Fix queue:');
+    for (const item of summary.fix) io.out(`  ${item.id}: ${item.note}`);
+  }
+  if (verbose) io.out(`Status changes: ${summary.changed}`);
+
+  if (summary.changed === 0) {
+    io.out('No status changed; the master was not written.');
+    return 0;
+  }
+  if (dryRun) {
+    io.out('Dry run: the master was not written.');
+    return 0;
+  }
+
+  await writeAtomic(
+    input,
+    writeCsv(
+      summary.table.header,
+      summary.table.rows.map((row) => row.values),
+    ),
+  );
+  const report = validateMaster(summary.table);
+  io.out(`Wrote ${summary.changed} status change(s) to ${input}`);
+  io.out(
+    `Master now: verified ${report.counts.verified}, draft ${report.counts.draft}, rejected ${report.counts.rejected}`,
+  );
+  io.out(
+    'Next: rebuild the signed pack with `npm run content:build` and commit the master, reviews and lock together.',
+  );
+  return 0;
+}
+
+function printReviewSubtopics(
+  entries: Readonly<Record<string, { approved: number; rejected: number; fix: number; pending: number }>>,
+  write: (message: string) => void,
+): void {
+  const names = Object.keys(entries).sort((a, b) => a.localeCompare(b));
+  if (names.length === 0) return;
+  write('By subtopic:');
+  for (const name of names) {
+    const entry = entries[name]!;
+    write(
+      `  ${name}: approved ${entry.approved}, rejected ${entry.rejected}, ` +
+        `fix ${entry.fix}, pending ${entry.pending}`,
+    );
+  }
+}
+
+async function writeAtomic(path: string, text: string): Promise<void> {
+  const temporary = `${path}.tmp`;
+  await writeFile(temporary, text, 'utf8');
+  await rename(temporary, path);
+}
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function runBuild(values: Values, io: CliIO, cwd: string, verbose: boolean): Promise<number> {

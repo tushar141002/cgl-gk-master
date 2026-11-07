@@ -31,6 +31,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 7C):** F1 creates the runtime and starts the scheduler after `auth.load`; F4 runs through `services/SyncScheduler.ts` with a real bearer token, a five-minute timer, wake signals and retry scheduling; F7 is the real PKCE sign-in, account claim, upload-then-pull and single rebuild (D-073..D-076).
 >
 > **Updated 2026-11-07 (Step 9):** F13 now covers batch 2. The master holds 60 verified and 300 draft rows across 15 sub-topics; `validate` reports all 360, while `build` still emits only the three verified packs, so `public/packs/` and `content/bundled.lock.json` stay at v2 until a draft is promoted (D-078).
+>
+> **Updated 2026-11-07 (Step 10):** F13 adds the review loop. `content:review` exports a sheet for one status and optional sub-topic; `content:promote` applies approve/reject/fix to the master through a stale-sheet guard and does not rebuild, so the build stays an explicit step (D-079).
 
 ---
 
@@ -189,11 +191,13 @@ content/
 public/packs/                signed manifest and pack files copied into the APK (D-059)
 
 tools/content/               offline build, run with tsx; never imported by the app
-  csv.ts                     strict RFC 4180 reader
+  csv.ts                     strict RFC 4180 reader and writer
   master.ts                  COLUMNS, statuses, difficulty seeds, validateMaster
   build.ts                   buildContent / writeBuild / lock
+  review.ts                  buildReviewSheet; per-status/per-subtopic export (D-079)
+  promote.ts                 apply approve/reject/fix with stale-sheet guard (D-079)
   signing.ts                 Ed25519 sign, verify and keygen
-  cli.ts                     validate / build / keygen entry point (F13)
+  cli.ts                     validate / review / promote / build / keygen entry point (F13)
 ```
 
 **Dependency direction (explicit, see D-030 and D-036):**
@@ -233,7 +237,7 @@ tools/content/               offline build, run with tsx; never imported by the 
 | F10 | Streak reminder | Daily, at the student's chosen time |
 | F11 | Report a question error | "Report error" tapped |
 | F12 | Delete account | Confirmed in Settings |
-| F13 | Build and publish content packs | Developer runs the content CLI |
+| F13 | Review, build and publish content packs | Developer runs the content CLI |
 
 ---
 
@@ -566,6 +570,26 @@ npm run content:validate -- [--input <csv>] [--verbose]
       └─ src/core/Question.ts › Question.issues(record)         same rules as the app
          → report { rows, counts, errors, warnings, questions }
 
+npm run content:review -- [--status draft|verified|rejected|all] [--subtopic <slug>] [--out <csv>] [--force]
+└─ tools/content/cli.ts › main(['review', ...])
+   ├─ tools/content/csv.ts › parseCsv(master)
+   ├─ tools/content/review.ts › buildReviewSheet(table, { status, subtopic })
+   │  → content columns for the selected rows, in file order, decision/note empty
+   └─ tools/content/csv.ts › writeCsv(header, rows, { bom: true })
+      → content/review/<status>-review.csv; refuses to overwrite without --force
+
+npm run content:promote -- --review <csv> [--input <master>] [--subtopic <slug>] [--at <iso>] [--dry-run]
+└─ tools/content/cli.ts › main(['promote', ...])
+   ├─ tools/content/csv.ts › parseCsv(master) + parseCsv(sheet)
+   ├─ tools/content/promote.ts › promote(table, sheet, { at, subtopic })
+   │  ├─ each sheet row: decision must be approve/reject/fix/blank; id unique and in master
+   │  ├─ reject and fix require a note; a stale status/answer/source_url/en_q is refused
+   │  ├─ approve → status=verified, verified_at=at
+   │  ├─ reject  → status=rejected, verified_at=''
+   │  └─ validateMaster(candidate)                         no partial write
+   ├─ tools/content/cli.ts › writeAtomic(master, csv)       .tmp then rename
+   └─ print per-subtopic summary; rebuild stays a separate command
+
 npm run content:build -- --key <pem> --url-base <https> [options]
 └─ tools/content/cli.ts › main(['build', ...])
    ├─ tools/content/build.ts › readLock(path)                    previous versions or null
@@ -583,13 +607,15 @@ npm run content:build -- --key <pem> --url-base <https> [options]
 
 Only `verified` rows are packed; `draft` and `rejected` rows may be incomplete and produce warnings instead of errors (D-047). A blank or duplicate id, an unknown status, a duplicated English question and every issue on a verified row are errors. The build stops before writing anything if the report has an error, so a failed run leaves the previous manifest and lock untouched.
 
+The review loop never edits the CSV by hand: `review` writes a sheet with read-only content and two editable columns, and `promote` is the only writer of `status`/`verified_at`. A decision that is not `approve`, `reject` or `fix` fails the whole sheet, as does a `reject`/`fix` without a note; rows whose content changed since the export are refused, so a stale sheet cannot overwrite a newer row. `--subtopic` limits both the export and the write, which lets one 25-row sub-topic be verified, promoted, rebuilt and committed without touching the rest of the bank. Promotion validates the candidate master and writes atomically, but it does not rebuild: the signed pack and its lock advance only when `content:build` runs (D-079).
+
 `validate` also prints per-subtopic progress (`verified`, `draft`, `rejected`), so the authoring queue is visible without opening the CSV. `tests/tools/masterFile.test.ts` runs the real master through the same validation on every `npm test` and asserts lower bounds for the verified and draft batches, and `tests/sync/bundledPack.test.ts` verifies and installs `public/packs/` with the pinned key (D-077, D-078).
 
 Batch 2 adds 300 `draft` rows, so `validate` reports 360 rows across 15 sub-topics while the build still emits the same three verified packs; `public/packs/` and `content/bundled.lock.json` move only when a row is promoted to `verified` (D-078).
 
 `--generated-at <iso>` makes the manifest reproducible; `CGL_SIGNING_KEY` and `CGL_PACK_URL_BASE` replace the two required options. The key is generated outside the repository, and `*.pem` is gitignored. `content/packs.lock.json` is committed so a pack version moves only when its questions change, while the URL always carries the byte hash so a changed file cannot be served from a stale CDN cache.
 
-**Failure path:** a CSV parse error, a validation error, a missing key or a non-https URL exits non-zero with the offending line and leaves `<out>/` and the lock unchanged. No network is touched. The app verifies the same canonical bytes in F5; if verification fails it discards the manifest and keeps the installed packs.
+**Failure path:** a CSV parse error, a validation error, a missing key, a non-https URL or a refused review decision (unknown value, missing note, stale row) exits non-zero with the offending line and leaves `<out>/`, the lock and the master unchanged. No network is touched. The app verifies the same canonical bytes in F5; if verification fails it discards the manifest and keeps the installed packs.
 
-**Deferred:** the admin verification UI (Step 7) will call the same `validateMaster` and `buildContent`. Until then the CSV `status` column is the review queue.
+**Deferred:** the admin verification UI (Step 7) will call the same `validateMaster` and `buildContent`. Until then the review sheets from `content:review` are the queue and `content:promote` applies decisions (D-079).
 

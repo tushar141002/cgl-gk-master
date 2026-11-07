@@ -147,3 +147,19 @@ function splitRecords(source: string): RawRecord[] {
 function isBlank(record: RawRecord): boolean {
   return record.fields.length === 1 && record.fields[0]!.trim().length === 0;
 }
+
+/**
+ * RFC 4180 writer for the master and its review sheets. Always quotes, so a
+ * comma, quote or newline in a question can never split a column. CRLF keeps
+ * the file diff-friendly on Windows; an optional BOM lets Excel detect UTF-8.
+ */
+export function writeCsv(
+  header: readonly string[],
+  rows: readonly Readonly<Record<string, string>>[],
+  options: { readonly bom?: boolean } = {},
+): string {
+  const cell = (value: string | undefined): string => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const lines = [header.map(cell).join(',')];
+  for (const row of rows) lines.push(header.map((column) => cell(row[column])).join(','));
+  return `${options.bom === true ? '\uFEFF' : ''}${lines.join('\r\n')}\r\n`;
+}

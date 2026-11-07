@@ -1,14 +1,14 @@
 # CGL GK Master — Project Spec
 
 **Last updated:** 2026-11-07
-**Status:** Steps 1–6, 7A–7C, 8 (batch 1) and 9 (batch 2) are complete. Step 7A wrote and tested the server migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` in PGlite; Step 7B gave the client pinned batch retries, a report queue and correction rebuilds; Step 7C adds Google sign-in through a small GoTrue PKCE client, the five-minute sync scheduler and the paged history pull; Step 8 ships the first 60 verified bilingual questions in the signed bundled pack (v2); Step 9 adds 300 bilingual draft questions across 12 new sub-topics, waiting on founder verification. Staging account deletion, live mocks, the nightly archive and the remaining ~1,940 verifications remain (§5, §10, §13, D-063..D-078).
+**Status:** Steps 1–6, 7A–7C, 8 (batch 1), 9 (batch 2) and 10 (review workflow) are complete. Step 7A wrote and tested the server migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` in PGlite; Step 7B gave the client pinned batch retries, a report queue and correction rebuilds; Step 7C adds Google sign-in through a small GoTrue PKCE client, the five-minute sync scheduler and the paged history pull; Step 8 ships the first 60 verified bilingual questions in the signed bundled pack (v2); Step 9 adds 300 bilingual draft questions across 12 new sub-topics; Step 10 adds the review-sheet export and promote CLI so drafts can be verified in 25-row sub-topic slices. Staging account deletion, live mocks, the nightly archive and the remaining ~1,940 verifications remain (§5, §10, §13, D-063..D-079).
 
 This is the single source of truth for what we are building and why. Companion files:
 
 | File | Purpose |
 |---|---|
 | `PROJECT_SPEC.md` | This file: what we are building, the full approved design |
-| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-077) |
+| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-079) |
 | `flow.md` | Code execution flows: entry points and call order between files |
 | `REVIEW-2026-11-01.md` | Step 1.6 external review: findings, open questions, what changed |
 
@@ -330,14 +330,16 @@ Used by a new or second device to merge history. `after` is `syncMeta.historyCur
 **Verification workflow** (founder verifies 30–40 questions a day; ~2,000 questions ≈ 57 days, Weeks 3–11):
 1. AI drafts questions in batches, each with a source link (SSC paper, PIB release, NCERT).
 2. A second AI pass fact-checks against that source; failures are regenerated.
-3. Founder approves, edits, or rejects in the admin queue. No source link, no approval.
-4. Approved questions publish in the next signed pack.
+3. Founder approves, edits, or rejects in the admin queue. Until it lands, the `content:review` sheet is the queue and `content:promote` applies the decision (D-079). No source link, no approval.
+4. Approved questions publish in the next signed pack; promotion does not rebuild, so the build is an explicit follow-up.
 5. "Report error" reports are triaged within 48 hours; confirmed errors go through the correction path.
 
 **Implemented in Step 3 (2026-11-07):** `content/master/questions.csv` is the authoring source — one row per question, flat English/Hindi and workflow columns (D-047). Ids are assigned-once slugs such as `polity-fr-0007` (D-048); authors mark `easy`, `medium` or `hard`, mapped to Elo seeds 1100/1200/1300 (D-049).
 
 ```sh
 npm run content:validate -- --verbose
+npm run content:review   -- --status draft --out content/review/draft-review.csv
+npm run content:promote  -- --review content/review/draft-review.csv --subtopic <slug>
 npm run content:keygen   -- --out ../cgl-keys
 npm run content:build    -- --key ../cgl-keys/ed25519-private.pem \
                             --url-base https://cdn.example.com/packs
@@ -348,6 +350,8 @@ npm run content:build    -- --key ../cgl-keys/ed25519-private.pem \
 **Step 8 batch 1 (completed 2026-11-07):** the master now holds 60 verified bilingual questions — 20 each in `polity-fundamental-rights`, `history-ancient-india` and `geography-indian-geography` — and they ship inside the APK in the bundled pack at manifest v2 (D-077). All rows are `source_type = practice`, not claimed PYQs, and each cites an official portal: the Constitution spotlight on `india.gov.in` for Polity, IGNCA or the Archaeological Survey of India for History, and the physical-features page on `india.gov.in` or the Survey of India for Geography. English and Hindi are authored together; options stay in their printed order (D-032) and `answer` names that position. `validate` now prints per-subtopic `verified`/`draft`/`rejected` counts and detects duplicate English questions (error when either row is verified, warning while both are drafts). Two guard tests keep the real data honest: `tests/tools/masterFile.test.ts` validates the master and requires at least 60 verified rows, and `tests/sync/bundledPack.test.ts` verifies `public/packs/` with the pinned key, installs all 60 questions and skips them on a second run. Tests: 550 passing in 38 files; the 60 packs measure 28,232 (geography), 28,814 (history) and 32,603 (polity) bytes. Founder review of batch 1 and the remaining ~1,940 questions are still on the critical path.
 
 **Step 9 batch 2 (completed 2026-11-07):** the master grows to 360 rows — the 60 verified rows unchanged plus 300 bilingual `practice` questions in `status=draft`, 25 each in 12 new sub-topics (`polity-constitution-basics`, `polity-union-executive`, `polity-parliament`, `polity-judiciary`, `polity-federalism-local`, `history-medieval-india`, `history-modern-india`, `history-national-movement`, `history-art-culture`, `geography-physical-india`, `geography-rivers-lakes`, `geography-climate-soils-agriculture`). Ids use the assigned-once prefixes `polity-const`, `polity-exec`, `polity-parl`, `polity-jud`, `polity-fed`, `history-medieval`, `history-modern`, `history-national`, `history-art`, `geography-physical`, `geography-rivers` and `geography-climate`. Because `content:build` publishes only verified rows, `public/packs/` and `content/bundled.lock.json` stay at v2 and the 60 verified questions are still the only ones a student sees. The authoring script rotates the correct option to position `index % 4` so answer letters cycle A/B/C/D; this is a static arrangement, not runtime shuffling (D-032 unchanged). `validate` reports 360 rows (verified 60, draft 300, rejected 0) across 15 sub-topics, and `tests/tools/masterFile.test.ts` now asserts those 15 sub-topics plus lower bounds (60 verified, 300 draft) so later verification does not break it. Batch 2 is not founder-reviewed yet (D-078).
+
+**Step 10 review workflow (completed 2026-11-07):** `content:review` exports a review sheet for one status and optionally one sub-topic, with the question, both language blocks and its source link as read-only columns plus empty `decision` and `note` columns. `content:promote` applies a filled sheet: `approve` moves a row to `verified` and stamps `verified_at`, `reject` moves it to `rejected` and clears the stamp, and `fix` or a blank decision leaves the master untouched. Reject and fix require a note, and a sheet whose `status`, `answer`, `source_url` or `en_q` no longer matches the master is refused rather than applied. The candidate master is validated before an atomic write; the pack rebuild stays a separate explicit command. With `--subtopic`, promotion applies one 25-row slice at a time, so each sub-topic can be reviewed, promoted, rebuilt and committed on its own (D-079). The two sheets for the current master are committed at `content/review/draft-review.csv` (300 rows) and `content/review/verified-review.csv` (60 rows).
 
 ---
 
@@ -426,6 +430,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 7 Backend & security | **7A + 7B + 7C done 2026-11-07** — migrations, RLS, `apply_sync_batch`, `sync_pull`, `compact_sync_inbox`, thin `/sync` Edge adapter, 38 PGlite tests (D-063..D-068). Client `SyncManager` with pinned retries, transport seam, report queue and correction rebuild (D-069..D-072). PKCE sign-in, session refresh, account claim, five-minute scheduler and paged history pull, 95 more tests (D-073..D-076). Pending: 7D security finish + account deletion, 7E live mocks, 7A-2 archive + checkpoints |
 | 8 Content batch 1 | **Done 2026-11-07** — 60 verified bilingual practice questions (20 each Polity, Ancient History, Indian Geography), official source links, per-subtopic progress and duplicate detection in `content:validate`, bundled pack rebuilt at v2, two guard tests; 550 tests passing (D-077). Founder review continues as the weekly authoring loop |
 | 9 Content batch 2 | **Done 2026-11-07** — 300 bilingual `status=draft` practice questions, 25 each in 12 new sub-topics across Polity, History and Geography; master at 360 rows (60 verified + 300 draft), 15 sub-topics; answer positions rotated at authoring time; bundled pack and lock unchanged at v2; guard test widened to lower bounds; 550 tests passing (D-078). Founder review of batch 2 is the next content step |
+| 10 Review workflow | **Done 2026-11-07** — `content:review` exports per-status/per-subtopic review sheets with `decision` and `note` columns; `content:promote` applies approve/reject/fix with note, stale-sheet and validation guards, atomic writes and optional `--subtopic`/`--dry-run`; pack rebuild stays explicit; draft (300) and verified (60) sheets committed; 565 tests passing (D-079). Founder fills the sheets next |
 | Launch polish | Pending |
 
 ---
