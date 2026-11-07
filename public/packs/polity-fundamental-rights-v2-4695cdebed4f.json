@@ -1,0 +1,666 @@
+{
+  "id": "polity-fundamental-rights",
+  "version": 2,
+  "questions": [
+    {
+      "id": "polity-fr-0001",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which Article of the Indian Constitution guarantees equality before the law and equal protection of the laws?",
+        "options": [
+          "Article 14",
+          "Article 15",
+          "Article 16",
+          "Article 17"
+        ],
+        "explanation": "Article 14 guarantees equality before the law and equal protection of the laws. It is available to every person, not only to citizens."
+      },
+      "hi": {
+        "q": "भारतीय संविधान का कौन-सा अनुच्छेद कानून के समक्ष समता और कानूनों के समान संरक्षण की गारंटी देता है?",
+        "options": [
+          "अनुच्छेद 14",
+          "अनुच्छेद 15",
+          "अनुच्छेद 16",
+          "अनुच्छेद 17"
+        ],
+        "explanation": "अनुच्छेद 14 कानून के समक्ष समता और कानूनों के समान संरक्षण देता है। यह केवल नागरिकों को नहीं, बल्कि प्रत्येक व्यक्ति को उपलब्ध है।"
+      },
+      "answer": 0,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0002",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Under Article 15, the State cannot discriminate against any citizen on which of the following grounds?",
+        "options": [
+          "Religion, race, caste, sex or place of birth",
+          "Religion only",
+          "Caste only",
+          "Place of birth only"
+        ],
+        "explanation": "Article 15(1) forbids discrimination on grounds of religion, race, caste, sex or place of birth. Article 15 also allows special provisions for women, children and backward classes."
+      },
+      "hi": {
+        "q": "अनुच्छेद 15 के अंतर्गत राज्य किस आधार पर किसी नागरिक के साथ भेदभाव नहीं कर सकता?",
+        "options": [
+          "धर्म, मूलवंश, जाति, लिंग या जन्मस्थान",
+          "केवल धर्म",
+          "केवल जाति",
+          "केवल जन्मस्थान"
+        ],
+        "explanation": "अनुच्छेद 15(1) धर्म, मूलवंश, जाति, लिंग या जन्मस्थान के आधार पर भेदभाव का निषेध करता है। अनुच्छेद 15 महिलाओं, बच्चों और पिछड़े वर्गों के लिए विशेष प्रावधान की भी अनुमति देता है।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0003",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Equality of opportunity in matters of public employment is guaranteed by which Article?",
+        "options": [
+          "Article 15",
+          "Article 16",
+          "Article 17",
+          "Article 18"
+        ],
+        "explanation": "Article 16 provides equality of opportunity in public employment and permits reservations for backward classes and other specified groups."
+      },
+      "hi": {
+        "q": "लोक रोजगार के मामलों में अवसर की समता किस अनुच्छेद द्वारा सुनिश्चित की गई है?",
+        "options": [
+          "अनुच्छेद 15",
+          "अनुच्छेद 16",
+          "अनुच्छेद 17",
+          "अनुच्छेद 18"
+        ],
+        "explanation": "अनुच्छेद 16 लोक रोजगार में अवसर की समता प्रदान करता है और पिछड़े वर्गों तथा अन्य निर्दिष्ट वर्गों के लिए आरक्षण की अनुमति देता है।"
+      },
+      "answer": 1,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0004",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Untouchability is abolished and its practice in any form is forbidden by which Article?",
+        "options": [
+          "Article 15",
+          "Article 16",
+          "Article 17",
+          "Article 18"
+        ],
+        "explanation": "Article 17 abolishes untouchability and forbids its practice in any form. The Protection of Civil Rights Act, 1955 makes its enforcement a punishable offence."
+      },
+      "hi": {
+        "q": "अस्पृश्यता का अंत और उसके किसी भी रूप में आचरण का निषेध किस अनुच्छेद में है?",
+        "options": [
+          "अनुच्छेद 15",
+          "अनुच्छेद 16",
+          "अनुच्छेद 17",
+          "अनुच्छेद 18"
+        ],
+        "explanation": "अनुच्छेद 17 अस्पृश्यता का अंत करता है और उसके किसी भी रूप में आचरण का निषेध करता है। सिविल अधिकार संरक्षण अधिनियम, 1955 इसे दंडनीय अपराध बनाता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0005",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which Article abolishes titles, except military and academic distinctions?",
+        "options": [
+          "Article 17",
+          "Article 18",
+          "Article 19",
+          "Article 20"
+        ],
+        "explanation": "Article 18 abolishes titles. Military and academic distinctions are excluded, and a citizen may accept a foreign honour only with the President’s consent."
+      },
+      "hi": {
+        "q": "किस अनुच्छेद में उपाधियों का अंत किया गया है, सैन्य और शैक्षिक विशिष्टताओं को छोड़कर?",
+        "options": [
+          "अनुच्छेद 17",
+          "अनुच्छेद 18",
+          "अनुच्छेद 19",
+          "अनुच्छेद 20"
+        ],
+        "explanation": "अनुच्छेद 18 उपाधियों का अंत करता है। सैन्य और शैक्षिक विशिष्टताएँ इसके अपवाद हैं, और नागरिक राष्ट्रपति की सहमति से ही विदेशी सम्मान स्वीकार कर सकता है।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0006",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which Article protects the six freedoms of citizens, including freedom of speech and expression?",
+        "options": [
+          "Article 18",
+          "Article 19",
+          "Article 20",
+          "Article 21"
+        ],
+        "explanation": "Article 19 protects six freedoms: speech and expression, assembly, association, movement, residence and profession. Each is subject to reasonable restrictions."
+      },
+      "hi": {
+        "q": "कौन-सा अनुच्छेद नागरिकों की छह स्वतंत्रताओं की रक्षा करता है, जिनमें अभिव्यक्ति की स्वतंत्रता भी है?",
+        "options": [
+          "अनुच्छेद 18",
+          "अनुच्छेद 19",
+          "अनुच्छेद 20",
+          "अनुच्छेद 21"
+        ],
+        "explanation": "अनुच्छेद 19 छह स्वतंत्रताएँ देता है: वाक् और अभिव्यक्ति, सम्मेलन, संगम, संचरण, निवास और व्यवसाय। इनमें से प्रत्येक पर उचित निर्बंधन लगाए जा सकते हैं।"
+      },
+      "answer": 1,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0007",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Protection against double jeopardy is contained in which Article?",
+        "options": [
+          "Article 20",
+          "Article 21",
+          "Article 22",
+          "Article 23"
+        ],
+        "explanation": "Article 20(2) says that no person shall be prosecuted and punished for the same offence more than once. Article 20 also bars ex post facto laws and self-incrimination."
+      },
+      "hi": {
+        "q": "दोहरे दंड से संरक्षण किस अनुच्छेद में निहित है?",
+        "options": [
+          "अनुच्छेद 20",
+          "अनुच्छेद 21",
+          "अनुच्छेद 22",
+          "अनुच्छेद 23"
+        ],
+        "explanation": "अनुच्छेद 20(2) कहता है कि किसी व्यक्ति को एक ही अपराध के लिए एक बार से अधिक बार अभियोजित और दंडित नहीं किया जाएगा। अनुच्छेद 20 पूर्वव्यापी कानूनों और स्वयं के विरुद्ध साक्ष्य देने पर भी रोक लगाता है।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0008",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The right to life and personal liberty is guaranteed by which Article?",
+        "options": [
+          "Article 19",
+          "Article 20",
+          "Article 21",
+          "Article 22"
+        ],
+        "explanation": "Article 21 says that no person shall be deprived of life or personal liberty except according to procedure established by law. The Supreme Court has read many rights, including privacy, into it."
+      },
+      "hi": {
+        "q": "जीवन और व्यक्तिगत स्वतंत्रता का अधिकार किस अनुच्छेद द्वारा प्रदान किया गया है?",
+        "options": [
+          "अनुच्छेद 19",
+          "अनुच्छेद 20",
+          "अनुच्छेद 21",
+          "अनुच्छेद 22"
+        ],
+        "explanation": "अनुच्छेद 21 कहता है कि विधि द्वारा स्थापित प्रक्रिया के अनुसार ही किसी व्यक्ति को जीवन या व्यक्तिगत स्वतंत्रता से वंचित किया जा सकता है। सर्वोच्च न्यायालय ने निजता सहित अनेक अधिकारों को इसमें सम्मिलित किया है।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0009",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Right to Education was made a fundamental right by which Constitutional Amendment?",
+        "options": [
+          "42nd Amendment",
+          "44th Amendment",
+          "86th Amendment",
+          "93rd Amendment"
+        ],
+        "explanation": "The 86th Amendment Act, 2002 inserted Article 21A, making free and compulsory education a fundamental right for children aged 6 to 14. It was brought into force in 2010."
+      },
+      "hi": {
+        "q": "शिक्षा के अधिकार को किस संविधान संशोधन द्वारा मौलिक अधिकार बनाया गया?",
+        "options": [
+          "42वाँ संशोधन",
+          "44वाँ संशोधन",
+          "86वाँ संशोधन",
+          "93वाँ संशोधन"
+        ],
+        "explanation": "86वें संशोधन अधिनियम, 2002 ने अनुच्छेद 21A जोड़ा और 6 से 14 वर्ष के बच्चों के लिए निःशुल्क तथा अनिवार्य शिक्षा को मौलिक अधिकार बनाया। यह 2010 में लागू हुआ।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0010",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Under Article 22, a person arrested must be produced before the nearest magistrate within how many hours?",
+        "options": [
+          "12 hours",
+          "24 hours",
+          "48 hours",
+          "72 hours"
+        ],
+        "explanation": "Article 22 requires that an arrested person be informed of the grounds of arrest and produced before the nearest magistrate within 24 hours, excluding travel time."
+      },
+      "hi": {
+        "q": "अनुच्छेद 22 के अनुसार गिरफ्तार व्यक्ति को कितने घंटों के भीतर निकटतम मजिस्ट्रेट के समक्ष प्रस्तुत करना होता है?",
+        "options": [
+          "12 घंटे",
+          "24 घंटे",
+          "48 घंटे",
+          "72 घंटे"
+        ],
+        "explanation": "अनुच्छेद 22 के अनुसार गिरफ्तार व्यक्ति को गिरफ्तारी के आधार बताए जाने चाहिए और यात्रा समय को छोड़कर 24 घंटे के भीतर निकटतम मजिस्ट्रेट के समक्ष प्रस्तुत करना होता है।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0011",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Article 23 prohibits which of the following?",
+        "options": [
+          "Traffic in human beings and forced labour",
+          "Employment of children below 14 years",
+          "Untouchability",
+          "Discrimination in shops and hotels"
+        ],
+        "explanation": "Article 23 prohibits traffic in human beings, begar and other similar forms of forced labour. Article 24 separately deals with child labour."
+      },
+      "hi": {
+        "q": "अनुच्छेद 23 निम्नलिखित में से किसका निषेध करता है?",
+        "options": [
+          "मनुष्यों का व्यापार और बंधुआ श्रम",
+          "14 वर्ष से कम आयु के बच्चों का रोजगार",
+          "अस्पृश्यता",
+          "दुकानों और होटलों में भेदभाव"
+        ],
+        "explanation": "अनुच्छेद 23 मनुष्यों के व्यापार, बेगार तथा बंधुआ श्रम के अन्य समान रूपों का निषेध करता है। बाल श्रम का प्रावधान अलग से अनुच्छेद 24 में है।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0012",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Article 24 prohibits the employment of children below which age in factories and mines?",
+        "options": [
+          "12 years",
+          "14 years",
+          "16 years",
+          "18 years"
+        ],
+        "explanation": "Article 24 prohibits the employment of children below 14 years in factories, mines and other hazardous work."
+      },
+      "hi": {
+        "q": "अनुच्छेद 24 कारखानों और खानों में कितने वर्ष से कम आयु के बच्चों के रोजगार का निषेध करता है?",
+        "options": [
+          "12 वर्ष",
+          "14 वर्ष",
+          "16 वर्ष",
+          "18 वर्ष"
+        ],
+        "explanation": "अनुच्छेद 24 कारखानों, खानों और अन्य जोखिम भरे कार्यों में 14 वर्ष से कम आयु के बच्चों के रोजगार का निषेध करता है।"
+      },
+      "answer": 1,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0013",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Freedom of conscience and the right to profess, practise and propagate religion is protected by which Article?",
+        "options": [
+          "Article 23",
+          "Article 24",
+          "Article 25",
+          "Article 26"
+        ],
+        "explanation": "Article 25 protects freedom of conscience and the right freely to profess, practise and propagate religion, subject to public order, morality and health."
+      },
+      "hi": {
+        "q": "अंतःकरण की स्वतंत्रता तथा धर्म को मानने, आचरण करने और प्रचार करने का अधिकार किस अनुच्छेद द्वारा संरक्षित है?",
+        "options": [
+          "अनुच्छेद 23",
+          "अनुच्छेद 24",
+          "अनुच्छेद 25",
+          "अनुच्छेद 26"
+        ],
+        "explanation": "अनुच्छेद 25 अंतःकरण की स्वतंत्रता तथा लोक व्यवस्था, नैतिकता और स्वास्थ्य के अधीन धर्म को स्वतंत्र रूप से मानने, आचरण करने और प्रचार करने का अधिकार देता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0014",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which Article did Dr B. R. Ambedkar describe as the heart and soul of the Constitution?",
+        "options": [
+          "Article 14",
+          "Article 19",
+          "Article 32",
+          "Article 356"
+        ],
+        "explanation": "Dr Ambedkar called Article 32, the right to constitutional remedies, the heart and soul of the Constitution because it lets a person move the Supreme Court directly for the enforcement of fundamental rights."
+      },
+      "hi": {
+        "q": "डॉ. बी. आर. आंबेडकर ने किस अनुच्छेद को संविधान का हृदय और आत्मा कहा था?",
+        "options": [
+          "अनुच्छेद 14",
+          "अनुच्छेद 19",
+          "अनुच्छेद 32",
+          "अनुच्छेद 356"
+        ],
+        "explanation": "डॉ. आंबेडकर ने संवैधानिक उपचारों के अधिकार वाले अनुच्छेद 32 को संविधान का हृदय और आत्मा कहा, क्योंकि यह व्यक्ति को मौलिक अधिकारों के प्रवर्तन के लिए सीधे सर्वोच्च न्यायालय जाने की सुविधा देता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0015",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The right of any section of citizens to conserve its language, script and culture is protected by which Article?",
+        "options": [
+          "Article 27",
+          "Article 28",
+          "Article 29",
+          "Article 30"
+        ],
+        "explanation": "Article 29 protects the language, script and culture of any section of citizens. Article 30 separately protects the rights of minorities to establish educational institutions."
+      },
+      "hi": {
+        "q": "नागरिकों के किसी वर्ग को अपनी भाषा, लिपि और संस्कृति का संरक्षण करने का अधिकार किस अनुच्छेद में है?",
+        "options": [
+          "अनुच्छेद 27",
+          "अनुच्छेद 28",
+          "अनुच्छेद 29",
+          "अनुच्छेद 30"
+        ],
+        "explanation": "अनुच्छेद 29 नागरिकों के किसी वर्ग की भाषा, लिपि और संस्कृति का संरक्षण करता है। अल्पसंख्यकों के शिक्षण संस्थान स्थापित करने का अधिकार अलग से अनुच्छेद 30 में है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0016",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The right of religious and linguistic minorities to establish and administer educational institutions is guaranteed by which Article?",
+        "options": [
+          "Article 28",
+          "Article 29",
+          "Article 30",
+          "Article 31"
+        ],
+        "explanation": "Article 30 gives all minorities, whether based on religion or language, the right to establish and administer educational institutions of their choice."
+      },
+      "hi": {
+        "q": "धार्मिक और भाषायी अल्पसंख्यकों को अपनी पसंद के शिक्षण संस्थान स्थापित और प्रशासित करने का अधिकार किस अनुच्छेद में है?",
+        "options": [
+          "अनुच्छेद 28",
+          "अनुच्छेद 29",
+          "अनुच्छेद 30",
+          "अनुच्छेद 31"
+        ],
+        "explanation": "अनुच्छेद 30 धर्म या भाषा के आधार पर सभी अल्पसंख्यकों को अपनी पसंद के शिक्षण संस्थान स्थापित और प्रशासित करने का अधिकार देता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0017",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The right to property ceased to be a fundamental right after which amendment?",
+        "options": [
+          "42nd Amendment",
+          "44th Amendment",
+          "52nd Amendment",
+          "86th Amendment"
+        ],
+        "explanation": "The 44th Amendment Act, 1978 removed the right to property from Part III. It is now a legal right under Article 300A."
+      },
+      "hi": {
+        "q": "संपत्ति का अधिकार किस संशोधन के बाद मौलिक अधिकार नहीं रहा?",
+        "options": [
+          "42वाँ संशोधन",
+          "44वाँ संशोधन",
+          "52वाँ संशोधन",
+          "86वाँ संशोधन"
+        ],
+        "explanation": "44वें संशोधन अधिनियम, 1978 ने संपत्ति के अधिकार को भाग III से हटा दिया। अब यह अनुच्छेद 300A के अंतर्गत विधिक अधिकार है।"
+      },
+      "answer": 1,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0018",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Fundamental Rights are contained in which Part of the Constitution?",
+        "options": [
+          "Part II",
+          "Part III",
+          "Part IV",
+          "Part V"
+        ],
+        "explanation": "Part III, covering Articles 12 to 35, contains the Fundamental Rights. Part IV contains the Directive Principles of State Policy."
+      },
+      "hi": {
+        "q": "मौलिक अधिकार संविधान के किस भाग में हैं?",
+        "options": [
+          "भाग II",
+          "भाग III",
+          "भाग IV",
+          "भाग V"
+        ],
+        "explanation": "भाग III, जिसमें अनुच्छेद 12 से 35 तक हैं, मौलिक अधिकारों को समाहित करता है। भाग IV में राज्य के नीति निदेशक तत्व हैं।"
+      },
+      "answer": 1,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0019",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "In Part III, the term State is defined by which Article?",
+        "options": [
+          "Article 12",
+          "Article 13",
+          "Article 14",
+          "Article 15"
+        ],
+        "explanation": "Article 12 defines the State for the purposes of Part III. It includes the Union and State governments, Parliament, State legislatures and other authorities within Indian territory."
+      },
+      "hi": {
+        "q": "भाग III में राज्य शब्द किस अनुच्छेद द्वारा परिभाषित है?",
+        "options": [
+          "अनुच्छेद 12",
+          "अनुच्छेद 13",
+          "अनुच्छेद 14",
+          "अनुच्छेद 15"
+        ],
+        "explanation": "अनुच्छेद 12 भाग III के प्रयोजनों के लिए राज्य की परिभाषा देता है। इसमें संघ और राज्य सरकारें, संसद, राज्य विधानमंडल तथा भारतीय क्षेत्र की अन्य प्राधिकृत संस्थाएँ सम्मिलित हैं।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "polity-fr-0020",
+      "v": 1,
+      "packId": "polity-fundamental-rights",
+      "section": "polity",
+      "subtopic": "polity-fundamental-rights",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which Article declares that any law inconsistent with Fundamental Rights is void?",
+        "options": [
+          "Article 12",
+          "Article 13",
+          "Article 14",
+          "Article 32"
+        ],
+        "explanation": "Article 13 declares that any law inconsistent with a fundamental right is void to the extent of the inconsistency. It also bars the State from making such laws."
+      },
+      "hi": {
+        "q": "कौन-सा अनुच्छेद घोषित करता है कि मौलिक अधिकारों से असंगत कोई भी कानून शून्य होगा?",
+        "options": [
+          "अनुच्छेद 12",
+          "अनुच्छेद 13",
+          "अनुच्छेद 14",
+          "अनुच्छेद 32"
+        ],
+        "explanation": "अनुच्छेद 13 घोषित करता है कि मौलिक अधिकार से असंगत कानून असंगति की सीमा तक शून्य होगा। यह राज्य को ऐसे कानून बनाने से भी रोकता है।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    }
+  ]
+}

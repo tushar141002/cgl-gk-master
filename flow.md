@@ -2,7 +2,7 @@
 
 How execution travels through CGL GK Master: the entry points, which function calls which, and in what order. Read this before changing any flow; update it in the same commit when you do.
 
-> **Status:** Step 7C (auth, sync timer and history pull) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and the repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer, client sync and the auth/history/scheduler seams (`src/auth/`, `src/sync/`, `src/services/`), the backend migrations and tests (`supabase/`, `tests/server/`) and the Home/chooser/practice screens. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
+> **Status:** Step 8 (first real content batch) is complete. **Landed and tested:** `shared/contract.ts`, `shared/canonicalJson.ts`, `shared/uuid.ts`, `src/core/*.ts` (eight classes), the `tools/content/` pipeline, `src/ui/*.css` with the self-hosted Mukta subset, the Svelte 5 shell (`src/app/`), the Dexie schema and the repositories (`src/data/`), typed bilingual UI copy, the signed-pack installer, client sync and the auth/history/scheduler seams (`src/auth/`, `src/sync/`, `src/services/`), the backend migrations and tests (`supabase/`, `tests/server/`), the Home/chooser/practice screens and 60 verified bilingual questions in the bundled pack. Mock, Progress and Report screens are still placeholders; everything else below is still **planned**; replace `(planned)` markers with real paths as each file lands.
 >
 > **Reviewed 2026-11-01 (Step 1.6):** F1, F2 and F7 corrected to keep `core/` pure (D-030); F4 carries reports and drops client aggregates (D-028); F6 states the correction-before-pack grading rule; F8 given local session persistence (D-029); F9 rewritten for daily immutable files (D-027); F11 and F12 added. D-026 to D-031 were all accepted on 2026-11-01.
 >
@@ -159,8 +159,9 @@ tests/
                              account claim and history cursor)
   sync/                      SyncManager.test.ts, CorrectionApplier.test.ts,
                              HttpSyncTransport.test.ts, PullTransport.test.ts,
-                             backoff.test.ts
-  tools/                     csv.test.ts, master.test.ts, build.test.ts, cli.test.ts,
+                             bundledPack.test.ts (real signed pack), backoff.test.ts
+  tools/                     csv.test.ts, master.test.ts, masterFile.test.ts
+                             (real master), build.test.ts, cli.test.ts,
                              fixtures.ts (in-memory master rows)
   ui/                        tokens.test.ts — WCAG contrast, token discipline, tap targets,
                              font subset size and licence; i18n.test.ts
@@ -173,7 +174,9 @@ tests/
   fixtures/                  elo-golden.json, fsrs-golden.json — hand-computed pins
 
 content/
-  master/questions.csv       authoritative bank: one row per question (D-047)
+  master/questions.csv       authoritative bank; batch 1 is 60 verified questions,
+                             20 each for polity-fundamental-rights,
+                             history-ancient-india and geography-indian-geography
   sample/questions.csv       four-row pipeline fixture (3 verified, 1 draft)
   bundled.lock.json          lock for the pack shipped inside the APK (D-059)
   packs.lock.json            written by the first CDN build; commit it so versions persist
@@ -574,7 +577,9 @@ npm run content:build -- --key <pem> --url-base <https> [options]
    └─ tools/content/build.ts › writeLock(result.lock, path)
 ```
 
-Only `verified` rows are packed; `draft` and `rejected` rows may be incomplete and produce warnings instead of errors (D-047). A blank or duplicate id, an unknown status, and every issue on a verified row are errors. The build stops before writing anything if the report has an error, so a failed run leaves the previous manifest and lock untouched.
+Only `verified` rows are packed; `draft` and `rejected` rows may be incomplete and produce warnings instead of errors (D-047). A blank or duplicate id, an unknown status, a duplicated English question and every issue on a verified row are errors. The build stops before writing anything if the report has an error, so a failed run leaves the previous manifest and lock untouched.
+
+`validate` also prints per-subtopic progress (`verified`, `draft`, `rejected`), so the authoring queue is visible without opening the CSV. `tests/tools/masterFile.test.ts` runs the real master through the same validation on every `npm test`, and `tests/sync/bundledPack.test.ts` verifies and installs `public/packs/` with the pinned key (D-077).
 
 `--generated-at <iso>` makes the manifest reproducible; `CGL_SIGNING_KEY` and `CGL_PACK_URL_BASE` replace the two required options. The key is generated outside the repository, and `*.pem` is gitignored. `content/packs.lock.json` is committed so a pack version moves only when its questions change, while the URL always carries the byte hash so a changed file cannot be served from a stale CDN cache.
 

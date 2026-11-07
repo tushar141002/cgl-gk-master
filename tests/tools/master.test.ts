@@ -213,5 +213,91 @@ describe('validateMaster', () => {
     expect(report.errors).toEqual([]);
     expect(report.questions).toEqual([]);
     expect(report.counts).toEqual({ verified: 0, draft: 0, rejected: 0 });
+    expect(report.subtopics).toEqual({});
+  });
+
+  it('reports progress for each subtopic', () => {
+    const report = validateMaster(
+      masterTable([
+        masterRow({}, 2),
+        statusRow('draft', { id: 'polity-fr-0002', en_q: 'Another question?' }, 3),
+        statusRow(
+          'rejected',
+          { id: 'history-ancient-0001', section: 'history', subtopic: 'history-ancient-india' },
+          4,
+        ),
+      ]),
+    );
+
+    expect(report.subtopics).toEqual({
+      'polity-fundamental-rights': { section: 'polity', verified: 1, draft: 1, rejected: 0 },
+      'history-ancient-india': { section: 'history', verified: 0, draft: 0, rejected: 1 },
+    });
+  });
+
+  it('rejects the same verified English question under two ids', () => {
+    const question = 'Which Article abolishes untouchability?';
+    const report = validateMaster(
+      masterTable([
+        masterRow({ en_q: question }, 2),
+        masterRow({ id: 'polity-fr-0002', en_q: question, en_option_d: 'Article 18', answer: 'D' }, 3),
+      ]),
+    );
+
+    expect(report.errors).toEqual([
+      expect.stringContaining('duplicates lines 2, 3'),
+      expect.stringContaining('duplicates lines 2, 3'),
+    ]);
+    expect(report.questions).toEqual([]);
+  });
+
+  it('only warns when two drafts repeat a question', () => {
+    const question = 'Which Article abolishes untouchability?';
+    const report = validateMaster(
+      masterTable([
+        statusRow('draft', { en_q: question }, 2),
+        statusRow('draft', { id: 'polity-fr-0002', en_q: question }, 3),
+      ]),
+    );
+
+    expect(report.errors).toEqual([]);
+    expect(report.warnings).toEqual([
+      expect.stringContaining('duplicates lines 2, 3'),
+      expect.stringContaining('duplicates lines 2, 3'),
+    ]);
+  });
+
+  it('treats a verified row that repeats a draft as an error', () => {
+    const question = 'Which Article abolishes untouchability?';
+    const report = validateMaster(
+      masterTable([
+        statusRow('draft', { en_q: question }, 2),
+        masterRow({ id: 'polity-fr-0002', en_q: question }, 3),
+      ]),
+    );
+
+    expect(report.errors).toEqual([expect.stringContaining('duplicates lines 2, 3')]);
+    expect(report.warnings).toEqual([expect.stringContaining('duplicates lines 2, 3')]);
+    expect(report.questions).toEqual([]);
+  });
+
+  it('ignores case, punctuation and spacing when checking duplicates', () => {
+    const report = validateMaster(
+      masterTable([
+        masterRow({ en_q: 'Which Article abolishes untouchability?' }, 2),
+        masterRow(
+          {
+            id: 'polity-fr-0002',
+            en_q: '  which article   abolishes UNTOUCHABILITY ',
+            en_option_d: 'Article 18',
+            answer: 'D',
+          },
+          3,
+        ),
+      ]),
+    );
+
+    expect(report.errors).toHaveLength(2);
+    expect(report.errors[0]).toContain('duplicates lines 2, 3');
   });
 });

@@ -1,14 +1,14 @@
 # CGL GK Master — Project Spec
 
 **Last updated:** 2026-11-07
-**Status:** Steps 1–6 and 7A–7C are complete. Step 7A wrote and tested the server migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` in PGlite; Step 7B gave the client pinned batch retries, a report queue and correction rebuilds; Step 7C adds Google sign-in through a small GoTrue PKCE client, the five-minute sync scheduler and the paged history pull. Staging account deletion, live mocks and the nightly archive remain (§5, §13, D-063..D-076).
+**Status:** Steps 1–6, 7A–7C and 8 (batch 1) are complete. Step 7A wrote and tested the server migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` in PGlite; Step 7B gave the client pinned batch retries, a report queue and correction rebuilds; Step 7C adds Google sign-in through a small GoTrue PKCE client, the five-minute sync scheduler and the paged history pull; Step 8 ships the first 60 verified bilingual questions in the signed bundled pack (v2). Staging account deletion, live mocks, the nightly archive and the remaining ~1,940 questions remain (§5, §10, §13, D-063..D-077).
 
 This is the single source of truth for what we are building and why. Companion files:
 
 | File | Purpose |
 |---|---|
 | `PROJECT_SPEC.md` | This file: what we are building, the full approved design |
-| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-076) |
+| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-077) |
 | `flow.md` | Code execution flows: entry points and call order between files |
 | `REVIEW-2026-11-01.md` | Step 1.6 external review: findings, open questions, what changed |
 
@@ -163,7 +163,7 @@ Dependency direction: `ui → services/sync/auth → core ← data`. `core/` imp
 
 **Step 7B client sync (completed 2026-11-07):** `src/sync/SyncManager.ts` sends unsynced attempts and queued reports in one batch at a time (200 attempts, 20 reports), records the server cursor and folds corrections in. The batch id and its exact contents are pinned in `syncMeta.pendingBatch` before the request, so a retry after a lost response or an app restart resends the same set and receives the server's stored response (D-067, D-070). `src/sync/SyncTransport.ts` is the only file that touches `fetch`, the URL and the token (D-069); `src/sync/backoff.ts` doubles 1 s → 5 min with jitter and honours `retryAfterMs`. Report taps live in a new `reports` table, Dexie schema v2, keyed `[qid+qv+reason]` (D-071). `src/sync/CorrectionApplier.ts` stores a batch of corrections and rebuilds cards/skills once with a corrected index; `PracticeService.answer` grades against `CorrectionRepository.answerFor` from the moment the row lands (D-072). 58 new tests cover replies, retries, pinning, corrections, the transport and the queue; 446 tests pass. The sync timer and the real access token are Step 7C.
 
-**Step 7C auth and scheduler (completed 2026-11-07):** `src/auth/` is a small GoTrue client instead of `supabase-js`: S256 PKCE with a random `state`, an `OAuthBrowser` seam (Capacitor Browser + the `com.cglgkmaster.app://auth-callback` deep link on Android, a page redirect on the web), a session in `localStorage` and a 10-minute pending verifier in `sessionStorage` (D-073). `src/services/AuthService.ts` restores the session, refreshes single-flight 60 s before expiry, claims the device for one account and refuses a second with a clear message (D-075). `src/services/HistoryService.ts` pages `sync_pull` from `syncMeta.historyCursor`, merges by attempt id, rebuilds derived state once and advances the cursor only after a complete pull (D-074). `src/services/SyncScheduler.ts` owns the five-minute timer, `online`/visibility wakes, auth/offline gating and `retryInMs` scheduling, with one run in flight (D-076); `App.svelte` only starts and stops it. `android/app/src/main/AndroidManifest.xml` gains the VIEW/BROWSABLE intent filter, and `.env.example` documents `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `VITE_AUTH_REDIRECT_URL`. 95 new tests cover PKCE (including the RFC 7636 vector), the GoTrue client, token stores, auth orchestration, paging, the pull transport and the scheduler; 541 tests pass. Measured bundle: 88.59 kB gzip JS and 4.05 kB gzip CSS. The OAuth round trip and token refresh still need a staging Supabase project; the Gradle build still needs a JDK and Android SDK.
+**Step 7C auth and scheduler (completed 2026-11-07):** `src/auth/` is a small GoTrue client instead of `supabase-js`: S256 PKCE with a random `state`, an `OAuthBrowser` seam (Capacitor Browser + the `com.cglgkmaster.app://auth-callback` deep link on Android, a page redirect on the web), a session in `localStorage` and a 10-minute pending verifier in `sessionStorage` (D-073). `src/services/AuthService.ts` restores the session, refreshes single-flight 60 s before expiry, claims the device for one account and refuses a second with a clear message (D-075). `src/services/HistoryService.ts` pages `sync_pull` from `syncMeta.historyCursor`, merges by attempt id, rebuilds derived state once and advances the cursor only after a complete pull (D-074). `src/services/SyncScheduler.ts` owns the five-minute timer, `online`/visibility wakes, auth/offline gating and `retryInMs` scheduling, with one run in flight (D-076); `App.svelte` only starts and stops it. `android/app/src/main/AndroidManifest.xml` gains the VIEW/BROWSABLE intent filter, and `.env.example` documents `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `VITE_AUTH_REDIRECT_URL`. 95 new tests cover PKCE (including the RFC 7636 vector), the GoTrue client, token stores, auth orchestration, paging, the pull transport and the scheduler; 541 tests passed at 7C (550 after Step 8). Measured bundle: 88.59 kB gzip JS and 4.05 kB gzip CSS. The OAuth round trip and token refresh still need a staging Supabase project; the Gradle build still needs a JDK and Android SDK.
 
 ---
 
@@ -323,6 +323,7 @@ Used by a new or second device to merge history. `after` is `syncMeta.historyCur
 **Sources:**
 - Real PYQs from official SSC question papers and answer keys (ssc.gov.in).
 - Current affairs from PIB (pib.gov.in) press releases.
+- Standard static facts from official government portals: `india.gov.in`, IGNCA (`ignca.gov.in`), the Archaeological Survey of India (`asi.nic.in`) and the Survey of India (`surveyofindia.gov.in`). NCERT is preferred when reachable; batch 1 used these instead.
 - AI-generated practice questions via the Claude API.
 - Never scrape coaching sites (Testbook, Adda247, etc.): their content is copyrighted.
 
@@ -336,13 +337,15 @@ Used by a new or second device to merge history. `after` is `syncMeta.historyCur
 **Implemented in Step 3 (2026-11-07):** `content/master/questions.csv` is the authoring source — one row per question, flat English/Hindi and workflow columns (D-047). Ids are assigned-once slugs such as `polity-fr-0007` (D-048); authors mark `easy`, `medium` or `hard`, mapped to Elo seeds 1100/1200/1300 (D-049).
 
 ```sh
-npm run content:validate -- --input content/sample/questions.csv --verbose
+npm run content:validate -- --verbose
 npm run content:keygen   -- --out ../cgl-keys
 npm run content:build    -- --key ../cgl-keys/ed25519-private.pem \
                             --url-base https://cdn.example.com/packs
 ```
 
 `validate` is strict on `verified` rows and warns on drafts. `build` writes one pack per subtopic plus `manifest.json`; a pack version moves only when its questions change, and the file name carries the sha256 prefix so a changed pack cannot be served from a stale cache. The manifest signature covers the canonical JSON of `{ version, generatedAt, packs }` (D-050), and `shared/canonicalJson.ts` is the implementation the app will use. Private keys are generated outside the repository and `*.pem` is gitignored. The admin verification UI is deferred to the backend step; until then the CSV `status` column is the review queue.
+
+**Step 8 batch 1 (completed 2026-11-07):** the master now holds 60 verified bilingual questions — 20 each in `polity-fundamental-rights`, `history-ancient-india` and `geography-indian-geography` — and they ship inside the APK in the bundled pack at manifest v2 (D-077). All rows are `source_type = practice`, not claimed PYQs, and each cites an official portal: the Constitution spotlight on `india.gov.in` for Polity, IGNCA or the Archaeological Survey of India for History, and the physical-features page on `india.gov.in` or the Survey of India for Geography. English and Hindi are authored together; options stay in their printed order (D-032) and `answer` names that position. `validate` now prints per-subtopic `verified`/`draft`/`rejected` counts and detects duplicate English questions (error when either row is verified, warning while both are drafts). Two guard tests keep the real data honest: `tests/tools/masterFile.test.ts` validates the master and requires at least 60 verified rows, and `tests/sync/bundledPack.test.ts` verifies `public/packs/` with the pinned key, installs all 60 questions and skips them on a second run. Tests: 550 passing in 38 files; the 60 packs measure 28,232 (geography), 28,814 (history) and 32,603 (polity) bytes. Founder review of batch 1 and the remaining ~1,940 questions are still on the critical path.
 
 ---
 
@@ -419,7 +422,8 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 4 UI design system (fonts, colours, components) | **Done 2026-11-07** — tokens, base and component layers, self-hosted Mukta subset, living preview, 47 design-system tests (D-051..D-054) |
 | 5–6 App build | **Done 2026-11-07** — Step 5: Vite + Svelte 5 shell, hash router, Dexie schema and eight repositories, typed bilingual UI, Home + Settings (D-055..D-058). Step 6: signed bundled pack install, single-transaction answer cycle, due-first picker, sub-topic chooser and practice/feedback screen (D-059..D-062, 350 tests) |
 | 7 Backend & security | **7A + 7B + 7C done 2026-11-07** — migrations, RLS, `apply_sync_batch`, `sync_pull`, `compact_sync_inbox`, thin `/sync` Edge adapter, 38 PGlite tests (D-063..D-068). Client `SyncManager` with pinned retries, transport seam, report queue and correction rebuild (D-069..D-072). PKCE sign-in, session refresh, account claim, five-minute scheduler and paged history pull, 95 more tests (D-073..D-076). Pending: 7D security finish + account deletion, 7E live mocks, 7A-2 archive + checkpoints |
-| 8 Polish & launch | Pending |
+| 8 Content batch 1 | **Done 2026-11-07** — 60 verified bilingual practice questions (20 each Polity, Ancient History, Indian Geography), official source links, per-subtopic progress and duplicate detection in `content:validate`, bundled pack rebuilt at v2, two guard tests; 550 tests passing (D-077). Batch 2 and founder review continue as the weekly authoring loop |
+| Launch polish | Pending |
 
 ---
 

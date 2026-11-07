@@ -1,0 +1,666 @@
+{
+  "id": "history-ancient-india",
+  "version": 2,
+  "questions": [
+    {
+      "id": "history-ancient-0001",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Harappa was first excavated in 1921 by which archaeologist?",
+        "options": [
+          "Rakhal Das Banerji",
+          "Daya Ram Sahni",
+          "John Marshall",
+          "Mortimer Wheeler"
+        ],
+        "explanation": "Daya Ram Sahni began the excavation of Harappa in 1921. Rakhal Das Banerji excavated Mohenjo-daro in 1922."
+      },
+      "hi": {
+        "q": "हड़प्पा की पहली खुदाई 1921 में किस पुरातत्ववेत्ता ने की थी?",
+        "options": [
+          "राखाल दास बनर्जी",
+          "दया राम साहनी",
+          "जॉन मार्शल",
+          "मॉर्टिमर व्हीलर"
+        ],
+        "explanation": "दया राम साहनी ने 1921 में हड़प्पा की खुदाई शुरू की। राखाल दास बनर्जी ने 1922 में मोहनजोदड़ो की खुदाई की।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0002",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Great Bath of the Indus Valley Civilisation is located at which site?",
+        "options": [
+          "Harappa",
+          "Lothal",
+          "Mohenjo-daro",
+          "Kalibangan"
+        ],
+        "explanation": "The Great Bath, a large brick-lined tank, was found at Mohenjo-daro. It suggests the importance of ritual bathing in the city."
+      },
+      "hi": {
+        "q": "सिंधु घाटी सभ्यता का विशाल स्नानागार किस स्थल पर मिला है?",
+        "options": [
+          "हड़प्पा",
+          "लोथल",
+          "मोहनजोदड़ो",
+          "कालीबंगन"
+        ],
+        "explanation": "विशाल स्नानागार, ईंटों से बना एक बड़ा कुंड, मोहनजोदड़ो में मिला। यह नगर में अनुष्ठानिक स्नान के महत्व का संकेत देता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0003",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which is the largest Harappan site in India?",
+        "options": [
+          "Lothal",
+          "Dholavira",
+          "Rakhigarhi",
+          "Kalibangan"
+        ],
+        "explanation": "Rakhigarhi, in Hisar district of Haryana, is the largest Harappan site in India. Dholavira in Gujarat is a UNESCO World Heritage Site."
+      },
+      "hi": {
+        "q": "भारत में सबसे बड़ा हड़प्पाकालीन स्थल कौन-सा है?",
+        "options": [
+          "लोथल",
+          "धोलावीरा",
+          "राखीगढ़ी",
+          "कालीबंगन"
+        ],
+        "explanation": "हरियाणा के हिसार जिले में स्थित राखीगढ़ी भारत का सबसे बड़ा हड़प्पाकालीन स्थल है। गुजरात का धोलावीरा यूनेस्को विश्व धरोहर स्थल है।"
+      },
+      "answer": 2,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0004",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which is the oldest of the four Vedas?",
+        "options": [
+          "Rigveda",
+          "Samaveda",
+          "Yajurveda",
+          "Atharvaveda"
+        ],
+        "explanation": "The Rigveda is the oldest Veda. It is a collection of hymns and is the source of much of later Vedic literature."
+      },
+      "hi": {
+        "q": "चारों वेदों में सबसे प्राचीन कौन-सा है?",
+        "options": [
+          "ऋग्वेद",
+          "सामवेद",
+          "यजुर्वेद",
+          "अथर्ववेद"
+        ],
+        "explanation": "ऋग्वेद सबसे प्राचीन वेद है। यह स्तुतियों का संग्रह है और परवर्ती वैदिक साहित्य का प्रमुख स्रोत है।"
+      },
+      "answer": 0,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0005",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Gayatri Mantra is found in which Veda?",
+        "options": [
+          "Rigveda",
+          "Samaveda",
+          "Yajurveda",
+          "Atharvaveda"
+        ],
+        "explanation": "The Gayatri Mantra appears in the Rigveda, dedicated to the solar deity Savitr. It is one of the most widely recited Vedic verses."
+      },
+      "hi": {
+        "q": "गायत्री मंत्र किस वेद में मिलता है?",
+        "options": [
+          "ऋग्वेद",
+          "सामवेद",
+          "यजुर्वेद",
+          "अथर्ववेद"
+        ],
+        "explanation": "गायत्री मंत्र ऋग्वेद में मिलता है और सूर्य देवता सवितृ को समर्पित है। यह सबसे अधिक पढ़े जाने वाले वैदिक मंत्रों में से एक है।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0006",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Gautama Buddha was born at which place?",
+        "options": [
+          "Kapilavastu",
+          "Lumbini",
+          "Bodh Gaya",
+          "Sarnath"
+        ],
+        "explanation": "Gautama Buddha was born at Lumbini, in present-day Nepal, in the Shakya clan. Kapilavastu was the capital of the Shakya state where he grew up."
+      },
+      "hi": {
+        "q": "गौतम बुद्ध का जन्म किस स्थान पर हुआ था?",
+        "options": [
+          "कपिलवस्तु",
+          "लुंबिनी",
+          "बोधगया",
+          "सारनाथ"
+        ],
+        "explanation": "गौतम बुद्ध का जन्म वर्तमान नेपाल में लुंबिनी में शाक्य कुल में हुआ था। कपिलवस्तु शाक्य राज्य की राजधानी थी, जहाँ उनका पालन-पोषण हुआ।"
+      },
+      "answer": 1,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0007",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Where did Gautama Buddha deliver his first sermon?",
+        "options": [
+          "Bodh Gaya",
+          "Sarnath",
+          "Kushinagar",
+          "Rajgriha"
+        ],
+        "explanation": "Buddha delivered his first sermon at Sarnath, near Varanasi. It is known as the Dhammachakka-pravartana, the setting in motion of the wheel of law."
+      },
+      "hi": {
+        "q": "गौतम बुद्ध ने अपना पहला उपदेश कहाँ दिया था?",
+        "options": [
+          "बोधगया",
+          "सारनाथ",
+          "कुशीनगर",
+          "राजगृह"
+        ],
+        "explanation": "बुद्ध ने वाराणसी के निकट सारनाथ में अपना पहला उपदेश दिया। इसे धम्मचक्कप्पवत्तन कहा जाता है, अर्थात् धर्मचक्र का प्रवर्तन।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0008",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Gautama Buddha attained enlightenment at which place?",
+        "options": [
+          "Lumbini",
+          "Sarnath",
+          "Bodh Gaya",
+          "Kushinagar"
+        ],
+        "explanation": "Buddha attained enlightenment at Bodh Gaya, under the Bodhi tree, after meditating for 49 days. Kushinagar is where he attained Mahaparinirvana."
+      },
+      "hi": {
+        "q": "गौतम बुद्ध को ज्ञान की प्राप्ति किस स्थान पर हुई थी?",
+        "options": [
+          "लुंबिनी",
+          "सारनाथ",
+          "बोधगया",
+          "कुशीनगर"
+        ],
+        "explanation": "बुद्ध को बोधगया में बोधि वृक्ष के नीचे 49 दिन ध्यान करने के बाद ज्ञान प्राप्त हुआ। कुशीनगर वह स्थान है जहाँ उन्होंने महापरिनिर्वाण प्राप्त किया।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0009",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The First Buddhist Council was held at which place?",
+        "options": [
+          "Rajgriha",
+          "Vaishali",
+          "Pataliputra",
+          "Kundalvana"
+        ],
+        "explanation": "The First Buddhist Council was held at Rajgriha under the patronage of Ajatashatru, soon after the Buddha’s death. The Second Council was held at Vaishali."
+      },
+      "hi": {
+        "q": "प्रथम बौद्ध संगीति कहाँ आयोजित की गई थी?",
+        "options": [
+          "राजगृह",
+          "वैशाली",
+          "पाटलिपुत्र",
+          "कुंडलवन"
+        ],
+        "explanation": "प्रथम बौद्ध संगीति बुद्ध की मृत्यु के कुछ समय बाद अजातशत्रु के संरक्षण में राजगृह में हुई। द्वितीय संगीति वैशाली में हुई।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0010",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "In which year did the Kalinga War take place?",
+        "options": [
+          "321 BCE",
+          "261 BCE",
+          "185 BCE",
+          "78 CE"
+        ],
+        "explanation": "The Kalinga War took place in 261 BCE during the reign of Ashoka. The suffering it caused led him to adopt Buddhism and the policy of dhamma."
+      },
+      "hi": {
+        "q": "कलिंग युद्ध किस वर्ष हुआ था?",
+        "options": [
+          "321 ईसा पूर्व",
+          "261 ईसा पूर्व",
+          "185 ईसा पूर्व",
+          "78 ईस्वी"
+        ],
+        "explanation": "कलिंग युद्ध 261 ईसा पूर्व में अशोक के शासनकाल में हुआ। इससे हुए कष्ट के कारण उन्होंने बौद्ध धर्म और धम्म की नीति अपनाई।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0011",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Most of Ashoka’s edicts were written in which language and script?",
+        "options": [
+          "Sanskrit in Devanagari",
+          "Prakrit in Brahmi",
+          "Pali in Kharoshthi",
+          "Tamil in Brahmi"
+        ],
+        "explanation": "Most Ashokan edicts are in Prakrit written in the Brahmi script. In the north-west, some edicts use Kharoshthi, and a few use Greek and Aramaic."
+      },
+      "hi": {
+        "q": "अशोक के अधिकांश अभिलेख किस भाषा और लिपि में लिखे गए थे?",
+        "options": [
+          "देवनागरी में संस्कृत",
+          "ब्राह्मी में प्राकृत",
+          "खरोष्ठी में पालि",
+          "ब्राह्मी में तमिल"
+        ],
+        "explanation": "अशोक के अधिकांश अभिलेख ब्राह्मी लिपि में प्राकृत भाषा में हैं। उत्तर-पश्चिम में कुछ अभिलेख खरोष्ठी में तथा कुछ यूनानी और अरामी में भी हैं।"
+      },
+      "answer": 1,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0012",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The capital of the Mauryan Empire was which city?",
+        "options": [
+          "Taxila",
+          "Ujjain",
+          "Pataliputra",
+          "Kannauj"
+        ],
+        "explanation": "Pataliputra, present-day Patna, was the capital of the Mauryan Empire. Taxila and Ujjain were important provincial centres."
+      },
+      "hi": {
+        "q": "मौर्य साम्राज्य की राजधानी कौन-सा नगर थी?",
+        "options": [
+          "तक्षशिला",
+          "उज्जैन",
+          "पाटलिपुत्र",
+          "कन्नौज"
+        ],
+        "explanation": "पाटलिपुत्र, वर्तमान पटना, मौर्य साम्राज्य की राजधानी थी। तक्षशिला और उज्जैन महत्वपूर्ण प्रांतीय केंद्र थे।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0013",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Arthashastra was written by which scholar?",
+        "options": [
+          "Panini",
+          "Kautilya",
+          "Patanjali",
+          "Kalidasa"
+        ],
+        "explanation": "The Arthashastra, a treatise on statecraft and economics, is attributed to Kautilya, also known as Chanakya, the mentor of Chandragupta Maurya."
+      },
+      "hi": {
+        "q": "अर्थशास्त्र किस विद्वान ने लिखा था?",
+        "options": [
+          "पाणिनि",
+          "कौटिल्य",
+          "पतंजलि",
+          "कालिदास"
+        ],
+        "explanation": "राजनीति और अर्थशास्त्र का ग्रंथ अर्थशास्त्र कौटिल्य को समर्पित है, जिन्हें चाणक्य भी कहा जाता है और जो चंद्रगुप्त मौर्य के मार्गदर्शक थे।"
+      },
+      "answer": 1,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0014",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Iron Pillar at Mehrauli, famous for its rust-resistant composition, belongs to the reign of which Gupta ruler?",
+        "options": [
+          "Samudragupta",
+          "Chandragupta II",
+          "Skandagupta",
+          "Kumaragupta I"
+        ],
+        "explanation": "The Iron Pillar at Mehrauli carries an inscription of Chandragupta II, also called Vikramaditya. Its low carbon content and protective oxide layer have limited rusting for over 1,600 years."
+      },
+      "hi": {
+        "q": "मेहरौली का लोहे का स्तंभ, जो जंग न लगने के लिए प्रसिद्ध है, किस गुप्त शासक के शासनकाल का है?",
+        "options": [
+          "समुद्रगुप्त",
+          "चंद्रगुप्त II",
+          "स्कंदगुप्त",
+          "कुमारगुप्त I"
+        ],
+        "explanation": "मेहरौली के लोहे के स्तंभ पर चंद्रगुप्त II, जिन्हें विक्रमादित्य भी कहा जाता है, का अभिलेख है। इसका कम कार्बन और सुरक्षात्मक ऑक्साइड परत 1,600 वर्षों से अधिक समय से जंग को सीमित रखे हुए है।"
+      },
+      "answer": 1,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0015",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Nalanda Mahavihara was founded during the reign of which Gupta ruler?",
+        "options": [
+          "Chandragupta I",
+          "Samudragupta",
+          "Kumaragupta I",
+          "Skandagupta"
+        ],
+        "explanation": "Nalanda Mahavihara was founded in the 5th century CE during the reign of Kumaragupta I. It grew into a major centre of Buddhist learning under the Palas."
+      },
+      "hi": {
+        "q": "नालंदा महाविहार की स्थापना किस गुप्त शासक के शासनकाल में हुई थी?",
+        "options": [
+          "चंद्रगुप्त I",
+          "समुद्रगुप्त",
+          "कुमारगुप्त I",
+          "स्कंदगुप्त"
+        ],
+        "explanation": "नालंदा महाविहार की स्थापना 5वीं शताब्दी ईस्वी में कुमारगुप्त I के शासनकाल में हुई। पाल शासकों के अधीन यह बौद्ध शिक्षा का प्रमुख केंद्र बना।"
+      },
+      "answer": 2,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0016",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Harshavardhana ruled with his capital at which city?",
+        "options": [
+          "Thanesar",
+          "Kannauj",
+          "Pataliputra",
+          "Ujjain"
+        ],
+        "explanation": "Harshavardhana ruled from 606 to 647 CE. He moved his capital from Thanesar to Kannauj, which became a major political and cultural centre."
+      },
+      "hi": {
+        "q": "हर्षवर्धन ने किस नगर को अपनी राजधानी बनाया था?",
+        "options": [
+          "थानेसर",
+          "कन्नौज",
+          "पाटलिपुत्र",
+          "उज्जैन"
+        ],
+        "explanation": "हर्षवर्धन ने 606 से 647 ईस्वी तक शासन किया। उन्होंने अपनी राजधानी थानेसर से कन्नौज स्थानांतरित की, जो एक प्रमुख राजनीतिक और सांस्कृतिक केंद्र बना।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0017",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Shore Temple at Mahabalipuram was built by which dynasty?",
+        "options": [
+          "Chola",
+          "Chera",
+          "Pallava",
+          "Chalukya"
+        ],
+        "explanation": "The Shore Temple at Mahabalipuram was built by the Pallavas, most likely under Narasimhavarman II, in the 8th century CE. It is a UNESCO World Heritage Site."
+      },
+      "hi": {
+        "q": "महाबलीपुरम का तटीय मंदिर किस राजवंश ने बनवाया था?",
+        "options": [
+          "चोल",
+          "चेर",
+          "पल्लव",
+          "चालुक्य"
+        ],
+        "explanation": "महाबलीपुरम का तटीय मंदिर 8वीं शताब्दी ईस्वी में पल्लवों ने बनवाया, संभवतः नरसिंहवर्मन II के अधीन। यह यूनेस्को विश्व धरोहर स्थल है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0018",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Brihadeeswarar Temple at Thanjavur was commissioned by which Chola king?",
+        "options": [
+          "Rajendra I",
+          "Rajaraja I",
+          "Kulottunga I",
+          "Parantaka I"
+        ],
+        "explanation": "Rajaraja I built the Brihadeeswarar Temple at Thanjavur in the early 11th century. It is also called the Big Temple and is a UNESCO World Heritage Site."
+      },
+      "hi": {
+        "q": "तंजौर का बृहदीश्वर मंदिर किस चोल राजा ने बनवाया था?",
+        "options": [
+          "राजेंद्र I",
+          "राजराज I",
+          "कुलोत्तुंग I",
+          "परांतक I"
+        ],
+        "explanation": "राजराज I ने 11वीं शताब्दी के आरंभ में तंजौर में बृहदीश्वर मंदिर बनवाया। इसे बिग टेम्पल भी कहा जाता है और यह यूनेस्को विश्व धरोहर स्थल है।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0019",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Tolkappiyam, the oldest surviving Tamil work, deals with which subject?",
+        "options": [
+          "Grammar",
+          "Astronomy",
+          "Medicine",
+          "Statecraft"
+        ],
+        "explanation": "Tolkappiyam is a treatise on Tamil grammar, poetics and prosody. It belongs to the Sangam corpus and is the oldest surviving work in Tamil."
+      },
+      "hi": {
+        "q": "तोलकाप्पियम, जो तमिल का सबसे प्राचीन उपलब्ध ग्रंथ है, किस विषय पर है?",
+        "options": [
+          "व्याकरण",
+          "खगोल विज्ञान",
+          "चिकित्सा",
+          "राजनीति"
+        ],
+        "explanation": "तोलकाप्पियम तमिल व्याकरण, काव्यशास्त्र और छंदशास्त्र का ग्रंथ है। यह संगम साहित्य का हिस्सा है और तमिल का सबसे प्राचीन उपलब्ध ग्रंथ है।"
+      },
+      "answer": 0,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "history-ancient-0020",
+      "v": 1,
+      "packId": "history-ancient-india",
+      "section": "history",
+      "subtopic": "history-ancient-india",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Alexander the Great defeated King Porus in 326 BCE at which battle?",
+        "options": [
+          "Battle of Hydaspes",
+          "Battle of Plassey",
+          "Battle of Buxar",
+          "Battle of Tarain"
+        ],
+        "explanation": "Alexander defeated Porus at the Battle of Hydaspes, on the river Jhelum, in 326 BCE. Impressed by Porus’s courage, Alexander restored his kingdom."
+      },
+      "hi": {
+        "q": "सिकंदर महान ने 326 ईसा पूर्व में राजा पोरस को किस युद्ध में हराया था?",
+        "options": [
+          "हाइडेस्पीज का युद्ध",
+          "प्लासी का युद्ध",
+          "बक्सर का युद्ध",
+          "तराइन का युद्ध"
+        ],
+        "explanation": "सिकंदर ने 326 ईसा पूर्व में झेलम नदी पर हाइडेस्पीज के युद्ध में पोरस को हराया। पोरस के साहस से प्रभावित होकर सिकंदर ने उनका राज्य लौटा दिया।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,666 @@
+{
+  "id": "geography-indian-geography",
+  "version": 2,
+  "questions": [
+    {
+      "id": "geography-indian-0001",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which is the highest mountain peak located within India?",
+        "options": [
+          "Nanda Devi",
+          "Kangchenjunga",
+          "Kamet",
+          "Mount Everest"
+        ],
+        "explanation": "Kangchenjunga, on the Sikkim-Nepal border, is the highest peak within India at 8,586 m. Mount Everest lies in Nepal."
+      },
+      "hi": {
+        "q": "भारत की सीमा के भीतर स्थित सबसे ऊँची पर्वत चोटी कौन-सी है?",
+        "options": [
+          "नंदा देवी",
+          "कंचनजंगा",
+          "कामेट",
+          "माउंट एवरेस्ट"
+        ],
+        "explanation": "सिक्किम-नेपाल सीमा पर स्थित कंचनजंगा 8,586 मीटर ऊँची भारत की सबसे ऊँची चोटी है। माउंट एवरेस्ट नेपाल में है।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0002",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which is the longest river flowing within India?",
+        "options": [
+          "Godavari",
+          "Brahmaputra",
+          "Ganga",
+          "Yamuna"
+        ],
+        "explanation": "The Ganga is the longest river flowing within India, at about 2,525 km. The Godavari is the longest peninsular river."
+      },
+      "hi": {
+        "q": "भारत में बहने वाली सबसे लंबी नदी कौन-सी है?",
+        "options": [
+          "गोदावरी",
+          "ब्रह्मपुत्र",
+          "गंगा",
+          "यमुना"
+        ],
+        "explanation": "गंगा भारत में बहने वाली सबसे लंबी नदी है, जिसकी लंबाई लगभग 2,525 किमी है। गोदावरी प्रायद्वीपीय भारत की सबसे लंबी नदी है।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0003",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Standard Meridian of India passes through which place?",
+        "options": [
+          "Allahabad",
+          "Mirzapur",
+          "Nagpur",
+          "Bhopal"
+        ],
+        "explanation": "India’s Standard Meridian is 82 degrees 30 minutes east, which passes through Mirzapur in Uttar Pradesh. It sets Indian Standard Time at UTC plus 5 hours 30 minutes."
+      },
+      "hi": {
+        "q": "भारत की मानक मध्याह्न रेखा किस स्थान से गुजरती है?",
+        "options": [
+          "इलाहाबाद",
+          "मिर्जापुर",
+          "नागपुर",
+          "भोपाल"
+        ],
+        "explanation": "भारत की मानक मध्याह्न रेखा 82 डिग्री 30 मिनट पूर्व है, जो उत्तर प्रदेश के मिर्जापुर से गुजरती है। इससे भारतीय मानक समय यूटीसी से 5 घंटे 30 मिनट आगे तय होता है।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0004",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Tropic of Cancer passes through how many Indian states?",
+        "options": [
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "explanation": "The Tropic of Cancer passes through eight states: Gujarat, Rajasthan, Madhya Pradesh, Chhattisgarh, Jharkhand, West Bengal, Tripura and Mizoram."
+      },
+      "hi": {
+        "q": "कर्क रेखा भारत के कितने राज्यों से गुजरती है?",
+        "options": [
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "explanation": "कर्क रेखा आठ राज्यों से गुजरती है: गुजरात, राजस्थान, मध्य प्रदेश, छत्तीसगढ़, झारखंड, पश्चिम बंगाल, त्रिपुरा और मिज़ोरम।"
+      },
+      "answer": 2,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0005",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Indira Point, the southernmost point of India, is located in which island group?",
+        "options": [
+          "Andaman Islands",
+          "Lakshadweep",
+          "Nicobar Islands",
+          "Maldives"
+        ],
+        "explanation": "Indira Point lies on Great Nicobar Island in the Nicobar group. It is the southernmost point of Indian territory."
+      },
+      "hi": {
+        "q": "भारत का दक्षिणतम बिंदु इंदिरा पॉइंट किस द्वीप समूह में स्थित है?",
+        "options": [
+          "अंडमान द्वीप समूह",
+          "लक्षद्वीप",
+          "निकोबार द्वीप समूह",
+          "मालदीव"
+        ],
+        "explanation": "इंदिरा पॉइंट निकोबार समूह के ग्रेट निकोबार द्वीप पर स्थित है। यह भारतीय क्षेत्र का दक्षिणतम बिंदु है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0006",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Palk Strait separates India from which country?",
+        "options": [
+          "Maldives",
+          "Sri Lanka",
+          "Indonesia",
+          "Myanmar"
+        ],
+        "explanation": "The Palk Strait lies between Tamil Nadu and Sri Lanka. The Gulf of Mannar lies to its south-west."
+      },
+      "hi": {
+        "q": "पाक जलडमरूमध्य भारत को किस देश से अलग करता है?",
+        "options": [
+          "मालदीव",
+          "श्रीलंका",
+          "इंडोनेशिया",
+          "म्यांमार"
+        ],
+        "explanation": "पाक जलडमरूमध्य तमिलनाडु और श्रीलंका के बीच है। इसके दक्षिण-पश्चिम में मन्नार की खाड़ी है।"
+      },
+      "answer": 1,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0007",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Ten Degree Channel separates which two island groups?",
+        "options": [
+          "Andaman and Nicobar",
+          "Lakshadweep and Minicoy",
+          "Nicobar and Sumatra",
+          "Andaman and Myanmar"
+        ],
+        "explanation": "The Ten Degree Channel separates the Andaman Islands from the Nicobar Islands. The Nine Degree Channel separates Minicoy from the Lakshadweep main group."
+      },
+      "hi": {
+        "q": "दस डिग्री चैनल किन दो द्वीप समूहों को अलग करता है?",
+        "options": [
+          "अंडमान और निकोबार",
+          "लक्षद्वीप और मिनिकॉय",
+          "निकोबार और सुमात्रा",
+          "अंडमान और म्यांमार"
+        ],
+        "explanation": "दस डिग्री चैनल अंडमान द्वीपों को निकोबार द्वीपों से अलग करता है। नौ डिग्री चैनल मिनिकॉय को लक्षद्वीप के मुख्य समूह से अलग करता है।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0008",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Western Ghats are also known by which name?",
+        "options": [
+          "Aravalli",
+          "Vindhya",
+          "Sahyadri",
+          "Satpura"
+        ],
+        "explanation": "The Western Ghats are also called the Sahyadri. They run parallel to India’s western coast from Gujarat to Kerala."
+      },
+      "hi": {
+        "q": "पश्चिमी घाट को किस दूसरे नाम से जाना जाता है?",
+        "options": [
+          "अरावली",
+          "विंध्य",
+          "सह्याद्री",
+          "सतपुड़ा"
+        ],
+        "explanation": "पश्चिमी घाट को सह्याद्री भी कहा जाता है। ये गुजरात से केरल तक भारत के पश्चिमी तट के समांतर फैले हैं।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0009",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Thar Desert lies mainly in which Indian state?",
+        "options": [
+          "Gujarat",
+          "Haryana",
+          "Rajasthan",
+          "Punjab"
+        ],
+        "explanation": "The Thar Desert, also called the Great Indian Desert, lies mainly in western Rajasthan and extends into Gujarat, Punjab and Haryana."
+      },
+      "hi": {
+        "q": "थार मरुस्थल मुख्यतः किस भारतीय राज्य में है?",
+        "options": [
+          "गुजरात",
+          "हरियाणा",
+          "राजस्थान",
+          "पंजाब"
+        ],
+        "explanation": "थार मरुस्थल, जिसे बृहत् भारतीय मरुस्थल भी कहा जाता है, मुख्यतः पश्चिमी राजस्थान में है और गुजरात, पंजाब तथा हरियाणा तक फैला है।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0010",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which Indian state has the largest area?",
+        "options": [
+          "Madhya Pradesh",
+          "Maharashtra",
+          "Rajasthan",
+          "Uttar Pradesh"
+        ],
+        "explanation": "Rajasthan is the largest Indian state by area, at about 342,239 square kilometres. Madhya Pradesh is the second largest."
+      },
+      "hi": {
+        "q": "क्षेत्रफल की दृष्टि से भारत का सबसे बड़ा राज्य कौन-सा है?",
+        "options": [
+          "मध्य प्रदेश",
+          "महाराष्ट्र",
+          "राजस्थान",
+          "उत्तर प्रदेश"
+        ],
+        "explanation": "क्षेत्रफल की दृष्टि से राजस्थान भारत का सबसे बड़ा राज्य है, जिसका क्षेत्रफल लगभग 3,42,239 वर्ग किमी है। मध्य प्रदेश दूसरे स्थान पर है।"
+      },
+      "answer": 2,
+      "eloSeed": 1100,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0011",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which is the smallest Indian state by area?",
+        "options": [
+          "Sikkim",
+          "Tripura",
+          "Goa",
+          "Manipur"
+        ],
+        "explanation": "Goa is the smallest Indian state by area, at about 3,702 square kilometres. Sikkim is the second smallest."
+      },
+      "hi": {
+        "q": "क्षेत्रफल की दृष्टि से भारत का सबसे छोटा राज्य कौन-सा है?",
+        "options": [
+          "सिक्किम",
+          "त्रिपुरा",
+          "गोवा",
+          "मणिपुर"
+        ],
+        "explanation": "क्षेत्रफल की दृष्टि से गोवा भारत का सबसे छोटा राज्य है, जिसका क्षेत्रफल लगभग 3,702 वर्ग किमी है। सिक्किम दूसरे स्थान पर है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0012",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which river is known as the Dakshin Ganga and is the longest peninsular river?",
+        "options": [
+          "Krishna",
+          "Kaveri",
+          "Godavari",
+          "Narmada"
+        ],
+        "explanation": "The Godavari is called the Dakshin Ganga. It rises in the Western Ghats near Nashik and is the longest river of peninsular India."
+      },
+      "hi": {
+        "q": "किस नदी को दक्षिण गंगा कहा जाता है और वह प्रायद्वीपीय भारत की सबसे लंबी नदी है?",
+        "options": [
+          "कृष्णा",
+          "कावेरी",
+          "गोदावरी",
+          "नर्मदा"
+        ],
+        "explanation": "गोदावरी को दक्षिण गंगा कहा जाता है। यह नासिक के निकट पश्चिमी घाट से निकलती है और प्रायद्वीपीय भारत की सबसे लंबी नदी है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0013",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Brahmaputra is known by which name in Tibet?",
+        "options": [
+          "Dihang",
+          "Jamuna",
+          "Tsangpo",
+          "Meghna"
+        ],
+        "explanation": "The Brahmaputra is called the Tsangpo in Tibet, the Dihang or Siang in Arunachal Pradesh, and the Jamuna in Bangladesh."
+      },
+      "hi": {
+        "q": "ब्रह्मपुत्र नदी को तिब्बत में किस नाम से जाना जाता है?",
+        "options": [
+          "दिहांग",
+          "जमुना",
+          "सांगपो",
+          "मेघना"
+        ],
+        "explanation": "ब्रह्मपुत्र को तिब्बत में सांगपो, अरुणाचल प्रदेश में दिहांग या सियांग तथा बांग्लादेश में जमुना कहा जाता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0014",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Chilika Lake, India’s largest brackish water lagoon, is located in which state?",
+        "options": [
+          "Andhra Pradesh",
+          "West Bengal",
+          "Odisha",
+          "Tamil Nadu"
+        ],
+        "explanation": "Chilika Lake lies on the coast of Odisha and is Asia’s largest brackish water lagoon. It is an important wintering ground for migratory birds."
+      },
+      "hi": {
+        "q": "चिलिका झील, जो भारत की सबसे बड़ी खारे पानी की लैगून है, किस राज्य में है?",
+        "options": [
+          "आंध्र प्रदेश",
+          "पश्चिम बंगाल",
+          "ओडिशा",
+          "तमिलनाडु"
+        ],
+        "explanation": "चिलिका झील ओडिशा के तट पर है और एशिया की सबसे बड़ी खारे पानी की लैगून है। यह प्रवासी पक्षियों के लिए महत्वपूर्ण शीतकालीन स्थल है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0015",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Which is the longest lake in India?",
+        "options": [
+          "Chilika Lake",
+          "Vembanad Lake",
+          "Wular Lake",
+          "Pulicat Lake"
+        ],
+        "explanation": "Vembanad Lake in Kerala is the longest lake in India. Wular Lake in Jammu and Kashmir is one of the largest freshwater lakes."
+      },
+      "hi": {
+        "q": "भारत की सबसे लंबी झील कौन-सी है?",
+        "options": [
+          "चिलिका झील",
+          "वेम्बनाड झील",
+          "वुलर झील",
+          "पुलिकट झील"
+        ],
+        "explanation": "केरल की वेम्बनाड झील भारत की सबसे लंबी झील है। जम्मू और कश्मीर की वुलर झील सबसे बड़ी मीठे पानी की झीलों में से एक है।"
+      },
+      "answer": 1,
+      "eloSeed": 1300,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0016",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Black soil, also called regur, is best suited for which crop?",
+        "options": [
+          "Rice",
+          "Tea",
+          "Cotton",
+          "Jute"
+        ],
+        "explanation": "Black soil, or regur, is formed from lava and retains moisture well. It is especially suited to cotton, which is why it is also called black cotton soil."
+      },
+      "hi": {
+        "q": "काली मिट्टी, जिसे रेगुर भी कहा जाता है, किस फसल के लिए सबसे उपयुक्त है?",
+        "options": [
+          "चावल",
+          "चाय",
+          "कपास",
+          "जूट"
+        ],
+        "explanation": "काली मिट्टी या रेगुर लावा से बनती है और नमी रोकती है। यह विशेष रूप से कपास के लिए उपयुक्त है, इसीलिए इसे काली कपास मिट्टी भी कहा जाता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0017",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Sundarbans, the world’s largest mangrove forest, lies in the delta of which river system?",
+        "options": [
+          "Ganga and Brahmaputra",
+          "Godavari",
+          "Krishna",
+          "Mahanadi"
+        ],
+        "explanation": "The Sundarbans lie in the Ganga-Brahmaputra delta, mainly in Bangladesh and the Indian state of West Bengal. They are a UNESCO World Heritage Site."
+      },
+      "hi": {
+        "q": "विश्व का सबसे बड़ा मैंग्रोव वन सुंदरबन किस नदी प्रणाली के डेल्टा में है?",
+        "options": [
+          "गंगा और ब्रह्मपुत्र",
+          "गोदावरी",
+          "कृष्णा",
+          "महानदी"
+        ],
+        "explanation": "सुंदरबन गंगा-ब्रह्मपुत्र डेल्टा में हैं, मुख्यतः बांग्लादेश और भारतीय राज्य पश्चिम बंगाल में। यह यूनेस्को विश्व धरोहर स्थल है।"
+      },
+      "answer": 0,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0018",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "The Zojila Pass connects Srinagar with which region?",
+        "options": [
+          "Jammu",
+          "Leh",
+          "Shimla",
+          "Manali"
+        ],
+        "explanation": "The Zojila Pass in the Himalayas connects Srinagar in the Kashmir Valley with Leh in Ladakh. It lies on the Srinagar-Leh highway."
+      },
+      "hi": {
+        "q": "ज़ोजिला दर्रा श्रीनगर को किस क्षेत्र से जोड़ता है?",
+        "options": [
+          "जम्मू",
+          "लेह",
+          "शिमला",
+          "मनाली"
+        ],
+        "explanation": "हिमालय में ज़ोजिला दर्रा कश्मीर घाटी के श्रीनगर को लद्दाख के लेह से जोड़ता है। यह श्रीनगर-लेह राजमार्ग पर स्थित है।"
+      },
+      "answer": 1,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0019",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Nathu La Pass, on the India-China border, is located in which state?",
+        "options": [
+          "Arunachal Pradesh",
+          "Uttarakhand",
+          "Sikkim",
+          "Himachal Pradesh"
+        ],
+        "explanation": "Nathu La is a mountain pass in Sikkim on the border with China. It was an important route on the ancient Silk Road."
+      },
+      "hi": {
+        "q": "भारत-चीन सीमा पर स्थित नाथू ला दर्रा किस राज्य में है?",
+        "options": [
+          "अरुणाचल प्रदेश",
+          "उत्तराखंड",
+          "सिक्किम",
+          "हिमाचल प्रदेश"
+        ],
+        "explanation": "नाथू ला सिक्किम में चीन की सीमा पर एक पर्वतीय दर्रा है। यह प्राचीन रेशम मार्ग का महत्वपूर्ण हिस्सा था।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "geography-indian-0020",
+      "v": 1,
+      "packId": "geography-indian-geography",
+      "section": "geography",
+      "subtopic": "geography-indian-geography",
+      "source": {
+        "type": "practice"
+      },
+      "en": {
+        "q": "Mawsynram, often described as the wettest place on Earth, is located in which state?",
+        "options": [
+          "Assam",
+          "Sikkim",
+          "Meghalaya",
+          "Arunachal Pradesh"
+        ],
+        "explanation": "Mawsynram is in the East Khasi Hills of Meghalaya. Its location and the funnel shape of the hills give it extremely high annual rainfall."
+      },
+      "hi": {
+        "q": "मॉसिनराम, जिसे पृथ्वी का सबसे अधिक वर्षा वाला स्थान कहा जाता है, किस राज्य में है?",
+        "options": [
+          "असम",
+          "सिक्किम",
+          "मेघालय",
+          "अरुणाचल प्रदेश"
+        ],
+        "explanation": "मॉसिनराम मेघालय की पूर्वी खासी पहाड़ियों में है। इसकी स्थिति और पहाड़ियों का कीपाकार ढाँचा अत्यधिक वार्षिक वर्षा कराता है।"
+      },
+      "answer": 2,
+      "eloSeed": 1200,
+      "verifiedAt": "2026-11-07T00:00:00.000Z"
+    }
+  ]
+}

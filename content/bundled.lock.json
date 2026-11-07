@@ -1,20 +1,20 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "packs": {
     "geography-indian-geography": {
-      "version": 1,
-      "contentHash": "136f0600f06dab9f72efcf1cad0ec62a58b233523f8e88458f0abd87063ef142",
-      "sha256": "9ad5b875ee8c4479dcc1b798682eb3d9d07f65509a8147f88fac71dc210ba366"
+      "version": 2,
+      "contentHash": "e2b0ced053d8a0646e50c089f49984ca220315a30bfce9595c471ef2195a4169",
+      "sha256": "2430466a5430884cf9d2ac89be25a72a51411d7f0cca5451c55cd4e74b649e1d"
     },
     "history-ancient-india": {
-      "version": 1,
-      "contentHash": "3fda488fe2e31489a6904084b89527ae035e57d6131c0a7b6600b455ea6c18d5",
-      "sha256": "adf8bad9f183137f49e22850cd696f3829ecdaa2ecb694435b66026965cf885e"
+      "version": 2,
+      "contentHash": "1ffd204c3a0d31159f7c58b068244a50f7114b78d2ffa7fafad294992489e671",
+      "sha256": "8d7c5a50335d4773824d8f989d3ac50845f4be2ef83745c3c56a14f7cace0481"
     },
     "polity-fundamental-rights": {
-      "version": 1,
-      "contentHash": "e49c010627845faa588cafc58aa2b3439c9d3b88708ef1f58fd86f37e550bbb5",
-      "sha256": "692276f66ea8f21d9b7a2ad0910d0833b8ddd2e17d598a7637155ab493d28d90"
+      "version": 2,
+      "contentHash": "7470c1e1793f8d3e42abba015f8fc1d74ee2af1e91a1add43dc88268ec940b47",
+      "sha256": "4695cdebed4f284e6b8288e64ee73261106e118f414e2e0f00191cb19ebf37be"
     }
   }
 }

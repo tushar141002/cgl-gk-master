@@ -69,9 +69,18 @@ export class ContentError extends Error {
   }
 }
 
+export interface SubtopicProgress {
+  readonly section: string;
+  readonly verified: number;
+  readonly draft: number;
+  readonly rejected: number;
+}
+
 export interface CheckedRow {
   readonly line: number;
   readonly id: string;
+  readonly section: string;
+  readonly subtopic: string;
   readonly status: RowStatus;
   readonly errors: readonly string[];
   readonly warnings: readonly string[];
@@ -82,6 +91,8 @@ export interface CheckedRow {
 export interface MasterReport {
   readonly rows: readonly CheckedRow[];
   readonly counts: Readonly<Record<RowStatus, number>>;
+  /** Per-subtopic status counts, keyed by the pack slug. */
+  readonly subtopics: Readonly<Record<string, SubtopicProgress>>;
   /** Flattened, line-prefixed; empty means the master can be built. */
   readonly errors: readonly string[];
   readonly warnings: readonly string[];
@@ -92,6 +103,9 @@ export interface MasterReport {
 interface RowDraft {
   line: number;
   id: string;
+  section: string;
+  subtopic: string;
+  normalizedQuestion: string;
   status: RowStatus;
   errors: string[];
   warnings: string[];
@@ -113,10 +127,13 @@ export function validateMaster(table: CsvTable): MasterReport {
 
   const drafts = table.rows.map((row) => inspectRow(row));
   markDuplicateIds(drafts);
+  markDuplicateQuestions(drafts);
 
   const rows: CheckedRow[] = drafts.map((draft) => ({
     line: draft.line,
     id: draft.id,
+    section: draft.section,
+    subtopic: draft.subtopic,
     status: draft.status,
     errors: draft.errors,
     warnings: draft.warnings,
@@ -124,7 +141,19 @@ export function validateMaster(table: CsvTable): MasterReport {
   }));
 
   const counts: Record<RowStatus, number> = { verified: 0, draft: 0, rejected: 0 };
-  for (const row of rows) counts[row.status] += 1;
+  const subtopics: Record<string, { section: string; verified: number; draft: number; rejected: number }> =
+    {};
+  for (const row of rows) {
+    counts[row.status] += 1;
+    if (row.subtopic === '') continue;
+    const entry = (subtopics[row.subtopic] ??= {
+      section: row.section,
+      verified: 0,
+      draft: 0,
+      rejected: 0,
+    });
+    entry[row.status] += 1;
+  }
 
   const errors = rows.flatMap((row) =>
     row.errors.map((message) => `line ${row.line}${row.id === '' ? '' : ` (${row.id})`}: ${message}`),
@@ -137,7 +166,7 @@ export function validateMaster(table: CsvTable): MasterReport {
     .filter((row) => row.status === 'verified' && row.question !== null)
     .map((row) => row.question!);
 
-  return { rows, counts, errors, warnings, questions };
+  return { rows, counts, subtopics, errors, warnings, questions };
 }
 
 function inspectRow(row: CsvRow): RowDraft {
@@ -246,7 +275,17 @@ function inspectRow(row: CsvRow): RowDraft {
 
   const question = resolvedStatus === 'verified' && errors.length === 0 ? Question.from(record) : null;
 
-  return { line: row.line, id, status: resolvedStatus, errors, warnings, question };
+  return {
+    line: row.line,
+    id,
+    section,
+    subtopic,
+    normalizedQuestion: normalizeQuestion(en.q),
+    status: resolvedStatus,
+    errors,
+    warnings,
+    question,
+  };
 }
 
 function markDuplicateIds(drafts: RowDraft[]): void {
@@ -266,6 +305,44 @@ function markDuplicateIds(drafts: RowDraft[]): void {
       draft.question = null;
     }
   }
+}
+
+/**
+ * Two ids for the same English question waste a student's time and skew the
+ * Elo estimate. Compare a lightly normalised question text: case, punctuation
+ * and spacing must not hide a copy. A draft only warns so work in progress can
+ * still validate; a verified duplicate is an error.
+ */
+function markDuplicateQuestions(drafts: RowDraft[]): void {
+  const byQuestion = new Map<string, RowDraft[]>();
+  for (const draft of drafts) {
+    if (draft.normalizedQuestion === '') continue;
+    const group = byQuestion.get(draft.normalizedQuestion);
+    if (group === undefined) byQuestion.set(draft.normalizedQuestion, [draft]);
+    else group.push(draft);
+  }
+
+  for (const group of byQuestion.values()) {
+    if (group.length < 2) continue;
+    const lines = group.map((draft) => draft.line).join(', ');
+    const message = `the English question duplicates lines ${lines}; ask a distinct question or merge them`;
+    for (const draft of group) {
+      if (draft.status === 'verified') {
+        draft.errors.push(message);
+        draft.question = null;
+      } else {
+        draft.warnings.push(message);
+      }
+    }
+  }
+}
+
+function normalizeQuestion(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function assertColumns(header: readonly string[]): void {

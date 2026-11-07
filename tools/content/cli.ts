@@ -119,6 +119,7 @@ async function runValidate(values: Values, io: CliIO, cwd: string, verbose: bool
     `Rows: ${report.rows.length} ` +
       `(verified ${report.counts.verified}, draft ${report.counts.draft}, rejected ${report.counts.rejected})`,
   );
+  printSubtopics(report.subtopics, io.out);
   printList('warning', report.warnings, verbose ? Number.POSITIVE_INFINITY : 20, io.out);
   printList('error', report.errors, verbose ? Number.POSITIVE_INFINITY : 50, io.err);
 
@@ -210,6 +211,18 @@ async function readText(path: string, label: string): Promise<string> {
     return await readFile(path, 'utf8');
   } catch (error) {
     throw new ContentError(`cannot read ${label} "${path}": ${asMessage(error)}`);
+  }
+}
+
+function printSubtopics(
+  subtopics: Readonly<Record<string, { verified: number; draft: number; rejected: number }>>,
+  write: (message: string) => void,
+): void {
+  const entries = Object.entries(subtopics).sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length === 0) return;
+  write('Subtopics:');
+  for (const [name, counts] of entries) {
+    write(`  ${name}: verified ${counts.verified}, draft ${counts.draft}, rejected ${counts.rejected}`);
   }
 }
 

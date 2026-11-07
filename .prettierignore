@@ -6,3 +6,7 @@ dist/
 files.zip
 *.png
 content/**/*.csv
+
+# Signed pack artifacts: bytes are hashed into the manifest, so formatting them
+# would break the signature and the pack sha256.
+public/packs/

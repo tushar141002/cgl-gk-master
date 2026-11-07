@@ -34,7 +34,13 @@ export function masterRow(overrides: Partial<Record<Column, string>> = {}, line 
     verified_at: '2026-11-07T00:00:00.000Z',
   };
 
-  return { line, values: { ...values, ...overrides } };
+  const merged = { ...values, ...overrides };
+  // Tie the default question to the id so two fixtures never collide with the
+  // duplicate-question rule; a test that wants a collision sets `en_q`.
+  if (overrides.en_q === undefined) {
+    merged.en_q = `Which Article abolishes untouchability? (${merged.id})`;
+  }
+  return { line, values: merged };
 }
 
 export function masterTable(rows: readonly CsvRow[]): CsvTable {

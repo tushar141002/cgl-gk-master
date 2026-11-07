@@ -53,6 +53,7 @@ describe('content CLI', () => {
 
     expect(code).toBe(0);
     expect(text).toContain('Rows: 4 (verified 3, draft 1, rejected 0)');
+    expect(text).toContain('Subtopics:');
     expect(text).toContain('polity-fr-0002');
     expect(text).toContain('Master is valid for building');
   });
