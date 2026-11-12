@@ -10,9 +10,10 @@ import type { CsvRow, CsvTable } from './csv';
 /**
  * The master CSV schema (D-047).
  *
- * One row is one question. `source_url`, `status`, `difficulty` and
- * `verified_at` are workflow columns: the first is kept for verification and
- * never packed, the other three decide whether and how the question ships.
+ * One row is one question. `source_url`, `source_ref`, `status`, `difficulty`
+ * and `verified_at` are workflow columns: the first two are kept for
+ * verification and never packed, the other three decide whether and how the
+ * question ships.
  */
 export const COLUMNS = [
   'id',
@@ -26,6 +27,7 @@ export const COLUMNS = [
   'source_date',
   'source_ca_month',
   'source_url',
+  'source_ref',
   'en_q',
   'en_option_a',
   'en_option_b',

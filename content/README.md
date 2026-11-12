@@ -1,4 +1,4 @@
-# Content master (Step 3; batch 1 in Step 8, batch 2 in Step 9, review in Step 10)
+# Content master (Step 3; batch 1 in Step 8, batch 2 in Step 9, review in Steps 10–11)
 
 The master CSV is the authoring source. The build turns verified rows into
 signed question packs; nothing here ships directly.
@@ -13,8 +13,10 @@ signed question packs; nothing here ships directly.
   versions and hashes survive between builds.
 - `bundled.lock.json` — lock for the pack shipped inside the APK; the build
   writes both the lock and the signed files under `public/packs/` (D-059).
-- `review/` — exported review sheets with `decision`/`note` columns; fill one,
-  run `content:promote`, then re-export before the next slice (D-079).
+- `review/` — exported review sheets. The English sheet has `decision`/`note`;
+  the Hindi sheet has `hi_check`/`hi_note`. Both carry a `content_hash`. Fill
+  them, run `content:promote`, then re-export before the next slice (D-079 to
+  D-083). `sources-review.csv` and `dupes-review.csv` are advisory reports.
 
 The target is about 2,000 verified questions across History, Polity and
 Geography before launch. At 30–40 verified rows a day that is roughly 57 days,
@@ -34,6 +36,7 @@ printed order, one official source link.
 | `source_exam`, `source_year`, `source_shift`, `source_date` | PYQ details; `source_exam` and `source_year` are required for a PYQ |
 | `source_ca_month` | `YYYY-MM`; required for `CA` |
 | `source_url` | Verification link; required before publishing, never packed |
+| `source_ref` | Locator — Article, section, chapter or page — required before approval (D-082) |
 | `en_*` / `hi_*` | Question, four options and explanation per language |
 | `answer` | `A`, `B`, `C` or `D` in the printed option order (D-032) |
 | `difficulty` | `easy` / `medium` / `hard` → `eloSeed` 1100 / 1200 / 1300 (D-049) |
@@ -56,8 +59,8 @@ error on a verified row and a warning while both rows are drafts.
 - Each row cites an official portal: the Constitution spotlight on
   `india.gov.in` for Polity, IGNCA or the Archaeological Survey of India for
   History, and the physical-features page on `india.gov.in` or the Survey of
-  India for Geography. Per-question page links are the next improvement; a
-  book-level link is the floor, not the target.
+  India for Geography. Step 11 tightens this: a new approval needs a
+  `source_ref` and a deep link, not a portal front page (D-082).
 - English and Hindi are authored together. The Hindi is not a later
   translation, so terminology stays consistent across the bank.
 - Options are not shuffled (D-032): the correct option sits where the author
@@ -95,42 +98,73 @@ error on a verified row and a warning while both rows are drafts.
 - Batch 2 is checked for duplicate English questions against itself and against
   all 60 verified rows. `validate` repeats that check on every run.
 
-## Review and promotion (D-079)
+## Review and promotion (D-079 to D-083)
 
-Do not edit `status` or `verified_at` by hand for a reviewed row. The sheet is
-the audit trail and `promote` is the only writer.
+Do not edit `status` or `verified_at` by hand for a reviewed row. The sheets
+are the audit trail and `promote` is the only writer.
 
-1. Export a slice:
+1. Export the English slice and the Hindi sheet:
 
    ```sh
    npm run content:review -- --status draft --out content/review/draft-review.csv
    npm run content:review -- --status draft --subtopic polity-parliament \
      --out content/review/polity-parliament.csv --force
+   npm run content:review -- --lang hi --out content/review/hindi-review.csv
    ```
 
-   `--status` is `draft` (default), `verified`, `rejected` or `all`. A sheet
-   that already exists is kept unless you pass `--force`.
+   `--status` is `draft` (English default), `verified`, `rejected` or `all`
+   (Hindi default). A sheet that already exists is kept unless you pass
+   `--force`. `--carry <old.csv>` copies a previous decision onto the new export
+   only when that row's `content_hash` is unchanged.
 
 2. Fill `decision` with `approve`, `reject` or `fix`. Leave it blank to defer.
-   `reject` and `fix` need a short `note`; `approve` does not.
+   `reject` and `fix` need a short `note`; `approve` does not. In the Hindi
+   sheet, fill `hi_check` with `ok` or `fix`; `fix` needs a `hi_note`.
 
 3. Apply it:
 
    ```sh
    npm run content:promote -- --review content/review/draft-review.csv \
+     --hindi content/review/hindi-review.csv \
      --subtopic polity-parliament --at 2026-11-07T00:00:00.000Z
    ```
 
-   - `approve` → `status=verified`, `verified_at` stamped.
-   - `reject` → `status=rejected`, `verified_at` cleared.
+   - `approve` → `status=verified`, `verified_at` stamped. It requires a
+     `content_hash` that matches both sheet and master, a non-empty
+     `source_ref`, an `https://` `source_url` that is not a portal front page,
+     and a Hindi row marked `hi_check=ok` whose translation hash matches.
+   - `reject` → `status=rejected`, `verified_at` cleared; no Hindi or source
+     needed because nothing ships.
    - `fix` and blank → row untouched; `fix` notes print as a queue.
-   - A sheet whose `status`, `answer`, `source_url` or `en_q` no longer matches
-     the master is refused; re-export instead of editing the master to match.
+   - Any content edit after export — question, option, explanation, source or
+     Hindi — invalidates the hash and the sheet is refused; re-export instead of
+     editing the master to match.
    - `--dry-run` prints the summary without writing. Promotion validates the
      whole master first and writes atomically.
 
 4. Rebuild the pack as a separate step, then commit the master, the review
    sheets and the lock together. Promotion never rebuilds on its own.
+
+## Source and duplicate audits (D-082, D-083)
+
+Both reports are advisory: they tell the reviewer where to look and never block
+a promotion.
+
+```sh
+npm run content:sources -- --status all --out content/review/sources-review.csv --force
+npm run content:dupes -- --out content/review/dupes-review.csv --force
+```
+
+- `content:sources` flags a missing `source_ref`, a missing or non-https
+  `source_url`, and a front-page URL (bare domain, `index`/`default`/`home`
+  page, or a bare language landing page). A query string or a deeper path counts
+  as a specific page.
+- `content:dupes` compares the English question and explanation by token
+  overlap (Jaccard) inside one section, default threshold 0.55, and scores the
+  answer text too. Rejected rows are hidden unless `--include-rejected`. The
+  four known repeats (Thar Desert, Indira Point, Tropic of Cancer, Chilika) are
+  marked `reject` in `draft-review.csv`; they stay drafts in the master until
+  their sub-topic is promoted, so they never ship.
 
 ## Commands
 
@@ -139,9 +173,13 @@ the audit trail and `promote` is the only writer.
 npm run content:validate
 npm run content:validate -- --input content/sample/questions.csv --verbose
 
-# Review and promote a slice (D-079)
+# Review and promote a slice (D-079 to D-083)
 npm run content:review -- --status draft --out content/review/draft-review.csv
-npm run content:promote -- --review content/review/draft-review.csv --subtopic polity-parliament
+npm run content:review -- --lang hi --out content/review/hindi-review.csv
+npm run content:promote -- --review content/review/draft-review.csv \
+  --hindi content/review/hindi-review.csv --subtopic polity-parliament
+npm run content:sources -- --status all --out content/review/sources-review.csv
+npm run content:dupes -- --out content/review/dupes-review.csv
 
 # Generate the signing key once, outside this repository
 npm run content:keygen -- --out ../cgl-keys

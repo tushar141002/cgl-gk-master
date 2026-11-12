@@ -210,6 +210,7 @@ describe('content CLI', () => {
   it('exports a review sheet, promotes an approval and refuses to overwrite the sheet', async () => {
     const master = join(repo, 'master.csv');
     const sheetPath = join(repo, 'review', 'draft-review.csv');
+    const hindiPath = join(repo, 'review', 'hindi-review.csv');
     const table = masterTable([
       statusRow('draft', { id: 'polity-fr-0002', en_q: 'Who is the head of state?' }, 2),
       statusRow('draft', { id: 'polity-fr-0003', en_q: 'Who presides over the Rajya Sabha?' }, 3),
@@ -229,6 +230,13 @@ describe('content CLI', () => {
     expect(reviewed).toBe(0);
     expect(messages.join('\n')).toContain('Wrote 2 row(s)');
 
+    const hindiReview = await main(
+      ['review', '--lang', 'hi', '--input', master, '--out', hindiPath],
+      io,
+      repo,
+    );
+    expect(hindiReview).toBe(0);
+
     const sheet = parseCsv(await readFile(sheetPath, 'utf8'));
     const filled = sheet.rows.map((row) => ({
       ...row.values,
@@ -236,10 +244,24 @@ describe('content CLI', () => {
     }));
     await writeFile(sheetPath, writeCsv(sheet.header, filled), 'utf8');
 
+    const hindi = parseCsv(await readFile(hindiPath, 'utf8'));
+    const checked = hindi.rows.map((row) => ({ ...row.values, hi_check: 'ok' }));
+    await writeFile(hindiPath, writeCsv(hindi.header, checked), 'utf8');
+
     messages = [];
     io = capture(messages);
     const promoted = await main(
-      ['promote', '--review', sheetPath, '--input', master, '--at', '2026-11-07T12:00:00.000Z'],
+      [
+        'promote',
+        '--review',
+        sheetPath,
+        '--hindi',
+        hindiPath,
+        '--input',
+        master,
+        '--at',
+        '2026-11-07T12:00:00.000Z',
+      ],
       io,
       repo,
     );
@@ -258,5 +280,130 @@ describe('content CLI', () => {
     const again = await main(['review', '--input', master, '--out', sheetPath], io, repo);
     expect(again).toBe(1);
     expect(messages.join('\n')).toContain('already exists');
+  });
+
+  it('carries decisions from an earlier export while the content is unchanged', async () => {
+    const master = join(repo, 'master.csv');
+    const sheetPath = join(repo, 'draft-review.csv');
+    const table = masterTable([
+      statusRow('draft', { id: 'polity-fr-0002' }, 2),
+      statusRow('draft', { id: 'polity-fr-0003' }, 3),
+    ]);
+    const columns = [...COLUMNS];
+    await writeFile(
+      master,
+      writeCsv(
+        columns,
+        table.rows.map((row) => row.values),
+      ),
+      'utf8',
+    );
+
+    expect(await main(['review', '--input', master, '--out', sheetPath], io, repo)).toBe(0);
+    const sheet = parseCsv(await readFile(sheetPath, 'utf8'));
+    const filled = sheet.rows.map((row) => ({
+      ...row.values,
+      decision: row.values.id === 'polity-fr-0002' ? 'approve' : '',
+    }));
+    await writeFile(sheetPath, writeCsv(sheet.header, filled), 'utf8');
+
+    messages = [];
+    io = capture(messages);
+    expect(
+      await main(
+        ['review', '--input', master, '--carry', sheetPath, '--out', sheetPath, '--force'],
+        io,
+        repo,
+      ),
+    ).toBe(0);
+    expect(messages.join('\n')).toContain('Carried 1 decision(s)');
+    const carried = parseCsv(await readFile(sheetPath, 'utf8'));
+    expect(carried.rows.find((row) => row.values.id === 'polity-fr-0002')?.values.decision).toBe('approve');
+
+    const changed = table.rows.map((row) =>
+      row.values.id === 'polity-fr-0002'
+        ? { line: row.line, values: { ...row.values, en_q: 'A changed question?' } }
+        : row,
+    );
+    await writeFile(
+      master,
+      writeCsv(
+        columns,
+        changed.map((row) => row.values),
+      ),
+      'utf8',
+    );
+
+    messages = [];
+    io = capture(messages);
+    expect(
+      await main(
+        ['review', '--input', master, '--carry', sheetPath, '--out', sheetPath, '--force'],
+        io,
+        repo,
+      ),
+    ).toBe(0);
+    expect(messages.join('\n')).toContain('1 dropped');
+    const dropped = parseCsv(await readFile(sheetPath, 'utf8'));
+    expect(dropped.rows.find((row) => row.values.id === 'polity-fr-0002')?.values.decision).toBe('');
+  });
+
+  it('writes a duplicate-candidate report', async () => {
+    const master = join(repo, 'master.csv');
+    const report = join(repo, 'dupes.csv');
+    const table = masterTable([
+      statusRow('draft', { id: 'geography-rivers-0001' }, 2),
+      statusRow(
+        'draft',
+        {
+          id: 'geography-rivers-0002',
+          en_q: 'Which Article abolishes untouchability in India?',
+        },
+        3,
+      ),
+    ]);
+    await writeFile(
+      master,
+      writeCsv(
+        [...COLUMNS],
+        table.rows.map((row) => row.values),
+      ),
+      'utf8',
+    );
+
+    const code = await main(['dupes', '--input', master, '--out', report], io, repo);
+    expect(code).toBe(0);
+    expect(messages.join('\n')).toContain('Duplicate candidates');
+    expect(messages.join('\n')).toContain('Wrote');
+
+    const parsed = parseCsv(await readFile(report, 'utf8'));
+    expect(parsed.header).toContain('left_id');
+    expect(parsed.header).toContain('score');
+  });
+
+  it('writes a source audit and flags missing refs and front pages', async () => {
+    const master = join(repo, 'master.csv');
+    const report = join(repo, 'sources.csv');
+    const table = masterTable([
+      statusRow('draft', { id: 'polity-fr-0002', source_ref: '' }, 2),
+      statusRow('draft', { id: 'polity-fr-0003', source_url: 'https://www.ssc.gov.in/' }, 3),
+    ]);
+    await writeFile(
+      master,
+      writeCsv(
+        [...COLUMNS],
+        table.rows.map((row) => row.values),
+      ),
+      'utf8',
+    );
+
+    const code = await main(['sources', '--input', master, '--out', report], io, repo);
+    expect(code).toBe(0);
+    expect(messages.join('\n')).toContain('Source audit: 2 row(s) checked');
+    expect(messages.join('\n')).toContain('missing source_ref: 1');
+    expect(messages.join('\n')).toContain('source_url is a front page: 1');
+
+    const parsed = parseCsv(await readFile(report, 'utf8'));
+    expect(parsed.rows.map((row) => row.values.id)).toEqual(['polity-fr-0002', 'polity-fr-0003']);
   });
 });

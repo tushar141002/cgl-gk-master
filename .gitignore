@@ -28,3 +28,7 @@ Thumbs.db
 
 # Content build output; packs.lock.json is committed, dist/ is not.
 content/dist/
+
+# Export/staging artifacts are not sources; keep local copies only (D-085).
+files.zip
+CGL GK Master *.docx

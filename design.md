@@ -118,6 +118,12 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-077 | Batch 1 is 60 author-verified practice questions in the bundled pack | Content | Accepted |
 | D-078 | Batch 2 is 300 bilingual draft questions across 12 new sub-topics | Content | Accepted |
 | D-079 | Review sheets plus a promote CLI gate every status change | Content | Accepted |
+| D-080 | A SHA-256 content hash, not four fields, guards a review sheet | Content | Accepted |
+| D-081 | Hindi is a hard approval gate with its own sheet and hash | Content | Accepted |
+| D-082 | Approval needs a precise source_ref and a non-front-page link | Content | Accepted |
+| D-083 | Duplicate candidates are an advisory offline Jaccard report | Content | Accepted |
+| D-084 | A 100-question official SSC PYQ pilot decides the mixed ratio | Content | Accepted |
+| D-085 | Staging artifacts are untracked; the Markdown docs stay authoritative | Business | Accepted |
 
 ---
 
@@ -459,7 +465,7 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 
 ## D-031: Markdown is the source of truth; the .docx is a snapshot
 - **Date:** 2026-11-01
-- **Status:** Accepted (2026-11-01)
+- **Status:** Superseded by D-085 (2026-11-07; the .docx is no longer regenerated or committed)
 - **Area:** Business
 - **Context:** `PROJECT_SPEC.md` calls itself the single source of truth, but the Step 1 `.docx` duplicates ~90 % of it. They had already drifted by 2026-11-01 (the platform line, a stale concurrency figure, a reference to a Word comment that does not exist). Two human-readable copies always drift, and an AI agent asked to "follow the spec" has no way to know which one wins.
 - **Decision:** The three `.md` files are authoritative and edited directly. The `.docx` is regenerated from them at the end of each step as a read-only summary and is never hand-edited.
@@ -996,4 +1002,70 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** The sheet is a stable artifact the founder can fill at their own pace, and `promote` turns it into exactly two legal transitions with the validation and stale-sheet checks done by code. Per-sub-topic promotion ships the first 25 verified rows without waiting for the other 275, and keeping the rebuild separate means the master, the review sheet and the signed pack each change in a reviewable commit.
 - **Trade-off accepted:** A sheet is a copy, so it must be re-exported after every promotion; decisions live in CSV rather than the deferred admin UI; `fix` records a note but does not edit content, so the author still changes the master and exports a fresh sheet. Promotion and rebuild are two commands, and forgetting the second leaves the pack behind the master until the guard tests or the next build catch it.
 - **Revisit when:** The admin verification UI lands, review moves to a phone or Google Sheets, or more than one reviewer needs per-person attribution.
+
+## D-080: A SHA-256 content hash, not four fields, guards a review sheet
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** D-079 refused a stale sheet by comparing `status`, `answer`, `source_url` and `en_q`. A reviewer also sees both options blocks and both explanations, so an edited option, explanation or Hindi line could change under a filled decision without the guard noticing. The founder's first review round also produced 33 content corrections, which is exactly the window where a partial comparison fails.
+- **Decision:** Every review row carries a `content_hash`: SHA-256 over the id, section, sub-topic, status, answer, both source fields and all twelve content fields, serialised as ordered `[column, value]` pairs with CRLF normalised to LF. `promote` recomputes the hash from the sheet and from the master and refuses any mismatch. `content:review --carry <old.csv>` copies a decision only when the new hash equals the old one and reports carried, dropped, changed and added rows. A stored hash that does not match its own row is an error, not a silent carry.
+- **Alternatives considered:** Compare every field individually (same guarantee, more code, and a forgotten field repeats the bug); compare only `id` and `status` (fast, but lets any edit slip through); trust the sheet because it came from the tool (no protection against hand edits or a merge conflict).
+- **Why:** One hash covers everything the reviewer saw, including fields added later if the column list is extended deliberately. Carry turns a re-export after 33 corrections into 267 decisions preserved and 33 rows blank, instead of re-reviewing all 300.
+- **Trade-off accepted:** Any content or source edit invalidates a pending decision and must be reviewed again; the hash is opaque in a spreadsheet; the column list is part of the format, so adding a field is a schema change.
+- **Revisit when:** Review moves to a system that can diff cells directly, or a hash collision or normalisation bug is observed.
+
+## D-081: Hindi is a hard approval gate with its own sheet and hash
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** `validateMaster` makes a missing Hindi block a warning on drafts and an error only when a row is verified, so an approval can still ship a translation nobody read. Hindi is half the product for the target student, and a wrong Article number or a mistranslated option is a content defect that no English review catches.
+- **Decision:** `content:review --lang hi` exports a separate sheet with `hi_check` (`ok` or `fix`) and `hi_note`. `promote` refuses any approval unless the matching Hindi row exists, its `content_hash` matches both the sheet and the master, and `hi_check=ok`; `fix` requires a note and blocks approval. The Hindi hash covers the id, answer and both language blocks but deliberately excludes `status` and the source fields, so a source backfill or a promotion does not invalidate a translation check that is still correct. Rejects need no Hindi sheet.
+- **Alternatives considered:** Fold a `hi_check` column into the English sheet (one export, but a 22-column sheet that mixes two decisions and two hashes); rely on the validation warning (no proof a human read the translation); machine-translate and trust it (cheaper, but the app's differentiator is trustworthy Hindi).
+- **Why:** A separate sheet keeps the translation decision legible and its hash stable across source cleanup. The gate is hard because a warning is exactly what shipped the earlier unreviewed rows.
+- **Trade-off accepted:** Every approval now needs two filled sheets, so the founder's per-row cost roughly doubles; a translation edit requires a fresh Hindi export. `fix` records the problem but does not edit the translation.
+- **Revisit when:** A reviewer who does not read Hindi joins, or translation is outsourced with its own sign-off artifact.
+
+## D-082: Approval needs a precise source_ref and a non-front-page link
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** Every row carried a `source_url`, but many pointed at a portal front page (`https://www.ssc.gov.in/`), which proves the portal exists and nothing about the fact. The audit found 195 front-page links and no locator column at all, so a reviewer could not tell which Article, chapter or page supports a row.
+- **Decision:** The master gains `source_ref` (an Article, section, chapter or page locator). An approval requires a non-empty `source_ref`, an `https://` URL, and a URL that is not a front page. `content:sources` is an advisory audit that lists missing refs, non-https links and front-page links per row. The front-page test flags a bare domain, a `/index|default|home` page and a bare language landing page; a query string, fragment or deeper path counts as a specific page. The review and Hindi sheets carry `source_ref` so the reviewer sees it.
+- **Alternatives considered:** Keep one URL and trust the reviewer (the status quo that produced 195 front pages); require a full citation string in the URL field (breaks the link); make the audit blocking (it would block the pilot and cannot judge whether a deep link truly supports a fact).
+- **Why:** A locator plus a deep link is the smallest citation that another person can check. The audit is advisory because only a human can decide whether a page supports a fact; the promote gate is hard because a row that cannot be checked should not ship.
+- **Trade-off accepted:** Backfilling 360 locators and deep links is manual work, and some official portals time out or expose only front pages, so a few rows will need a PDF or an alternate official source. The heuristic can miss a disguised front page or flag a valid landing page.
+- **Revisit when:** A machine-readable official source (for example an India Code API or an NCERT PDF index) can generate locators, or the audit's false-positive rate becomes noisy.
+
+## D-083: Duplicate candidates are an advisory offline Jaccard report
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** `validateMaster` rejects an exact duplicate English question, but batch 2 repeated four verified facts in different words: Thar Desert, Indira Point, Tropic of Cancer and Chilika Lake. Those pass validation and would waste a student's practice slot. Comparing 360 rows by hand is slow, and a network or embedding service is neither offline nor free.
+- **Decision:** `content:dupes` tokenises the English question and explanation, drops stop words and short tokens, and computes Jaccard similarity for every pair in the same section, with an optional sub-topic filter and a default threshold of 0.55. It also scores the answer text and marks a pair `same` at 0.8 or above. The report is advisory and can be written to CSV. Rejected rows are hidden unless `--include-rejected` is passed. The four identified duplicates are marked `reject` with a note in the draft review sheet; they stay `draft` in the master until their sub-topic is promoted, so they cannot ship.
+- **Alternatives considered:** Block promotion on any candidate (a false positive would stall a sub-topic); embed questions with a hosted model (better recall, but network, cost and a new dependency); rely on exact `en_q` matching only (proved insufficient).
+- **Why:** Token overlap runs offline, in milliseconds, with no dependency, and the four known repeats score 0.59-0.92, well above the threshold. The answer-text score separates a true repeat from a same-topic question. Keeping the rejection in the sheet, not the master, preserves the review trail and lets a future promote record it.
+- **Trade-off accepted:** Lexical similarity misses a paraphrase with no shared vocabulary and can flag a legitimate same-topic pair. The report is not a gate, so a reviewer can still miss a duplicate.
+- **Revisit when:** The bank grows past a few thousand rows and pairwise comparison slows down, or a local embedding model fits the size budget.
+
+## D-084: A 100-question official SSC PYQ pilot decides the mixed ratio
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** The launch target is about 2,000 verified questions, and the bank is currently practice questions written in-house. PYQs are the strongest signal of what the exam asks, but sourcing them from official SSC papers costs time: finding the paper, locating the shift and question, writing a verified bilingual version, and citing the page. The project has never measured that cost.
+- **Decision:** Run a 100-question pilot drawn from official SSC CGL papers before committing the full mix. Record the actual time and cost per row, then set the PYQ/practice split for the remaining bank (an early example was 1,200 PYQ + 800 practice). Until the pilot is measured, new rows continue as practice questions and every PYQ row carries `source_type=PYQ`, exam, year, shift and date.
+- **Alternatives considered:** Commit to a 60/40 PYQ mix now (a plausible target, but an unmeasured cost that could consume the 12-week budget); stay practice-only (fast, but weaker exam fidelity); copy PYQs without bilingual verification (fastest, but breaks the verification promise).
+- **Why:** The pilot is 5% of the launch target, small enough to afford and large enough to expose the real bottleneck. Measuring first prevents a ratio that the schedule cannot deliver.
+- **Trade-off accepted:** The mix stays undecided until the pilot finishes, and 100 rows of work may show that the chosen papers are harder to source than expected. The final ratio needs its own decision entry.
+- **Revisit when:** The pilot completes and the per-row cost is known.
+
+## D-085: Staging artifacts are untracked; the Markdown docs stay authoritative
+- **Date:** 2026-11-07
+- **Status:** Accepted
+- **Area:** Business
+- **Context:** D-031 made the three Markdown files authoritative and kept a regenerated `.docx` as a shareable snapshot. In practice the snapshot stopped being regenerated and drifted, and a `files.zip` staging archive was committed alongside it. Both are build/export artifacts, not sources: they bloat history, produce unreviewable binary diffs, and invite an agent to read a stale copy.
+- **Decision:** Stop tracking `files.zip` and `CGL GK Master - Step 1 Design Doc (2026-11-01).docx`. Remove them from the index with `git rm --cached`, add both to `.gitignore`, and keep the local copies. The three `.md` files remain the only authoritative documentation. This supersedes D-031: no `.docx` is regenerated or committed as part of a step.
+- **Alternatives considered:** Keep committing both (one `git clone` gives every artifact, at the cost of history size and drift); delete the files entirely (loses the local shareable/printable copy); commit only the `.docx` and drop the zip (still a binary snapshot that drifts).
+- **Why:** The repository should contain what a builder edits and what the app ships. Binary exports are reproducible on demand from the Markdown, and untracking them while keeping local copies loses nothing the founder uses.
+- **Trade-off accepted:** A fresh clone no longer contains the `.docx` or the zip; anyone who needs the snapshot must export it. The local copies can drift silently because nothing regenerates them.
+- **Revisit when:** A stakeholder requires a committed printable snapshot, or a release process needs a versioned export.
 

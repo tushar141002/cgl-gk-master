@@ -1,14 +1,14 @@
 # CGL GK Master — Project Spec
 
 **Last updated:** 2026-11-07
-**Status:** Steps 1–6, 7A–7C, 8 (batch 1), 9 (batch 2) and 10 (review workflow) are complete. Step 7A wrote and tested the server migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` in PGlite; Step 7B gave the client pinned batch retries, a report queue and correction rebuilds; Step 7C adds Google sign-in through a small GoTrue PKCE client, the five-minute sync scheduler and the paged history pull; Step 8 ships the first 60 verified bilingual questions in the signed bundled pack (v2); Step 9 adds 300 bilingual draft questions across 12 new sub-topics; Step 10 adds the review-sheet export and promote CLI so drafts can be verified in 25-row sub-topic slices. Staging account deletion, live mocks, the nightly archive and the remaining ~1,940 verifications remain (§5, §10, §13, D-063..D-079).
+**Status:** Steps 1–6, 7A–7C, 8 (batch 1), 9 (batch 2), 10 (review workflow) and 11 (content-quality upgrade) are complete. Step 7A wrote and tested the server migrations, RLS policies, `apply_sync_batch`, `sync_pull` and `compact_sync_inbox` in PGlite; Step 7B gave the client pinned batch retries, a report queue and correction rebuilds; Step 7C adds Google sign-in through a small GoTrue PKCE client, the five-minute sync scheduler and the paged history pull; Step 8 ships the first 60 verified bilingual questions in the signed bundled pack (v2); Step 9 adds 300 bilingual draft questions across 12 new sub-topics; Step 10 adds the review-sheet export and promote CLI so drafts can be verified in 25-row sub-topic slices; Step 11 adds content hashes, a hard Hindi gate, precise `source_ref` citations, duplicate and source audits, the PYQ pilot decision and repository housekeeping. Staging account deletion, live mocks, the nightly archive and the remaining ~1,940 verifications remain (§5, §10, §13, D-063..D-085).
 
 This is the single source of truth for what we are building and why. Companion files:
 
 | File | Purpose |
 |---|---|
 | `PROJECT_SPEC.md` | This file: what we are building, the full approved design |
-| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-079) |
+| `design.md` | Decision log: every decision with reasons and trade-offs (D-001 to D-085) |
 | `flow.md` | Code execution flows: entry points and call order between files |
 | `REVIEW-2026-11-01.md` | Step 1.6 external review: findings, open questions, what changed |
 
@@ -330,7 +330,7 @@ Used by a new or second device to merge history. `after` is `syncMeta.historyCur
 **Verification workflow** (founder verifies 30–40 questions a day; ~2,000 questions ≈ 57 days, Weeks 3–11):
 1. AI drafts questions in batches, each with a source link (SSC paper, PIB release, NCERT).
 2. A second AI pass fact-checks against that source; failures are regenerated.
-3. Founder approves, edits, or rejects in the admin queue. Until it lands, the `content:review` sheet is the queue and `content:promote` applies the decision (D-079). No source link, no approval.
+3. Founder approves, edits, or rejects in the admin queue. Until it lands, the `content:review` sheet is the queue and `content:promote` applies the decision (D-079). No source link, no approval. An approval also needs a `source_ref` locator and a link that is not a portal front page (D-082), and a Hindi sheet marked `hi_check=ok` (D-081).
 4. Approved questions publish in the next signed pack; promotion does not rebuild, so the build is an explicit follow-up.
 5. "Report error" reports are triaged within 48 hours; confirmed errors go through the correction path.
 
@@ -339,13 +339,19 @@ Used by a new or second device to merge history. `after` is `syncMeta.historyCur
 ```sh
 npm run content:validate -- --verbose
 npm run content:review   -- --status draft --out content/review/draft-review.csv
-npm run content:promote  -- --review content/review/draft-review.csv --subtopic <slug>
+npm run content:review   -- --lang hi --out content/review/hindi-review.csv
+npm run content:promote  -- --review content/review/draft-review.csv \
+                            --hindi content/review/hindi-review.csv --subtopic <slug>
+npm run content:sources  -- --status all --out content/review/sources-review.csv
+npm run content:dupes    -- --out content/review/dupes-review.csv
 npm run content:keygen   -- --out ../cgl-keys
 npm run content:build    -- --key ../cgl-keys/ed25519-private.pem \
                             --url-base https://cdn.example.com/packs
 ```
 
 `validate` is strict on `verified` rows and warns on drafts. `build` writes one pack per subtopic plus `manifest.json`; a pack version moves only when its questions change, and the file name carries the sha256 prefix so a changed pack cannot be served from a stale cache. The manifest signature covers the canonical JSON of `{ version, generatedAt, packs }` (D-050), and `shared/canonicalJson.ts` is the implementation the app will use. Private keys are generated outside the repository and `*.pem` is gitignored. The admin verification UI is deferred to the backend step; until then the CSV `status` column is the review queue.
+
+**Step 11 content-quality upgrade (completed 2026-11-07):** every review row now carries a `content_hash` over the full displayed content, so an edit to any option or explanation — not only `en_q` — invalidates a filled decision; `content:review --carry <old.csv>` preserves a decision only while that hash is unchanged (D-080). `content:review --lang hi` exports a separate `hi_check`/`hi_note` sheet and `content:promote` refuses any approval unless the matching Hindi row is marked `ok`; the Hindi hash excludes `status` and the source fields so a source backfill does not invalidate a translation check (D-081). The master gains `source_ref`, and an approval requires a locator plus an `https://` link that is not a portal front page; `content:sources` audits all 360 rows — currently every row is missing a ref and 195 carry a front-page URL (D-082). `content:dupes` is an advisory offline Jaccard report at threshold 0.55; it found the four known repeats (Thar, Indira Point, Tropic of Cancer, Chilika) plus one borderline pair with different answers, and the four are marked `reject` in the draft sheet while remaining drafts in the master (D-083). A 100-question official SSC PYQ pilot will set the final PYQ/practice mix (D-084). `files.zip` and the Step 1 `.docx` are untracked and gitignored; the Markdown docs remain authoritative (D-085, superseding D-031). The sheets are committed at `content/review/draft-review.csv` (300 rows: 263 approve, 33 blank corrections, 4 reject), `verified-review.csv` (60), `hindi-review.csv` (360), `sources-review.csv` (360) and `dupes-review.csv` (5). Tests: 595 passing in 41 files; the bundled pack and lock stay at v2.
 
 **Step 8 batch 1 (completed 2026-11-07):** the master now holds 60 verified bilingual questions — 20 each in `polity-fundamental-rights`, `history-ancient-india` and `geography-indian-geography` — and they ship inside the APK in the bundled pack at manifest v2 (D-077). All rows are `source_type = practice`, not claimed PYQs, and each cites an official portal: the Constitution spotlight on `india.gov.in` for Polity, IGNCA or the Archaeological Survey of India for History, and the physical-features page on `india.gov.in` or the Survey of India for Geography. English and Hindi are authored together; options stay in their printed order (D-032) and `answer` names that position. `validate` now prints per-subtopic `verified`/`draft`/`rejected` counts and detects duplicate English questions (error when either row is verified, warning while both are drafts). Two guard tests keep the real data honest: `tests/tools/masterFile.test.ts` validates the master and requires at least 60 verified rows, and `tests/sync/bundledPack.test.ts` verifies `public/packs/` with the pinned key, installs all 60 questions and skips them on a second run. Tests: 550 passing in 38 files; the 60 packs measure 28,232 (geography), 28,814 (history) and 32,603 (polity) bytes. Founder review of batch 1 and the remaining ~1,940 questions are still on the critical path.
 
@@ -431,6 +437,7 @@ Lives in `src/ui/`; `src/ui/preview.html` is the living reference (open it in a 
 | 8 Content batch 1 | **Done 2026-11-07** — 60 verified bilingual practice questions (20 each Polity, Ancient History, Indian Geography), official source links, per-subtopic progress and duplicate detection in `content:validate`, bundled pack rebuilt at v2, two guard tests; 550 tests passing (D-077). Founder review continues as the weekly authoring loop |
 | 9 Content batch 2 | **Done 2026-11-07** — 300 bilingual `status=draft` practice questions, 25 each in 12 new sub-topics across Polity, History and Geography; master at 360 rows (60 verified + 300 draft), 15 sub-topics; answer positions rotated at authoring time; bundled pack and lock unchanged at v2; guard test widened to lower bounds; 550 tests passing (D-078). Founder review of batch 2 is the next content step |
 | 10 Review workflow | **Done 2026-11-07** — `content:review` exports per-status/per-subtopic review sheets with `decision` and `note` columns; `content:promote` applies approve/reject/fix with note, stale-sheet and validation guards, atomic writes and optional `--subtopic`/`--dry-run`; pack rebuild stays explicit; draft (300) and verified (60) sheets committed; 565 tests passing (D-079). Founder fills the sheets next |
+| 11 Content-quality upgrade | **Done 2026-11-07** — SHA-256 content hashes and `--carry`; separate Hindi sheet with a hard `hi_check=ok` approval gate; `source_ref` plus non-front-page link required for approval and an advisory `content:sources` audit (360 rows flagged, 195 front pages); `content:dupes` advisory Jaccard report (4 known repeats marked `reject` in the draft sheet); 100-question PYQ pilot decision; `files.zip` and the Step 1 `.docx` untracked and gitignored; 595 tests passing; bundled pack/lock stay at v2 (D-080..D-085) |
 | Launch polish | Pending |
 
 ---

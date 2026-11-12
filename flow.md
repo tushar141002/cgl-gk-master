@@ -33,6 +33,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 > **Updated 2026-11-07 (Step 9):** F13 now covers batch 2. The master holds 60 verified and 300 draft rows across 15 sub-topics; `validate` reports all 360, while `build` still emits only the three verified packs, so `public/packs/` and `content/bundled.lock.json` stay at v2 until a draft is promoted (D-078).
 >
 > **Updated 2026-11-07 (Step 10):** F13 adds the review loop. `content:review` exports a sheet for one status and optional sub-topic; `content:promote` applies approve/reject/fix to the master through a stale-sheet guard and does not rebuild, so the build stays an explicit step (D-079).
+>
+> **Updated 2026-11-07 (Step 11):** F13 adds content hashes and `--carry`, a separate Hindi sheet with a hard `hi_check=ok` approval gate, the `source_ref`/non-front-page approval gate, and the advisory `content:sources` and `content:dupes` reports (D-080..D-083).
 
 ---
 
@@ -570,25 +572,44 @@ npm run content:validate -- [--input <csv>] [--verbose]
       └─ src/core/Question.ts › Question.issues(record)         same rules as the app
          → report { rows, counts, errors, warnings, questions }
 
-npm run content:review -- [--status draft|verified|rejected|all] [--subtopic <slug>] [--out <csv>] [--force]
+npm run content:review -- [--status draft|verified|rejected|all] [--subtopic <slug>] [--lang en|hi] [--carry <csv>] [--out <csv>] [--force]
 └─ tools/content/cli.ts › main(['review', ...])
-   ├─ tools/content/csv.ts › parseCsv(master)
-   ├─ tools/content/review.ts › buildReviewSheet(table, { status, subtopic })
-   │  → content columns for the selected rows, in file order, decision/note empty
+   ├─ tools/content/csv.ts › parseCsv(master) [+ parseCsv(carry sheet)]
+   ├─ tools/content/review.ts › buildReviewSheet(table, { status, subtopic, carry })
+   │  ├─ content columns for the selected rows, in file order, decision/note empty
+   │  ├─ tools/content/hash.ts › contentHash(values, REVIEW_CONTENT_COLUMNS) → content_hash
+   │  └─ carryDecisions(rows, old)         copies a decision only when the hash matches
+   ├─ tools/content/review.ts › buildHindiSheet(table, { status, subtopic, carry })
+   │  → hi_check/hi_note empty; contentHash over translation fields, no status/source
    └─ tools/content/csv.ts › writeCsv(header, rows, { bom: true })
-      → content/review/<status>-review.csv; refuses to overwrite without --force
+      → English default content/review/<status>-review.csv; --lang hi defaults to
+        content/review/hindi-review.csv; refuses to overwrite without --force
 
-npm run content:promote -- --review <csv> [--input <master>] [--subtopic <slug>] [--at <iso>] [--dry-run]
+npm run content:promote -- --review <csv> [--hindi <csv>] [--input <master>] [--subtopic <slug>] [--at <iso>] [--dry-run]
 └─ tools/content/cli.ts › main(['promote', ...])
-   ├─ tools/content/csv.ts › parseCsv(master) + parseCsv(sheet)
-   ├─ tools/content/promote.ts › promote(table, sheet, { at, subtopic })
+   ├─ tools/content/csv.ts › parseCsv(master) + parseCsv(sheet) + parseCsv(Hindi)
+   ├─ tools/content/promote.ts › promote(table, sheet, { at, subtopic, hindi })
    │  ├─ each sheet row: decision must be approve/reject/fix/blank; id unique and in master
-   │  ├─ reject and fix require a note; a stale status/answer/source_url/en_q is refused
+   │  ├─ reject and fix require a note; the English content_hash must match sheet and master
+   │  ├─ approve also needs source_ref, an https URL that is not a front page, and a Hindi
+   │  │  row with hi_check=ok whose translation hash matches the master
    │  ├─ approve → status=verified, verified_at=at
    │  ├─ reject  → status=rejected, verified_at=''
    │  └─ validateMaster(candidate)                         no partial write
    ├─ tools/content/cli.ts › writeAtomic(master, csv)       .tmp then rename
    └─ print per-subtopic summary; rebuild stays a separate command
+
+npm run content:sources -- [--input <master>] [--status draft|verified|rejected|all] [--subtopic <slug>] [--out <csv>] [--force]
+└─ tools/content/cli.ts › main(['sources', ...])
+   ├─ tools/content/sources.ts › auditSources(table, { status, subtopic })
+   │  → per-row issues: missing source_ref, missing/non-https source_url, front page
+   └─ print issue counts; optional writeCsv report
+
+npm run content:dupes -- [--input <master>] [--threshold <0-1>] [--subtopic <slug>] [--include-rejected] [--out <csv>] [--force]
+└─ tools/content/cli.ts › main(['dupes', ...])
+   ├─ tools/content/dupes.ts › findDuplicateCandidates(table, { threshold, subtopic, includeRejected })
+   │  → same-section token Jaccard pairs, answer-text score, sorted by score
+   └─ print candidates (default 20, all with --verbose); optional writeCsv report
 
 npm run content:build -- --key <pem> --url-base <https> [options]
 └─ tools/content/cli.ts › main(['build', ...])
@@ -607,11 +628,13 @@ npm run content:build -- --key <pem> --url-base <https> [options]
 
 Only `verified` rows are packed; `draft` and `rejected` rows may be incomplete and produce warnings instead of errors (D-047). A blank or duplicate id, an unknown status, a duplicated English question and every issue on a verified row are errors. The build stops before writing anything if the report has an error, so a failed run leaves the previous manifest and lock untouched.
 
-The review loop never edits the CSV by hand: `review` writes a sheet with read-only content and two editable columns, and `promote` is the only writer of `status`/`verified_at`. A decision that is not `approve`, `reject` or `fix` fails the whole sheet, as does a `reject`/`fix` without a note; rows whose content changed since the export are refused, so a stale sheet cannot overwrite a newer row. `--subtopic` limits both the export and the write, which lets one 25-row sub-topic be verified, promoted, rebuilt and committed without touching the rest of the bank. Promotion validates the candidate master and writes atomically, but it does not rebuild: the signed pack and its lock advance only when `content:build` runs (D-079).
+The review loop never edits the CSV by hand: `review` writes a sheet with read-only content and two editable columns, and `promote` is the only writer of `status`/`verified_at`. Every row carries a `content_hash` over all displayed content, so an option, explanation or Hindi edit without a fresh export is refused — not just a changed `en_q` (D-080). A decision that is not `approve`, `reject` or `fix` fails the whole sheet, as does a `reject`/`fix` without a note. `--carry` re-applies a previous decision only when the hash is unchanged; changed rows come back blank. `--subtopic` limits both the export and the write, which lets one 25-row sub-topic be verified, promoted, rebuilt and committed without touching the rest of the bank. An approval also needs a `source_ref` locator, an `https://` link that is not a portal front page and a matching Hindi row marked `hi_check=ok`; the Hindi hash omits `status` and the source fields so source cleanup does not invalidate a translation check (D-081, D-082). Promotion validates the candidate master and writes atomically, but it does not rebuild: the signed pack and its lock advance only when `content:build` runs (D-079).
 
 `validate` also prints per-subtopic progress (`verified`, `draft`, `rejected`), so the authoring queue is visible without opening the CSV. `tests/tools/masterFile.test.ts` runs the real master through the same validation on every `npm test` and asserts lower bounds for the verified and draft batches, and `tests/sync/bundledPack.test.ts` verifies and installs `public/packs/` with the pinned key (D-077, D-078).
 
 Batch 2 adds 300 `draft` rows, so `validate` reports 360 rows across 15 sub-topics while the build still emits the same three verified packs; `public/packs/` and `content/bundled.lock.json` move only when a row is promoted to `verified` (D-078).
+
+Step 11 adds two advisory reports. `content:sources` lists missing `source_ref` values, missing or non-https URLs and portal front pages; the front-page check treats a bare domain, an `index`/`default`/`home` page and a bare language landing page as too vague, while a query string or deeper path counts as a specific page. `content:dupes` tokenises the English question and explanation, drops stop words, and prints same-section pairs above a Jaccard threshold (default 0.55) with an answer-text score; rejected rows are hidden unless `--include-rejected`. Neither report gates promotion: they are review aids, and only the approval gates in `promote` are hard (D-082, D-083).
 
 `--generated-at <iso>` makes the manifest reproducible; `CGL_SIGNING_KEY` and `CGL_PACK_URL_BASE` replace the two required options. The key is generated outside the repository, and `*.pem` is gitignored. `content/packs.lock.json` is committed so a pack version moves only when its questions change, while the URL always carries the byte hash so a changed file cannot be served from a stale CDN cache.
 

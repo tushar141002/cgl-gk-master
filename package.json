@@ -22,6 +22,8 @@
     "content:validate": "tsx tools/content/cli.ts validate",
     "content:review": "tsx tools/content/cli.ts review",
     "content:promote": "tsx tools/content/cli.ts promote",
+    "content:dupes": "tsx tools/content/cli.ts dupes",
+    "content:sources": "tsx tools/content/cli.ts sources",
     "content:build": "tsx tools/content/cli.ts build",
     "content:keygen": "tsx tools/content/cli.ts keygen"
   },
