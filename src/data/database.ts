@@ -143,6 +143,38 @@ export class AppDatabase extends Dexie {
 export const DATABASE_NAME = 'cgl-gk-master';
 
 /**
+ * Every table is either personal (erased by `wipeLocalData`) or content (kept).
+ * A new table must be added to one list; a test fails until it is.
+ */
+export const PERSONAL_TABLES = [
+  'attempts',
+  'cardState',
+  'skills',
+  'bookmarks',
+  'dailySummary',
+  'reports',
+  'settings',
+  'syncMeta',
+] as const;
+
+export const CONTENT_TABLES = ['questions', 'packs', 'corrections'] as const;
+
+/**
+ * Erases everything this phone knows about the student (F12, D-086): the
+ * attempt log, derived state, bookmarks, queued reports, preferences and the
+ * device identity, in one transaction. Installed packs and stored corrections
+ * are published content, not personal data, so they stay and the app does not
+ * have to reinstall the bank. The next start creates a fresh device id and
+ * default settings.
+ */
+export async function wipeLocalData(db: AppDatabase): Promise<void> {
+  const personal = PERSONAL_TABLES.map((name) => db.table(name));
+  await db.transaction('rw', personal, async () => {
+    await Promise.all(personal.map((table) => table.clear()));
+  });
+}
+
+/**
  * Opens the database or rejects with the original error. A closed handle is
  * never returned, and the caller owns the resulting connection (F1).
  */

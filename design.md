@@ -124,6 +124,7 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-083 | Duplicate candidates are an advisory offline Jaccard report | Content | Accepted |
 | D-084 | A 100-question official SSC PYQ pilot decides the mixed ratio | Content | Accepted |
 | D-085 | Staging artifacts are untracked; the Markdown docs stay authoritative | Business | Accepted |
+| D-086 | Account deletion is server-first, then a local wipe; erase-this-phone is separate | Security | Accepted |
 
 ---
 
@@ -1068,4 +1069,15 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** The repository should contain what a builder edits and what the app ships. Binary exports are reproducible on demand from the Markdown, and untracking them while keeping local copies loses nothing the founder uses.
 - **Trade-off accepted:** A fresh clone no longer contains the `.docx` or the zip; anyone who needs the snapshot must export it. The local copies can drift silently because nothing regenerates them.
 - **Revisit when:** A stakeholder requires a committed printable snapshot, or a release process needs a versioned export.
+
+## D-086: Account deletion is server-first, then a local wipe; erase-this-phone is separate
+- **Date:** 2026-11-12
+- **Status:** Accepted
+- **Area:** Security
+- **Context:** The feature list and the DPDP Act promise in-app account deletion (F12). Deleting only the Supabase auth user would leave the attempt log and aggregates behind. A wipe on the phone before the server confirms would leave the account's server data with no way left to reach it from the app. D-075 also told a student on a phone linked to another account to "clear the app data", which needed an in-app way to do it.
+- **Decision:** `public.delete_user()` is a `security definer` RPC that deletes every row the caller owns (reports, daily stats, checkpoints, inbox, batches, sync state, profile) and then the `auth.users` row, in one transaction, and returns `{ ok: true }`. It is idempotent, so a retry after a lost response succeeds. `AccountService.deleteAccount()` calls it first and erases the phone with `wipeLocalData` only after `{ ok: true }`; any other answer leaves everything local untouched. Sync is paused during the call. `wipeLocalData` clears every personal Dexie table and keeps installed packs and corrections; `PERSONAL_TABLES` and `CONTENT_TABLES` must cover every table, which a test enforces. A separate "Erase data on this phone" action wipes locally and signs out without touching the server account. Both actions need a second, explicit confirm tap, and the app reloads afterwards for a fresh device id and default settings.
+- **Alternatives considered:** Delete only the auth user and rely on `on delete cascade` (works today, but a future table without the cascade would silently keep data; explicit deletes plus a catalogue-driven test fail loudly instead); an Edge Function with the service key (a second deployable and a secret, for no benefit while there is no Storage archive); wipe locally first (fast, but strands server data); delete the whole IndexedDB database (also removes the installed question bank, so the next start must reinstall it).
+- **Why:** Completeness is the legal requirement, and ordering is what makes it safe on patchy 4G: an unclear answer never destroys the only copy the student can still reach. The RPC needs no new secret, and the erase action doubles as the D-075 remedy.
+- **Trade-off accepted:** The caller's access token stays valid until it expires (up to an hour) but owns nothing. Anonymous `question_stats` keep the deleted student's contribution to per-question counts. Answers not yet synced are lost on erase, which the confirm text says. When 7A-2 adds a Storage archive under `users/<id>/`, those objects must be deleted through the Storage API (Postgres cannot), so deletion will then need an Edge Function step before the RPC.
+- **Revisit when:** 7A-2 writes Storage objects, live-mock tables arrive in 7E (they must join the delete list and the test), or a regulator asks for a deletion receipt.
 

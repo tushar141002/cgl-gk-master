@@ -1,9 +1,15 @@
+<script module lang="ts">
+  /** Why the last delete or erase did not finish; mirrors `AccountDeletionCode`. */
+  export type DataProblem = 'offline' | 'unauthenticated' | 'failed' | 'local-wipe-failed' | 'erase-failed';
+</script>
+
 <script lang="ts">
   import type { Settings } from '../../../shared/contract';
   import type { AuthState } from '../../services/AuthService';
   import { useI18n } from '../i18n/context';
+  import type { MessageKey } from '../i18n/messages';
 
-  /** Preferences plus the account card (F7, D-073, D-075). */
+  /** Preferences, the account card and the data controls (F7, F12, D-073, D-075, D-086). */
   let {
     settings,
     onchange,
@@ -13,6 +19,10 @@
     canSignIn,
     onSignIn,
     onSignOut,
+    dataBusy,
+    dataProblem,
+    onDeleteAccount,
+    onEraseDevice,
   }: {
     settings: Settings;
     onchange: (patch: Partial<Settings>) => void;
@@ -22,9 +32,24 @@
     canSignIn: boolean;
     onSignIn: () => void;
     onSignOut: () => void;
+    dataBusy: boolean;
+    dataProblem: DataProblem | null;
+    onDeleteAccount: () => void;
+    onEraseDevice: () => void;
   } = $props();
 
   const { t } = useI18n();
+
+  /** Nothing is deleted on the first tap; the second, explicit button does it. */
+  let confirming = $state<'delete' | 'erase' | null>(null);
+
+  const problemKey: Record<DataProblem, MessageKey> = {
+    offline: 'data.offline',
+    unauthenticated: 'data.unauthenticated',
+    failed: 'data.failed',
+    'local-wipe-failed': 'data.wipeFailed',
+    'erase-failed': 'data.eraseFailed',
+  };
 </script>
 
 <section class="stack">
@@ -99,6 +124,65 @@
       <p class="banner banner--danger" role="alert">{t('account.mismatch')}</p>
     {:else if accountProblem === 'failed'}
       <p class="banner banner--danger" role="alert">{t('account.failed')}</p>
+    {/if}
+  </div>
+
+  <div class="card stack">
+    <span class="field__label">{t('data.title')}</span>
+
+    {#if canSignIn && account.status === 'signed-in'}
+      <p class="card__meta">{t('data.deleteNote')}</p>
+      {#if confirming === 'delete'}
+        <p role="alert">{t('data.confirm')}</p>
+        <div class="cluster">
+          <button class="btn btn--danger" type="button" disabled={dataBusy} onclick={onDeleteAccount}>
+            {dataBusy ? t('account.busy') : t('data.confirmDelete')}
+          </button>
+          <button
+            class="btn btn--ghost"
+            type="button"
+            disabled={dataBusy}
+            onclick={() => (confirming = null)}
+          >
+            {t('data.cancel')}
+          </button>
+        </div>
+      {:else}
+        <button
+          class="btn btn--ghost"
+          type="button"
+          disabled={dataBusy || accountBusy}
+          onclick={() => (confirming = 'delete')}
+        >
+          {t('data.deleteAccount')}
+        </button>
+      {/if}
+    {/if}
+
+    <p class="card__meta">{t('data.eraseNote')}</p>
+    {#if confirming === 'erase'}
+      <p role="alert">{t('data.confirm')}</p>
+      <div class="cluster">
+        <button class="btn btn--danger" type="button" disabled={dataBusy} onclick={onEraseDevice}>
+          {dataBusy ? t('account.busy') : t('data.confirmErase')}
+        </button>
+        <button class="btn btn--ghost" type="button" disabled={dataBusy} onclick={() => (confirming = null)}>
+          {t('data.cancel')}
+        </button>
+      </div>
+    {:else}
+      <button
+        class="btn btn--ghost"
+        type="button"
+        disabled={dataBusy || accountBusy}
+        onclick={() => (confirming = 'erase')}
+      >
+        {t('data.erase')}
+      </button>
+    {/if}
+
+    {#if dataProblem !== null}
+      <p class="banner banner--danger" role="alert">{t(problemKey[dataProblem])}</p>
     {/if}
   </div>
 

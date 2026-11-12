@@ -3,10 +3,11 @@
   import { Capacitor } from '@capacitor/core';
   import type { Settings } from '../../shared/contract';
   import { appConfig } from '../config';
-  import type { AppDatabase } from '../data/database';
+  import { wipeLocalData, type AppDatabase } from '../data/database';
   import { SettingsRepository } from '../data/repositories/SettingsRepository';
   import { ProgressService } from '../services/ProgressService';
   import { PracticeService } from '../services/PracticeService';
+  import { AccountDeletionError } from '../services/AccountService';
   import { AccountMismatchError, type AuthState } from '../services/AuthService';
   import { HistoryError } from '../services/HistoryService';
   import { examDeadlineFrom } from '../services/examDeadline';
@@ -15,7 +16,7 @@
   import { translate, type MessageKey } from '../ui/i18n/messages';
   import { provideI18n } from '../ui/i18n/context';
   import { applyLanguage, applyTheme, writeThemeHint } from '../ui/theme';
-  import SettingsScreen from '../ui/screens/Settings.svelte';
+  import SettingsScreen, { type DataProblem } from '../ui/screens/Settings.svelte';
   import Placeholder from '../ui/screens/Placeholder.svelte';
   import HomeRoute from './HomeRoute.svelte';
   import PracticeRoute from './PracticeRoute.svelte';
@@ -63,6 +64,8 @@
   let account = $state<AuthState>({ status: 'guest', userId: null, email: null });
   let accountBusy = $state(false);
   let accountProblem = $state<'mismatch' | 'failed' | null>(null);
+  let dataBusy = $state(false);
+  let dataProblem = $state<DataProblem | null>(null);
   /** The account whose log has already been uploaded and pulled this session. */
   let handledUser: string | null = null;
 
@@ -181,6 +184,51 @@
   }
 
   /**
+   * F12: delete the account on the server, then erase this phone (D-086). Sync
+   * is paused first so no batch races the deletion; on failure it resumes and
+   * nothing local has changed. On success the app restarts from a clean
+   * database, which also creates a fresh device id and default settings.
+   */
+  async function deleteAccount(): Promise<void> {
+    if (runtime === null) return;
+
+    dataBusy = true;
+    dataProblem = null;
+    runtime.scheduler.stop();
+    try {
+      await runtime.account.deleteAccount();
+      globalThis.location.reload();
+    } catch (error) {
+      console.warn('account deletion did not finish', error);
+      dataProblem =
+        error instanceof AccountDeletionError && error.code !== 'not-signed-in' ? error.code : 'failed';
+      if (dataProblem !== 'local-wipe-failed') runtime.scheduler.start();
+      dataBusy = false;
+    }
+  }
+
+  /**
+   * Erases this phone only (D-086): the remedy for a phone linked to another
+   * account (D-075) and the fallback when a deletion could not wipe locally.
+   * A signed-in student is signed out; their server account is kept.
+   */
+  async function eraseDevice(): Promise<void> {
+    dataBusy = true;
+    dataProblem = null;
+    runtime?.scheduler.stop();
+    try {
+      await wipeLocalData(db);
+      await runtime?.auth.signOut();
+      globalThis.location.reload();
+    } catch (error) {
+      console.error('could not erase this phone', error);
+      dataProblem = 'erase-failed';
+      runtime?.scheduler.start();
+      dataBusy = false;
+    }
+  }
+
+  /**
    * Installs the packs shipped in the APK (D-059). It runs after first paint
    * and never blocks the UI; a failure leaves the retry banner and whatever
    * version was already on the phone.
@@ -293,6 +341,10 @@
         canSignIn={runtime !== null}
         onSignIn={() => void signIn()}
         onSignOut={() => void signOut()}
+        {dataBusy}
+        {dataProblem}
+        onDeleteAccount={() => void deleteAccount()}
+        onEraseDevice={() => void eraseDevice()}
       />
     {:else}
       <Placeholder titleKey="notFound.title" noteKey="notFound.body" />

@@ -34,6 +34,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 >
 > **Updated 2026-11-07 (Step 10):** F13 adds the review loop. `content:review` exports a sheet for one status and optional sub-topic; `content:promote` applies approve/reject/fix to the master through a stale-sheet guard and does not rebuild, so the build stays an explicit step (D-079).
 >
+> **Updated 2026-11-12 (Step 7D):** F12 is real. `delete_user()` lives in a migration, not an Edge Function; the client calls it through `sync/AccountTransport.ts`, wipes with `data/database.ts › wipeLocalData()` only after it confirms, and Settings gains a separate "Erase data on this phone" action (D-086).
+
 > **Updated 2026-11-07 (Step 11):** F13 adds content hashes and `--carry`, a separate Hindi sheet with a hard `hi_check=ok` approval gate, the `source_ref`/non-front-page approval gate, and the advisory `content:sources` and `content:dupes` reports (D-080..D-083).
 
 ---
@@ -148,10 +150,10 @@ supabase/
     20261107090000_sync_core.sql   tables, constraints, indexes, triggers (D-063)
     20261107090100_sync_rpc.sql    RLS, grants, ist_day(), apply_sync_batch(),
                                    sync_pull(), compact_sync_inbox() (D-064..D-067)
+    20261112090000_delete_user.sql delete_user(): account deletion (F12, D-086)
   functions/
     sync/index.ts            POST /sync adapter: method, bearer, size cap, RPC call
     grade_mock/              live mock grading                           (planned)
-    delete_user/             account deletion cascade (F12)              (planned)
     nightly_compaction/      schedules compact_sync_inbox()              (planned)
 
 tests/
@@ -547,18 +549,28 @@ Queued offline and sent with the next sync batch, so reporting never fails on pa
 ## F12: Delete account
 
 ```
-ui/screens/Settings.svelte › confirmDelete()
-└─ services/AccountService.ts › deleteAccount()
-   ├─ ⟶ RPC delete_user()                                          [network]
-   │  └─ server: delete daily_stats, question_reports, mock_answers,
-   │     mock_sessions, attempt_inbox, sync_batches, checkpoints,
-   │     profiles, log files under users/<id>/, then the auth user
-   ├─ data/database.ts › wipeLocal()                                [DB write]
-   └─ sync/SyncManager.ts › stop()
+ui/screens/Settings.svelte › "Delete account" → "Yes, delete my account"   [UI]
+└─ app/App.svelte › deleteAccount()
+   ├─ services/SyncScheduler.ts › stop()
+   ├─ services/AccountService.ts › deleteAccount()
+   │  ├─ ⟶ sync/AccountTransport.ts › deleteAccount()               [network]
+   │  │  └─ RPC delete_user(): delete question_reports, daily_stats,
+   │  │     checkpoints, attempt_inbox, sync_batches, sync_state,
+   │  │     profiles, then auth.users, in one transaction → { ok: true }
+   │  ├─ data/database.ts › wipeLocalData()  only after { ok: true } [DB write]
+   │  └─ services/AuthService.ts › signOut()
+   └─ location.reload()  → F1 with a fresh device id and default settings
+
+ui/screens/Settings.svelte › "Erase data on this phone" → "Yes, erase"     [UI]
+└─ app/App.svelte › eraseDevice()
+   ├─ services/SyncScheduler.ts › stop()
+   ├─ data/database.ts › wipeLocalData()                             [DB write]
+   ├─ services/AuthService.ts › signOut()       server account is kept
+   └─ location.reload()
 ```
 
-Promised in the feature list and required by the DPDP Act: deletion must be complete, including object storage — deleting the auth user alone leaves the log files behind.
-**Failure path:** if the server call fails, do **not** wipe local data; show the error and retry. Local wipe happens only after the server confirms, otherwise the account becomes undeletable while its data still exists.
+Promised in the feature list and required by the DPDP Act (D-086). `wipeLocalData` clears every table in `PERSONAL_TABLES` and keeps `CONTENT_TABLES` (installed packs and corrections), so the question bank survives. `question_stats` holds no user id and keeps its counts. There is no Storage archive yet; when 7A-2 adds `users/<id>/` objects they must be deleted through the Storage API before the RPC.
+**Failure path:** no response gives `offline`, a 401 gives `unauthenticated` (sign in again), and any other answer gives `failed`. In all three, nothing local changes and sync resumes. If the server confirmed but the wipe failed, the student is still signed out and told to use "Erase data on this phone". `delete_user()` is idempotent, so a retry after a lost response returns ok.
 
 ---
 

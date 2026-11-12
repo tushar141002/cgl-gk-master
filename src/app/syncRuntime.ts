@@ -4,11 +4,13 @@ import { createOAuthBrowser } from '../auth/OAuthBrowser';
 import { MemoryPendingAuthStore, SessionStoragePendingAuthStore } from '../auth/PendingAuthStore';
 import { LocalStorageTokenStore, MemoryTokenStore } from '../auth/TokenStore';
 import type { AppConfigState } from '../config';
-import type { AppDatabase } from '../data/database';
+import { wipeLocalData, type AppDatabase } from '../data/database';
 import { SyncRepository } from '../data/repositories/SyncRepository';
+import { AccountService } from '../services/AccountService';
 import { AuthService } from '../services/AuthService';
 import { HistoryService } from '../services/HistoryService';
 import { SyncScheduler } from '../services/SyncScheduler';
+import { HttpAccountTransport } from '../sync/AccountTransport';
 import { SyncManager } from '../sync/SyncManager';
 import { HttpPullTransport, HttpSyncTransport } from '../sync/SyncTransport';
 
@@ -17,6 +19,7 @@ export interface SyncRuntime {
   readonly sync: SyncManager;
   readonly history: HistoryService;
   readonly scheduler: SyncScheduler;
+  readonly account: AccountService;
 }
 
 export interface SyncRuntimeOptions {
@@ -31,7 +34,8 @@ export interface SyncRuntimeOptions {
 }
 
 /**
- * Wires auth, sync, history and the scheduler for a configured build (F1, F7).
+ * Wires auth, sync, history, the scheduler and account deletion for a
+ * configured build (F1, F7, F12).
  *
  * Returns null for a guest-only build: practice works fully offline and the
  * Settings card hides sign-in instead of offering a button that cannot work.
@@ -92,8 +96,17 @@ export function createSyncRuntime(options: SyncRuntimeOptions): SyncRuntime | nu
     ...(options.examDeadline === undefined ? {} : { examDeadline: options.examDeadline }),
   });
   const scheduler = new SyncScheduler({ sync, auth, subscribeWake });
+  const account = new AccountService({
+    transport: new HttpAccountTransport({
+      url: `${config.supabaseUrl}/rest/v1/rpc/delete_user`,
+      anonKey: config.supabaseAnonKey,
+      getAccessToken,
+    }),
+    auth,
+    wipeLocal: () => wipeLocalData(db),
+  });
 
-  return { auth, sync, history, scheduler };
+  return { auth, sync, history, scheduler, account };
 }
 
 /**
