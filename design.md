@@ -64,8 +64,8 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-023 | Attempt inbox + nightly compaction to monthly files | Sync | Partly superseded by D-027 |
 | D-024 | Local notifications for streak reminders | Build | Accepted |
 | D-025 | Ed25519-signed pack manifest | Security | Accepted |
-| D-026 | Checkpoints at the retention boundary | Data | Accepted |
-| D-027 | Immutable daily log files + compact attempt encoding | Sync | Accepted |
+| D-026 | Checkpoints at the retention boundary | Data | Accepted, amended by D-091 |
+| D-027 | Immutable daily log files + compact attempt encoding | Sync | Accepted, amended by D-091 |
 | D-028 | Server derives daily_stats; drop client aggregates from sync | Sync | Accepted |
 | D-029 | Live mocks run in a scheduled window, not a simultaneous start | Content | Accepted |
 | D-030 | `core/` is pure: no database writes | Architecture | Accepted |
@@ -104,7 +104,7 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-063 | One row per accepted attempt; `(user_id, attempt_id)` is the dedupe key | Data | Accepted |
 | D-064 | One SECURITY DEFINER RPC owns the sync transaction | Sync | Accepted |
 | D-065 | Aggregates are derived at sync time, by recomputation where possible | Sync | Accepted |
-| D-066 | Compaction prunes attempts only behind a checkpoint | Data | Accepted |
+| D-066 | Compaction prunes attempts only behind a checkpoint | Data | Accepted, amended by D-091 |
 | D-067 | A retried batch replays its stored response; corrections use a watermark with overlap | Sync | Accepted |
 | D-068 | The migrations run in PGlite; the Edge Function stays a thin adapter | Build | Accepted |
 | D-069 | `SyncManager` reaches the server through an injected transport | Sync | Accepted |
@@ -112,7 +112,7 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-071 | Report taps live in their own table, keyed by question, version and reason | Data | Accepted |
 | D-072 | Corrections are stored first, folded in once and used for grading immediately | Sync | Accepted |
 | D-073 | Hand-rolled minimal GoTrue PKCE client behind `AuthService` | Auth | Accepted |
-| D-074 | History pull pages `sync_pull`; checkpoints wait for 7A-2 | Sync | Accepted |
+| D-074 | History pull pages `sync_pull`; checkpoints wait for 7A-2 | Sync | Accepted, amended by D-091 |
 | D-075 | One Google account per device; switching needs a data wipe | Auth | Accepted |
 | D-076 | A dedicated `SyncScheduler` owns timing; `App.svelte` only starts it | Sync | Accepted |
 | D-077 | Batch 1 is 60 author-verified practice questions in the bundled pack | Content | Accepted |
@@ -129,6 +129,7 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-088 | Sync is rate-limited per user in Postgres; replays always pass | Security | Accepted |
 | D-089 | Android backup and device transfer are off | Security | Accepted |
 | D-090 | Live mocks: private pool, per-student draw, server deadline with grace, answers after close | Content | Accepted |
+| D-091 | The phone writes checkpoints; a nightly job archives days; pruning needs archive, checkpoint and age | Data | Accepted |
 
 ---
 
@@ -415,7 +416,7 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 
 ## D-026: Checkpoints at the retention boundary
 - **Date:** 2026-11-01
-- **Status:** Accepted (2026-11-01)
+- **Status:** Accepted (2026-11-01), amended by D-091 (2026-11-14): the phone writes checkpoints, not the nightly job
 - **Area:** Data
 - **Context:** D-016 rebuilds FSRS and Elo by replaying the full attempt log, and `PROJECT_SPEC.md` Â§4 prunes raw attempts after 12 months. Those two rules contradict each other: once a device prunes, replaying the remaining log produces different card states than the original device, so a correction re-grade or a new device would disagree with it. Full-log replay also grows forever (~2 MB of gzipped JSON per active student per year, i.e. ~2 GB at 1,000 users against 1 GB of free storage).
 - **Decision:** At each prune boundary, the nightly job writes one compact checkpoint per user â€” `{cursor, cardStates, skills, istDailyTotals}` â€” as a row in Postgres. Replay means "load the newest checkpoint, then replay attempts after its cursor". D-016 is amended from "never sync card state" to "sync checkpoints only, never per-attempt state".
@@ -426,7 +427,7 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 
 ## D-027: Immutable daily log files + compact attempt encoding
 - **Date:** 2026-11-01
-- **Status:** Accepted (2026-11-01)
+- **Status:** Accepted (2026-11-01), amended by D-091 (2026-11-14): files are parts per day, named with a hash; about 1.6x smaller than gzipped JSON
 - **Area:** Sync
 - **Context:** Supabase object storage has S3 semantics: objects cannot be appended. D-023 chose one `.gz` per month, which means the nightly job must read, decompress, merge and rewrite the whole month for every active user â€” O(month Ã— users) every night, and a failed run can corrupt a month. Attempts are also stored as JSON, where the UUID alone costs 36 bytes per attempt.
 - **Decision:** One immutable file per user per day, `users/<id>/<yyyy-mm-dd>.gz`, listed by a per-user manifest. Attempts are encoded compactly instead of as JSON: 16-byte attempt ID as base64url (22 chars), question index into the pack rather than a string ID, 1-byte bitfield for mode/flags, varint `ms`.
@@ -855,7 +856,7 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 
 ## D-066: Compaction prunes attempts only behind a checkpoint
 - **Date:** 2026-11-07
-- **Status:** Accepted
+- **Status:** Accepted, amended by D-091 (2026-11-14): pruning also needs the archive and 30 days of age
 - **Area:** Data
 - **Context:** An inbox that never shrinks costs storage and slows every aggregate. But D-016 makes the attempt log the source of truth: deleting attempts before a checkpoint exists deletes history that no device can replay. The nightly archive and its checkpoint writer are 7A-2, not 7A.
 - **Decision:** `compact_sync_inbox(p_batch_retention)` deletes an attempt only when it is at or before the newest checkpoint cursor for its owner, and deletes a batch idempotency key only when it is older than the retention window and no longer owns any attempt. 7A writes no checkpoints, so on a 7A database the job prunes only stale batch keys — it is safe to schedule now and starts reclaiming space when checkpoint writing lands.
@@ -944,7 +945,7 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 
 ## D-074: History pull pages `sync_pull`; checkpoints wait for 7A-2
 - **Date:** 2026-11-07
-- **Status:** Accepted
+- **Status:** Accepted, amended by D-091 (2026-11-14): a full pull adopts the newest checkpoint first
 - **Area:** Sync
 - **Context:** A new or second device must download the account's attempt log before it can show progress. The server has `sync_pull(after, limit)` but no checkpoint writer yet (7A-2), so a pull cannot start from a snapshot. A single unbounded response would put a whole history in memory and exceed the function timeout; a failed page must not force the student to start over.
 - **Decision:** `PullTransport.pull(after, limit)` posts `{ p_after, p_limit }` to the `sync_pull` RPC. `HistoryService` starts at `syncMeta.historyCursor` (null means a full pull), pages until `hasMore` is false, merges by attempt id, marks pulled rows `synced: 1`, rebuilds cards, skills and daily summaries once, and advances the cursor only after the last page. A failure halfway folds the pages that arrived into the log but keeps the old cursor, so a retry re-fetches them and dedupes locally. The caller uploads the local log before the first pull, so a guest's history is on the server and comes back in the same pass. Page size defaults to 200 and is capped at 500.
@@ -1128,4 +1129,15 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** Every input to a rank is decided on the server, which is what D-012 promises. A per-student draw from a larger pool and late answers make sharing far less useful, and the grace period and local session make the test survive the devices and networks this app targets.
 - **Trade-off accepted:** Different draws mean slightly different difficulty between students. A student offline for more than 10 minutes after the deadline loses the attempt. The speed flag is a heuristic that can miss a careful cheat or flag a very fast student. The `question_corrections` re-grade of `mock_answers` (spec §8) is not built yet. The pool must be at least `question_count` questions or `start_mock` answers `unavailable`.
 - **Revisit when:** The admin site exists, pools are large enough to balance draws by difficulty, a correction hits a mock question, or flags produce complaints.
+
+## D-091: The phone writes checkpoints; a nightly job archives days; pruning needs archive, checkpoint and age
+- **Date:** 2026-11-14
+- **Status:** Accepted
+- **Area:** Data
+- **Context:** D-026 had the nightly server job write checkpoints, but a checkpoint is FSRS cards and Elo skills, and computing them needs the replay engine (`core/Replayer`, `ts-fsrs`) and the question bank (sub-topic, seed rating, answer key per version). Neither exists on the server. D-027 planned daily archive files without saying how late attempts for an archived day are handled, and D-066 pruned on the checkpoint alone, before any archive existed.
+- **Decision:** (1) **Checkpoints come from the phone.** After a successful sync, `CheckpointService` folds every attempt at least 30 days old into a checkpoint and uploads it with `put_checkpoint`, at most once a week and only when all those attempts are synced. The server accepts it only if its cursor is at or before the last cursor it received from that student and after the previous checkpoint, and keeps the newest two. The 30-day margin keeps a checkpoint behind attempts a second, offline phone may still upload, and matches the 30-day window in which an attempt keeps its own IST day (D-028). (2) **A phone uses a checkpoint only when it adopts one.** A full history pull fetches `latest_checkpoint` first, stores it in `syncMeta.checkpoint`, and every rebuild from then on starts from it, including day totals. The writing phone keeps rebuilding from its own full log, so a later correction still re-grades its old attempts. (3) **Archive files come from a nightly Edge function** (`nightly_archive`). For each (student, finished IST day) with unarchived attempts, it encodes them compactly, gzips, uploads to the private `attempt-archive` bucket as `users/<id>/<day>-<part>-<sha8>.cga.gz`, then `record_archive` writes the manifest row (`attempt_archive`) and marks exactly those attempts archived, in one transaction. A late attempt for an archived day goes into the next part, so no file is rewritten; a crash between upload and record leaves an unreferenced file and the next run archives the day again under a new name. The same job removes the Storage folders of deleted accounts (`archive_orphans`), completing D-086. (4) **Pruning needs all three:** `compact_sync_inbox` deletes an inbox attempt only if it is archived, at or before the newest checkpoint, and received more than 30 days ago.
+- **Alternatives considered:** Port the replay engine and a question table to the server (two copies of the scoring rules that must stay identical forever); a server checkpoint with only day totals (a new device would lose its FSRS schedule); rewrite a day file when a late attempt arrives (breaks immutability, the point of D-027); prune on the checkpoint alone (the archive would be the only copy of nothing).
+- **Why:** The phone already has everything a checkpoint needs, and a forged checkpoint can only harm its own author's revision schedule, never a rank (ranks come from server-graded mocks, D-012). Requiring archive, checkpoint and age together means no attempt is ever deleted while it is the only copy anywhere. The equivalence of "checkpoint plus tail" and "full log" is pinned by a test.
+- **Trade-off accepted:** A student who never opens the app on a phone with 30-day-old synced history never gets a checkpoint, so their inbox is never pruned. That is safe, just not smaller. An attempt uploaded more than 30 days late and older than the newest checkpoint is kept but not replayed on a phone that adopted the checkpoint. The measured archive is about 1.6 times smaller than gzipped JSON, not the 2–3 times D-027 hoped for, because the random half of each UUIDv7 does not compress. `ms` is stored in whole milliseconds. The bucket, the cron schedule and `ARCHIVE_CRON_SECRET` are set up by hand in the Supabase dashboard.
+- **Revisit when:** The admin question table exists (the server could then compute checkpoints itself), Storage object counts become costly, or inactive accounts start to dominate the inbox.
 

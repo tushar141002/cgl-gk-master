@@ -4,6 +4,7 @@ import type {
   AttemptRecord,
   BatchId,
   CardState,
+  Checkpoint,
   Cursor,
   DailySummary,
   DeviceId,
@@ -121,6 +122,14 @@ export interface SyncMetaRow {
    * next pull is a full history download. Absent on rows written before 7C.
    */
   readonly historyCursor?: Cursor | null;
+  /**
+   * A server checkpoint adopted on a full history pull (D-026, D-091). When
+   * present, every rebuild starts from it, because attempts before its cursor
+   * may no longer exist on the server or on this phone. Absent before 7A-2.
+   */
+  readonly checkpoint?: Checkpoint | null;
+  /** Phone time of the last checkpoint upload attempt; paces `CheckpointService`. */
+  readonly checkpointTriedAt?: number | null;
 }
 
 export class AppDatabase extends Dexie {

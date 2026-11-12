@@ -1,6 +1,13 @@
-import { MAX_PULL_ATTEMPTS, type AttemptRecord, type Cursor } from '../../shared/contract';
+import {
+  MAX_PULL_ATTEMPTS,
+  compareCursor,
+  type AttemptRecord,
+  type Checkpoint,
+  type Cursor,
+} from '../../shared/contract';
 import type { AppDatabase } from '../data/database';
 import { SyncRepository } from '../data/repositories/SyncRepository';
+import type { CheckpointTransport } from '../sync/CheckpointTransport';
 import { buildReplayIndex, replaceDerived } from '../sync/derived';
 import type { PullTransport } from '../sync/SyncTransport';
 
@@ -28,6 +35,11 @@ export interface HistoryServiceOptions {
   readonly examDeadline?: number;
   /** 1..`MAX_PULL_ATTEMPTS`; the server caps it at 500 anyway. */
   readonly pageSize?: number;
+  /**
+   * Where a full pull fetches the newest server checkpoint first (D-091).
+   * Without it, a full pull replays the whole log as before 7A-2.
+   */
+  readonly checkpoints?: CheckpointTransport;
 }
 
 export interface PullSummary {
@@ -58,6 +70,7 @@ export class HistoryService {
   private readonly transport: PullTransport;
   private readonly pageSize: number;
   private readonly examDeadline: number | undefined;
+  private readonly checkpoints: CheckpointTransport | undefined;
 
   constructor(
     private readonly db: AppDatabase,
@@ -72,6 +85,7 @@ export class HistoryService {
     this.transport = options.transport;
     this.pageSize = pageSize;
     this.examDeadline = options.examDeadline;
+    this.checkpoints = options.checkpoints;
   }
 
   async pull(): Promise<PullSummary> {
@@ -82,6 +96,10 @@ export class HistoryService {
     let after = start;
     let pages = 0;
 
+    // A full pull starts from the newest checkpoint: once the server has
+    // pruned (D-066, D-091), attempts before it exist only in that snapshot.
+    const adopted = start === null ? await this.adoptCheckpoint(meta.checkpoint ?? null) : false;
+
     const collected = new Map<string, AttemptRecord>();
 
     while (pages < MAX_PULL_PAGES) {
@@ -89,12 +107,12 @@ export class HistoryService {
       try {
         response = await this.transport.pull(after, this.pageSize);
       } catch {
-        await this.commit(collected, null, false);
+        await this.commit(collected, null, false, adopted);
         throw new HistoryError('network', 'could not reach the history service');
       }
 
       if (!response.ok) {
-        await this.commit(collected, null, false);
+        await this.commit(collected, null, false, adopted);
         throw errorFor(response.error);
       }
 
@@ -102,25 +120,49 @@ export class HistoryService {
       for (const attempt of response.attempts) collected.set(attempt.id, attempt);
 
       if (!response.hasMore) {
-        const inserted = await this.commit(collected, response.nextCursor, true);
+        const inserted = await this.commit(collected, response.nextCursor, true, adopted);
         return {
           pages,
           received: collected.size,
           inserted,
-          rebuilt: inserted > 0,
+          rebuilt: inserted > 0 || adopted,
           cursor: response.nextCursor,
         };
       }
 
       if (response.nextCursor === null || response.nextCursor === after) {
-        await this.commit(collected, null, false);
+        await this.commit(collected, null, false, adopted);
         throw new HistoryError('sync_failed', 'history service did not advance');
       }
       after = response.nextCursor;
     }
 
-    await this.commit(collected, null, false);
+    await this.commit(collected, null, false, adopted);
     throw new HistoryError('sync_failed', 'history is too large for one download');
+  }
+
+  /**
+   * Stores the server's newest checkpoint when it is ahead of the one this
+   * phone already uses. A failed fetch stops the pull: replaying without a
+   * checkpoint the server relies on would silently lose pruned history.
+   */
+  private async adoptCheckpoint(current: Checkpoint | null): Promise<boolean> {
+    if (this.checkpoints === undefined) return false;
+
+    let response;
+    try {
+      response = await this.checkpoints.latest();
+    } catch {
+      throw new HistoryError('network', 'could not reach the history service');
+    }
+    if (!response.ok) throw errorFor(response.error);
+
+    const latest = response.checkpoint;
+    if (latest === null) return false;
+    if (current !== null && compareCursor(latest.cursor, current.cursor) <= 0) return false;
+
+    await this.sync.setCheckpoint(latest);
+    return true;
   }
 
   /**
@@ -132,8 +174,9 @@ export class HistoryService {
     collected: ReadonlyMap<string, AttemptRecord>,
     cursor: Cursor | null,
     advance: boolean,
+    forceRebuild = false,
   ): Promise<number> {
-    if (collected.size === 0) {
+    if (collected.size === 0 && !forceRebuild) {
       if (advance) await this.sync.setHistoryCursor(cursor);
       return 0;
     }
@@ -159,7 +202,7 @@ export class HistoryService {
         // never uploaded again. Rows that already exist are left untouched:
         // a local unsynced copy may carry the same id and will be de-duped by
         // the server's primary key.
-        if (missing.length > 0) {
+        if (missing.length > 0 || forceRebuild) {
           await this.db.attempts.bulkPut(missing.map((attempt) => ({ ...attempt, synced: 1 as const })));
 
           const attempts = await this.db.attempts.toArray();

@@ -72,6 +72,19 @@ async function seedStudent(email: string): Promise<string> {
     [userId],
   );
 
+  await actAsOwner(db);
+  const { rows: waiting } = await db.query<{ attempt_id: string; day: string }>(
+    'select attempt_id, day::text as day from public.attempt_inbox where user_id = $1 order by attempt_id limit 1',
+    [userId],
+  );
+  await db.query('select public.record_archive($1, $2::date, 1, $3, $4, 10, $5)', [
+    userId,
+    waiting[0]!.day,
+    `users/${userId}/${waiting[0]!.day}-1-test.cga.gz`,
+    [waiting[0]!.attempt_id],
+    'a'.repeat(64),
+  ]);
+
   await asUser(db, userId, async () => {
     const { rows } = await db.query<{ result: { sessionId: string } }>(
       "select public.start_mock('delete-mock') as result",

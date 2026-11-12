@@ -50,6 +50,7 @@ export class CorrectionApplier {
         this.db.cardState,
         this.db.skills,
         this.db.dailySummary,
+        this.db.syncMeta,
       ],
       async (): Promise<CorrectionResult> => {
         const stored = await this.db.corrections.bulkGet(corrections.map((item) => item.id));

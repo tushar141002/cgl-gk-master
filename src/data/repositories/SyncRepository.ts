@@ -1,4 +1,4 @@
-import type { Cursor, DeviceId } from '../../../shared/contract';
+import type { Checkpoint, Cursor, DeviceId } from '../../../shared/contract';
 import type { AppDatabase, PendingBatch, SyncMetaRow } from '../database';
 
 const ROW_ID = 'device';
@@ -81,6 +81,24 @@ export class SyncRepository {
       }
       return owner === userId ? 'ok' : 'mismatch';
     });
+  }
+
+  /** Stores a server checkpoint adopted on a full pull (D-091). */
+  async setCheckpoint(checkpoint: Checkpoint | null): Promise<void> {
+    const existing = await this.db.syncMeta.get(ROW_ID);
+    if (existing === undefined) {
+      throw new Error('cannot record a checkpoint before ensureDeviceId');
+    }
+    await this.db.syncMeta.put({ ...existing, checkpoint });
+  }
+
+  /** Records when this phone last tried to upload a checkpoint. */
+  async setCheckpointTriedAt(at: number): Promise<void> {
+    const existing = await this.db.syncMeta.get(ROW_ID);
+    if (existing === undefined) {
+      throw new Error('cannot record a checkpoint time before ensureDeviceId');
+    }
+    await this.db.syncMeta.put({ ...existing, checkpointTriedAt: at });
   }
 
   /** Advances the pull position only after a complete history download (F7). */

@@ -1,12 +1,13 @@
 import type {
   AttemptRecord,
+  Checkpoint,
   DailySummary,
   OptionIndex,
   QuestionCorrection,
   QuestionId,
   SubtopicId,
 } from '../../shared/contract';
-import { istDayKey } from '../../shared/contract';
+import { compareCursor, encodeCursor, istDayKey } from '../../shared/contract';
 import { Replayer, type ReplayIndex, type ReplayQuestion, type ReplayResult } from '../core/Replayer';
 import { StreakTracker } from '../core/StreakTracker';
 import type { AppDatabase, CorrectionRow, QuestionRow } from '../data/database';
@@ -71,19 +72,25 @@ export function buildReplayIndex(
  *
  * A skip-only day writes a zero row, which is what breaks a streak (D-043).
  * Duplicate attempt ids are ignored so a pull that overlaps an upload cannot
- * count an answer twice.
+ * count an answer twice. With a checkpoint, its day totals are the starting
+ * point and only attempts strictly after its cursor are added (D-026).
  */
-export function foldDailySummaries(attempts: readonly AttemptRecord[]): DailySummary[] {
+export function foldDailySummaries(
+  attempts: readonly AttemptRecord[],
+  checkpoint: Checkpoint | null = null,
+): DailySummary[] {
   const seen = new Set<string>();
   const ordered = [...attempts]
     .filter((attempt) => {
       if (seen.has(attempt.id)) return false;
       seen.add(attempt.id);
-      return true;
+      if (checkpoint === null) return true;
+      return compareCursor(encodeCursor(attempt.at, attempt.id), checkpoint.cursor) > 0;
     })
     .sort((a, b) => a.at - b.at || compareText(a.id, b.id));
 
   const byDate = new Map<string, DailySummary>();
+  for (const total of checkpoint?.istDailyTotals ?? []) byDate.set(total.date, total);
   for (const attempt of ordered) {
     const date = istDayKey(attempt.at);
     byDate.set(date, StreakTracker.apply(attempt, byDate.get(date) ?? null));
@@ -96,9 +103,10 @@ export function foldDailySummaries(attempts: readonly AttemptRecord[]): DailySum
  * Replaces every derived store from the attempt log (D-016, D-026).
  *
  * Must run inside a Dexie write transaction that includes `attempts`,
- * `cardState`, `skills` and `dailySummary`; the caller owns the transaction so
- * a correction batch, a pull merge or a settings change can share one commit.
- * Rows are replaced, not merged: replay is the single source of truth.
+ * `cardState`, `skills`, `dailySummary` and `syncMeta`; the caller owns the
+ * transaction so a correction batch, a pull merge or a settings change can
+ * share one commit. Rows are replaced, not merged: replay is the single source
+ * of truth. An adopted server checkpoint, if any, is the starting point.
  */
 export async function replaceDerived(
   db: AppDatabase,
@@ -106,13 +114,14 @@ export async function replaceDerived(
   index: ReplayIndex,
   options: ReplaceDerivedOptions = {},
 ): Promise<ReplayResult> {
+  const checkpoint = (await db.syncMeta.get('device'))?.checkpoint ?? null;
   const rebuilt = Replayer.rebuild(
     attempts,
-    null,
+    checkpoint,
     index,
     options.examDeadline === undefined ? {} : { examDeadline: options.examDeadline },
   );
-  const daily = foldDailySummaries(attempts);
+  const daily = foldDailySummaries(attempts, checkpoint);
 
   await db.cardState.clear();
   await db.skills.clear();

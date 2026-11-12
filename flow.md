@@ -34,6 +34,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 >
 > **Updated 2026-11-07 (Step 10):** F13 adds the review loop. `content:review` exports a sheet for one status and optional sub-topic; `content:promote` applies approve/reject/fix to the master through a stale-sheet guard and does not rebuild, so the build stays an explicit step (D-079).
 >
+> **Updated 2026-11-14 (Step 7A-2):** F9 is real: `nightly_archive` writes immutable day files and records them, removes deleted accounts' folders and compacts; pruning needs archive, checkpoint and 30 days (D-091). F4 offers the server a phone-written checkpoint after a successful sync, and F7's full pull adopts the newest checkpoint first.
+
 > **Updated 2026-11-13 (Step 7E):** F8 is real: `list_mocks`, `start_mock`, `submit_mock`, `mock_leaderboard` and `mock_review` in a migration, `sync/MockTransport.ts`, `services/MockService.ts` with the local `mockSessions` table, and `#/mock` and `#/mock/:id` screens. F12 also deletes mock sessions and answers (D-090).
 
 > **Updated 2026-11-12 (Step 7D security):** F4's RPC is now a rate-limited wrapper around `apply_sync_batch_unthrottled`, and `rate_limited` is retryable (D-088). Production builds get a CSP meta tag (D-087).
@@ -158,10 +160,13 @@ supabase/
     20261112090000_delete_user.sql delete_user(): account deletion (F12, D-086)
     20261112090100_sync_rate_limit.sql  per-user limit wrapper on apply_sync_batch (D-088)
     20261113090000_live_mocks.sql  mock tables, RLS, list/start/submit/leaderboard/review (F8, D-090)
+    20261114090000_archive_checkpoints.sql  archive manifest, put/latest checkpoint, prune rule (D-091)
   functions/
     sync/index.ts            POST /sync adapter: method, bearer, size cap, RPC call
     grade_mock/              live mock grading                           (planned)
-    nightly_compaction/      schedules compact_sync_inbox()              (planned)
+    nightly_archive/index.ts nightly: archive days, remove deleted folders, compact (F9, D-091)
+    _shared/archiveCodec.ts  compact attempt encoding + gzip + SHA-256 (D-027)
+    _shared/archiveJob.ts    runArchive() with injected ports; tested in Node
 
 tests/
   core/                      Attempt.test.ts, EloRating.test.ts, ... (Vitest, node env)
@@ -470,6 +475,8 @@ then app/App.svelte › syncAfterSignIn(userId)
 ├─ sync/SyncManager.ts › uploadAll({ allowEmpty: true })      guest log → server (F4)
 ├─ services/HistoryService.ts › pull()                        [network + DB write]
 │  ├─ data/repositories/SyncRepository.ts › getMeta()          historyCursor (null = full pull)
+│  ├─ full pull only: sync/CheckpointTransport.ts › latest()   ⟶ RPC latest_checkpoint  D-091
+│  │  └─ newer than syncMeta.checkpoint → setCheckpoint(); later rebuilds start from it
 │  ├─ loop: sync/SyncTransport.ts › HttpPullTransport › POST sync_pull
 │  │        { p_after, p_limit 1..500 } → { attempts, nextCursor, hasMore }
 │  ├─ merge by attempt id; pulled rows stored `synced: 1`
@@ -480,7 +487,7 @@ then app/App.svelte › syncAfterSignIn(userId)
 └─ services/SyncScheduler.ts › runNow('manual')               resume the normal timer
 ```
 
-Sign-in is Google-only via GoTrue on the custom scheme. `auth.load(location.href)` resumes a web redirect; on Android the manifest intent filter delivers the deep link. The local log is uploaded before the first pull, so the same pass returns it marked `synced: 1` (dedupe by attempt id). Derived state is rebuilt once per complete pull, and the attempt log is never edited; stored corrections decide each verdict through `buildReplayIndex` (D-072). Starting from `syncMeta.historyCursor` means the second sign-in downloads only the tail. Checkpoints are not written yet; 7A-2 will let the pull start from a checkpoint plus the tail (D-074).
+Sign-in is Google-only via GoTrue on the custom scheme. `auth.load(location.href)` resumes a web redirect; on Android the manifest intent filter delivers the deep link. The local log is uploaded before the first pull, so the same pass returns it marked `synced: 1` (dedupe by attempt id). Derived state is rebuilt once per complete pull, and the attempt log is never edited; stored corrections decide each verdict through `buildReplayIndex` (D-072). Starting from `syncMeta.historyCursor` means the second sign-in downloads only the tail. A full pull adopts the newest server checkpoint first, so pruned history is replaced by its snapshot; a failed checkpoint fetch stops the pull instead of replaying without it (D-074, D-091).
 
 **Failure path:** a mismatched account or a failed token exchange leaves the student a guest and shows the Settings error, with no batch uploaded. If the upload succeeds but the pull fails, the arrived pages stay merged, the cursor is unchanged and the scheduler retries on its normal timer (D-076). Never wipe local attempts on a failed rebuild.
 
@@ -534,24 +541,33 @@ See D-029 and D-090. The session lives in the `mockSessions` table so a phone ca
 
 ---
 
-## F9: Nightly compaction (server)
-
-`compact_sync_inbox()` is landed (7A, D-066); the archive and checkpoint writer are 7A-2.
+## F9: Nightly archive and compaction (server)
 
 ```
-supabase/functions/nightly_compaction › scheduled run()                      (planned)
-└─ ⟶ RPC public.compact_sync_inbox(p_batch_retention)                        [DB write]
-   ├─ delete attempt_inbox rows at or before the newest checkpoint cursor    D-026
-   ├─ delete sync_batches older than the retention that own no attempts      D-063
-   └─ return { attemptsPruned, batchesPruned }
+Supabase Cron, nightly (e.g. 21:00 UTC) ⟶ POST /functions/v1/nightly_archive   x-cron-secret
+└─ supabase/functions/_shared/archiveJob.ts › runArchive(ports)
+   ├─ ⟶ RPC archive_pending(500)        (user, finished IST day, nextPart) groups   service role
+   ├─ for each group:
+   │  ├─ ⟶ RPC archive_attempts(user, day)   unarchived attempts, replay order
+   │  ├─ _shared/archiveCodec.ts › encodeArchive() → gzip() → sha256Hex()
+   │  ├─ ⟶ Storage upload attempt-archive/users/<id>/<day>-<part>-<sha8>.cga.gz  upsert: false
+   │  └─ ⟶ RPC record_archive(...)   manifest row + mark exactly those attempts archived, one txn
+   │     (a failure is logged and the group waits for the next night)
+   ├─ ⟶ Storage list users/ → RPC archive_orphans(ids) → remove folders of deleted accounts  D-086
+   └─ ⟶ RPC compact_sync_inbox()
+      ├─ delete an inbox attempt only if archived AND at or before the newest
+      │  checkpoint AND received more than 30 days ago                           D-091
+      └─ delete sync_batches older than 90 days that own no attempts           D-063
 
-7A-2 (planned): write one immutable file per user per day
-(users/<id>/<yyyy-mm-dd>.gz, compact encoding, D-027), update question_stats.elo,
-write a checkpoint before the prune (D-026), and reconcile late attempts for
-days already archived (D-065).
+app: services/SyncScheduler.ts › onResult(ok) → services/CheckpointService.ts › maybeWrite()
+├─ at most once a week; only attempts ≥ 30 days old, all synced
+├─ core/Replayer.ts › rebuild(eligible, adopted checkpoint, index)  pure
+└─ ⟶ RPC put_checkpoint   cursor ≤ server's last cursor and after the previous; newest two kept
 ```
 
-See D-023, D-026, D-027, D-028, D-066. Must be idempotent: running it twice must not double-count and must not rewrite an existing day file. Daily files are immutable by construction; a failed run loses at most one day, which the next run re-derives from the inbox.
+See D-026, D-027, D-066 and D-091. Idempotent by construction: a day file is never rewritten (a late attempt goes into the next part), `record_archive` is a no-op for a path it already holds, and an upload whose record failed leaves only an unreferenced file. No attempt is deleted while it is the only copy anywhere.
+**Failure path:** a failed group keeps its attempts unarchived, therefore unprunable, until a later run succeeds. A checkpoint upload that gets no answer is retried after the next sync; a refusal (`stale`, `ahead_of_server`) waits a week.
+**Setup (by hand):** create the private bucket `attempt-archive`, set `ARCHIVE_CRON_SECRET` (32+ characters) for the function, and schedule the call.
 
 ---
 

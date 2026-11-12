@@ -8,10 +8,12 @@ import { wipeLocalData, type AppDatabase } from '../data/database';
 import { SyncRepository } from '../data/repositories/SyncRepository';
 import { AccountService } from '../services/AccountService';
 import { AuthService } from '../services/AuthService';
+import { CheckpointService } from '../services/CheckpointService';
 import { HistoryService } from '../services/HistoryService';
 import { MockService } from '../services/MockService';
 import { SyncScheduler } from '../services/SyncScheduler';
 import { HttpAccountTransport } from '../sync/AccountTransport';
+import { HttpCheckpointTransport } from '../sync/CheckpointTransport';
 import { HttpMockTransport } from '../sync/MockTransport';
 import { SyncManager } from '../sync/SyncManager';
 import { HttpPullTransport, HttpSyncTransport } from '../sync/SyncTransport';
@@ -94,11 +96,31 @@ export function createSyncRuntime(options: SyncRuntimeOptions): SyncRuntime | nu
     transport,
     ...(options.examDeadline === undefined ? {} : { examDeadline: options.examDeadline }),
   });
+  const checkpointTransport = new HttpCheckpointTransport({
+    supabaseUrl: config.supabaseUrl,
+    anonKey: config.supabaseAnonKey,
+    getAccessToken,
+  });
   const history = new HistoryService(db, {
     transport: pullTransport,
+    checkpoints: checkpointTransport,
     ...(options.examDeadline === undefined ? {} : { examDeadline: options.examDeadline }),
   });
-  const scheduler = new SyncScheduler({ sync, auth, subscribeWake });
+  const checkpoints = new CheckpointService(db, {
+    transport: checkpointTransport,
+    now,
+    examDeadline: options.examDeadline,
+  });
+  // After a sync that went through, offer the server a fresh checkpoint; the
+  // service itself paces this to once a week (D-091).
+  const scheduler = new SyncScheduler({
+    sync,
+    auth,
+    subscribeWake,
+    onResult: (result) => {
+      if (result.status === 'ok') void checkpoints.maybeWrite().catch(() => undefined);
+    },
+  });
   const account = new AccountService({
     transport: new HttpAccountTransport({
       url: `${config.supabaseUrl}/rest/v1/rpc/delete_user`,

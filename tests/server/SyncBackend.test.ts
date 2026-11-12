@@ -890,7 +890,7 @@ describe('compact_sync_inbox', () => {
     return rows[0]!.result;
   }
 
-  it('keeps every attempt until a checkpoint covers it', async () => {
+  it('keeps every archived, old attempt until a checkpoint covers it', async () => {
     const userId = await newUser();
     const qid = nextQid();
     const base = Date.now() - 2 * DAY;
@@ -898,6 +898,12 @@ describe('compact_sync_inbox', () => {
     const two = makeAttempt({ qid, at: base + 1000, id: 'compact-2' });
 
     await sync(userId, makeBatch('batch-compact', [one, two]));
+    // The other two conditions for pruning (D-091) are met here on purpose.
+    await actAsOwner(db);
+    await db.query(
+      "update public.attempt_inbox set archived_at = now(), received_at = now() - interval '40 days' where user_id = $1",
+      [userId],
+    );
 
     expect((await compact()).attemptsPruned).toBe(0);
     expect(await attemptCount(userId)).toBe(2);
