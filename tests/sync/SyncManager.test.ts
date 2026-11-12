@@ -340,6 +340,20 @@ describe('SyncManager retries (D-067, D-070)', () => {
     expect(result).toEqual({ status: 'retry', error: 'timeout', retryInMs: 30_000 });
   });
 
+  it('retries a rate-limited batch and keeps it pinned (D-088)', async () => {
+    await seedAttempts(attempt({ id: 'a1', at: AT }));
+    const transport = new FakeTransport();
+    transport.scriptWith({ ok: false, error: 'rate_limited', retryAfterMs: 45_000 });
+    const sync = manager(transport);
+
+    const limited = await sync.runOnce();
+    expect(limited).toEqual({ status: 'retry', error: 'rate_limited', retryInMs: 45_000 });
+
+    await sync.runOnce();
+    expect(transport.calls).toHaveLength(2);
+    expect(transport.calls[1]!.batchId).toBe(transport.calls[0]!.batchId);
+  });
+
   it('shares one run between concurrent callers', async () => {
     await seedAttempts(attempt({ id: 'a1', at: AT }));
     const transport = new FakeTransport();

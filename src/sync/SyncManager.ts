@@ -22,7 +22,13 @@ import type { SyncTransport } from './SyncTransport';
 export const MAX_UPLOAD_BATCHES = 500;
 
 /** Failures the server itself says are temporary (F4). */
-const RETRYABLE_ERRORS: ReadonlySet<string> = new Set(['timeout', 'sync_failed', 'batch_in_progress']);
+const RETRYABLE_ERRORS: ReadonlySet<string> = new Set([
+  'timeout',
+  'sync_failed',
+  'batch_in_progress',
+  // Per-user limit (D-088): the same pinned batch goes again after the wait.
+  'rate_limited',
+]);
 
 /** A batch the server will never accept; keeping it pinned would wedge sync. */
 const POISON_ERRORS: ReadonlySet<string> = new Set(['invalid_batch', 'invalid_json']);

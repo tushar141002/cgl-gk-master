@@ -34,6 +34,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 >
 > **Updated 2026-11-07 (Step 10):** F13 adds the review loop. `content:review` exports a sheet for one status and optional sub-topic; `content:promote` applies approve/reject/fix to the master through a stale-sheet guard and does not rebuild, so the build stays an explicit step (D-079).
 >
+> **Updated 2026-11-12 (Step 7D security):** F4's RPC is now a rate-limited wrapper around `apply_sync_batch_unthrottled`, and `rate_limited` is retryable (D-088). Production builds get a CSP meta tag (D-087).
+
 > **Updated 2026-11-12 (Step 7D):** F12 is real. `delete_user()` lives in a migration, not an Edge Function; the client calls it through `sync/AccountTransport.ts`, wipes with `data/database.ts › wipeLocalData()` only after it confirms, and Settings gains a separate "Erase data on this phone" action (D-086).
 
 > **Updated 2026-11-07 (Step 11):** F13 adds content hashes and `--carry`, a separate Hindi sheet with a hard `hi_check=ok` approval gate, the `source_ref`/non-front-page approval gate, and the advisory `content:sources` and `content:dupes` reports (D-080..D-083).
@@ -151,6 +153,7 @@ supabase/
     20261107090100_sync_rpc.sql    RLS, grants, ist_day(), apply_sync_batch(),
                                    sync_pull(), compact_sync_inbox() (D-064..D-067)
     20261112090000_delete_user.sql delete_user(): account deletion (F12, D-086)
+    20261112090100_sync_rate_limit.sql  per-user limit wrapper on apply_sync_batch (D-088)
   functions/
     sync/index.ts            POST /sync adapter: method, bearer, size cap, RPC call
     grade_mock/              live mock grading                           (planned)
@@ -363,6 +366,9 @@ services/SyncScheduler.ts › start() / runNow(reason)                 landed (D
 │  │  └─ sync/SyncTransport.ts › HttpSyncTransport › POST /sync → supabase/functions/sync/index.ts
 │  │     ├─ method, Bearer header, ≤512 KB body                      landed
 │  │     └─ ⟶ RPC public.apply_sync_batch(p_batch)                   [DB write]
+│  │        ├─ new batch id and ≥ 30 batches in 60 s → rate_limited  D-088
+│  │        │  { retryAfterMs }, HTTP 429; a stored batch id skips this
+│  │        └─ apply_sync_batch_unthrottled(p_batch):
 │  │        ├─ insert sync_batches; a repeated batchId returns its stored
 │  │        │  response and writes nothing                           D-067
 │  │        ├─ insert attempt_inbox once per (user_id, attempt_id)   D-063
@@ -385,7 +391,7 @@ services/SyncScheduler.ts › start() / runNow(reason)                 landed (D
 **Trigger:** `start()` on app open, a five-minute timer while the app is in use, an `online` event, and `visibilitychange` when the app returns to the foreground (D-009, D-076). `wake` and `manual` runs may send an empty batch so corrections and the cursor arrive without a new answer; the five-minute tick does not. Concurrent triggers share the run in flight.
 **Payload:** attempts plus `reports[]` (F11). No client-computed `daily` aggregates — the server derives them (D-028, D-065).
 **Retry state:** the batch is pinned in `syncMeta.pendingBatch` before the request, so a retry — even after a restart — sends the same `batchId` with the same attempt ids and reports and receives the server's stored response (D-067, D-070). A new attempt that arrives meanwhile waits for the next batch. The pin is cleared only on success or a poison rejection (`invalid_batch`, `invalid_json`).
-**Result:** `runOnce` returns `idle | ok | retry{retryInMs} | failed`. Network throw, `timeout`, `sync_failed`, `batch_in_progress` and any `retryAfterMs` are retryable (`sync/backoff.ts` doubles from 1 s to 5 min with jitter); `unauthenticated`, `forbidden` and validation errors are terminal. The scheduler owns the timer: a retryable result schedules `retryInMs`, anything else the regular interval.
+**Result:** `runOnce` returns `idle | ok | retry{retryInMs} | failed`. Network throw, `timeout`, `sync_failed`, `batch_in_progress`, `rate_limited` (D-088) and any `retryAfterMs` are retryable (`sync/backoff.ts` doubles from 1 s to 5 min with jitter); `unauthenticated`, `forbidden` and validation errors are terminal. The scheduler owns the timer: a retryable result schedules `retryInMs`, anything else the regular interval.
 **Failure path:** on network error, keep attempts unsynced and retry the pinned batch with backoff. Retries are safe because a repeated `batchId` returns the stored response (D-067) and a resent attempt is rejected by the inbox primary key (D-063). A partial success never happens: the RPC accepts the batch or raises, and the whole transaction rolls back. A guest or an offline device skips the request but keeps the timer alive, so signing in or coming back online needs no separate path.
 
 ---

@@ -125,6 +125,9 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-084 | A 100-question official SSC PYQ pilot decides the mixed ratio | Content | Accepted |
 | D-085 | Staging artifacts are untracked; the Markdown docs stay authoritative | Business | Accepted |
 | D-086 | Account deletion is server-first, then a local wipe; erase-this-phone is separate | Security | Accepted |
+| D-087 | Production builds carry a strict CSP injected at build time | Security | Accepted |
+| D-088 | Sync is rate-limited per user in Postgres; replays always pass | Security | Accepted |
+| D-089 | Android backup and device transfer are off | Security | Accepted |
 
 ---
 
@@ -1080,4 +1083,37 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** Completeness is the legal requirement, and ordering is what makes it safe on patchy 4G: an unclear answer never destroys the only copy the student can still reach. The RPC needs no new secret, and the erase action doubles as the D-075 remedy.
 - **Trade-off accepted:** The caller's access token stays valid until it expires (up to an hour) but owns nothing. Anonymous `question_stats` keep the deleted student's contribution to per-question counts. Answers not yet synced are lost on erase, which the confirm text says. When 7A-2 adds a Storage archive under `users/<id>/`, those objects must be deleted through the Storage API (Postgres cannot), so deletion will then need an Edge Function step before the RPC.
 - **Revisit when:** 7A-2 writes Storage objects, live-mock tables arrive in 7E (they must join the delete list and the test), or a regulator asks for a deletion receipt.
+
+## D-087: Production builds carry a strict CSP injected at build time
+- **Date:** 2026-11-12
+- **Status:** Accepted
+- **Area:** Security
+- **Context:** The spec promised a strict Content-Security-Policy, but the app had none. The session token lives in WebView `localStorage` (D-073), so any injected script could read it. `index.html` has one inline script (the pre-paint theme hint, D-055), several components use `style="..."` attributes, and the only network peer is the Supabase project chosen at build time.
+- **Decision:** `tools/web/csp.ts` builds the policy and a Vite plugin adds it as a `<meta http-equiv>` right after the charset, in production builds only: `default-src 'self'`; `script-src 'self'` plus the SHA-256 of each inline script, computed from the final HTML; `style-src 'self'` with `style-src-attr 'unsafe-inline'`; `img-src 'self' data:`; `font-src 'self'`; `connect-src 'self'` plus the origin of `VITE_SUPABASE_URL` (none for a guest-only build); and `'none'` for objects, frames, workers, `base-uri` and `form-action`. A test also forbids `{@html}`, `innerHTML =`, `eval(` and `new Function(` anywhere in `src/`.
+- **Alternatives considered:** No CSP and rely on plain-text rendering alone (one mistake away from token theft); a hand-written meta tag in `index.html` (breaks `vite dev`, and the hash and Supabase origin drift out of date); `'unsafe-inline'` for scripts (defeats the policy); moving the theme script into a file (an extra request before first paint, and the flash it prevents comes back).
+- **Why:** The hash and origin are derived from the real build, so they cannot go stale, and a guest-only build cannot talk to any server at all. Style attributes carry no script and are needed by existing layout helpers.
+- **Trade-off accepted:** `vite dev` runs without the policy, so a violation shows up only in a production build or preview. `frame-ancestors` cannot be set from a meta tag, which matters only for the web build, not the APK. Adding any third-party origin (Sentry, a CDN) now needs a deliberate change to the builder.
+- **Revisit when:** Sentry or another network peer is added, the web build is hosted, or the theme hint script changes.
+
+## D-088: Sync is rate-limited per user in Postgres; replays always pass
+- **Date:** 2026-11-12
+- **Status:** Accepted
+- **Area:** Security
+- **Context:** The spec lists per-user rate limits against API flooding. The 200-attempt cap bounded one request, but nothing bounded how many requests a student, or a modified APK with a stolen token, could send. A real phone sends one batch every five minutes, plus a burst after sign-in while a guest log uploads. A limit must never refuse the replay of a batch already accepted, or the pinned-batch retry (D-070) could stall.
+- **Decision:** The original function is renamed `apply_sync_batch_unthrottled` and students lose execute on it. A new `apply_sync_batch` wrapper counts the caller's `sync_batches` rows from the last 60 seconds and, at 30 or more, returns `{ ok: false, error: 'rate_limited', retryAfterMs }` with the time until the oldest one leaves the window. A batch id the server already stored skips the check. The Edge function answers `rate_limited` with HTTP 429. The client lists `rate_limited` as retryable and keeps the batch pinned.
+- **Alternatives considered:** A limit in the Edge function only (students can call the RPC directly through PostgREST with the same token); Cloudflare rate limiting only (per IP, not per account, and many students share carrier NAT addresses); a separate counter table (more writes and another cleanup job, when `sync_batches` already records every batch with a timestamp).
+- **Why:** It lives where it cannot be bypassed and where the tests run, it reuses an existing indexed table, and the client already honours `retryAfterMs`. Thirty batches a minute is 6,000 attempts, far above any real student and enough for a guest log to drain in a few minutes.
+- **Trade-off accepted:** The count is not atomic, so two concurrent requests at the edge of the window can both pass; that is acceptable for flood control. `sync_pull` and `delete_user` are not limited yet; a pull is read-only and bounded to 500 rows a page.
+- **Revisit when:** Real traffic shows legitimate students hitting the limit, or abuse appears on `sync_pull`.
+
+## D-089: Android backup and device transfer are off
+- **Date:** 2026-11-12
+- **Status:** Accepted
+- **Area:** Security
+- **Context:** The Capacitor template set `android:allowBackup="true"`. The WebView's storage holds the sign-in session and the attempt log, so a Google Drive backup, an `adb backup` or a device-to-device transfer could copy a live session to another phone and bypass the one-account-per-device rule (D-075).
+- **Decision:** `allowBackup="false"` and `fullBackupContent="false"` for Android 11 and below, and `res/xml/data_extraction_rules.xml` excluding every domain from both cloud backup and device transfer for Android 12+. A test reads the manifest and the rules file, because the Gradle build is not available in CI.
+- **Alternatives considered:** Keep backup and exclude only the WebView folders (fragile across WebView versions); keep backup for guests (a guest's log is the only copy, but it also carries no session, and a guest can sign in to keep progress).
+- **Why:** Sync already moves a signed-in student's progress between phones, so backup adds risk without adding a recovery path.
+- **Trade-off accepted:** A guest who changes phones without signing in loses their local progress.
+- **Revisit when:** Students ask to move progress without an account.
 

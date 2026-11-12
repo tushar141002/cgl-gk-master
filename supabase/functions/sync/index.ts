@@ -84,6 +84,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   if (typeof data === 'object' && data !== null && 'ok' in data && data.ok === false) {
+    // `rate_limited` (D-088) is the student's own pace; the body's
+    // `retryAfterMs` is what the client reads.
+    if ('error' in data && data.error === 'rate_limited') return json(data, 429);
     // `batch_in_progress`: a concurrent retry is still committing.
     return json(data, 503);
   }
