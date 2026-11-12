@@ -34,6 +34,8 @@ How execution travels through CGL GK Master: the entry points, which function ca
 >
 > **Updated 2026-11-07 (Step 10):** F13 adds the review loop. `content:review` exports a sheet for one status and optional sub-topic; `content:promote` applies approve/reject/fix to the master through a stale-sheet guard and does not rebuild, so the build stays an explicit step (D-079).
 >
+> **Updated 2026-11-13 (Step 7E):** F8 is real: `list_mocks`, `start_mock`, `submit_mock`, `mock_leaderboard` and `mock_review` in a migration, `sync/MockTransport.ts`, `services/MockService.ts` with the local `mockSessions` table, and `#/mock` and `#/mock/:id` screens. F12 also deletes mock sessions and answers (D-090).
+
 > **Updated 2026-11-12 (Step 7D security):** F4's RPC is now a rate-limited wrapper around `apply_sync_batch_unthrottled`, and `rate_limited` is retryable (D-088). Production builds get a CSP meta tag (D-087).
 
 > **Updated 2026-11-12 (Step 7D):** F12 is real. `delete_user()` lives in a migration, not an Edge Function; the client calls it through `sync/AccountTransport.ts`, wipes with `data/database.ts › wipeLocalData()` only after it confirms, and Settings gains a separate "Erase data on this phone" action (D-086).
@@ -145,8 +147,9 @@ src/
     i18n/messages.ts         en + hi dictionary, translate()        landed (D-057)
     i18n/context.ts          provideI18n / useI18n                  landed
     screens/                 landed: Home, Practice, PracticeChooser, Settings,
-                             Placeholder, StorageError
-                             planned: Mock, Results, Progress, ReportError
+                             Placeholder, StorageError, MockList, MockTest, MockResult
+                             planned: Progress, ReportError
+    mockFormat.ts            mock phase, India-time dates, countdown, marks (D-090)
 supabase/
   migrations/                applied in filename order by the CLI and by tests
     20261107090000_sync_core.sql   tables, constraints, indexes, triggers (D-063)
@@ -154,6 +157,7 @@ supabase/
                                    sync_pull(), compact_sync_inbox() (D-064..D-067)
     20261112090000_delete_user.sql delete_user(): account deletion (F12, D-086)
     20261112090100_sync_rate_limit.sql  per-user limit wrapper on apply_sync_batch (D-088)
+    20261113090000_live_mocks.sql  mock tables, RLS, list/start/submit/leaderboard/review (F8, D-090)
   functions/
     sync/index.ts            POST /sync adapter: method, bearer, size cap, RPC call
     grade_mock/              live mock grading                           (planned)
@@ -487,17 +491,45 @@ Sign-in is Google-only via GoTrue on the custom scheme. `auth.load(location.href
 ## F8: Live mock
 
 ```
-ui/screens/Mock.svelte › start()
-└─ services/MockService.ts › startSession(mockId)
-   ├─ ⟶ RPC start_mock → server records startedAt, returns questions without answers   [network]
-   ├─ data/repositories/MockRepository.ts › saveSession(questions, ttl)   [DB write]
-   ├─ … student answers locally, no grading on device …
-   └─ ⟶ RPC grade_mock(answers)                                    [network]
-      └─ server: time-window check, speed check, grade, store score, update leaderboard
+app/MockRoute.svelte (#/mock)  › loadList()
+└─ services/MockService.ts › list()  ⟶ RPC list_mocks()               [network]
+   └─ mocks from 14 days back to 14 days ahead, each with the caller's
+      session status (active | submitted | expired) and score
+
+app/MockRoute.svelte (#/mock/:id) › openMock(id)
+├─ services/MockService.ts › local(id)                               [DB read]
+│  └─ a stored, unexpired session → MockTest at once, no network
+├─ else list() → open: intro + "Start" | active: start() | done: result
+└─ services/MockService.ts › start(id)
+   ├─ ⟶ RPC start_mock(id)                                           [network]
+   │  ├─ window check: not_open | closed | already_submitted | expired
+   │  ├─ draw question_count from mock_pool at random, once per student
+   │  ├─ deadline = least(now + duration, closes_at)  server clock
+   │  └─ questions without answers or explanations
+   └─ db.mockSessions.put(questions, deadline, clock offset)         [DB write]
+
+ui/screens/MockTest.svelte › tap / Previous / Next                  [UI]
+└─ services/MockService.ts › record() | moveTo()                     [DB write, every tap]
+   └─ choice (changeable, clearable) and time per question, summed
+
+app/MockRoute.svelte › submit()   on "Yes, submit" or when the timer hits 0
+├─ services/MockService.ts › submit(sessionId)
+│  ├─ ⟶ RPC submit_mock(sessionId, answers)                          [network]
+│  │  ├─ refuse after deadline + 10 min grace → too_late
+│  │  ├─ validate qids, choices and times; store mock_answers
+│  │  ├─ +mark_correct / −mark_wrong; time = least(now, deadline) − start
+│  │  ├─ flag < 2 s per answered question (kept off the leaderboard)
+│  │  └─ store the response; a retry returns it unchanged
+│  └─ db.mockSessions.delete(sessionId)  only after a grade or too_late [DB write]
+└─ ui/screens/MockResult.svelte + ⟶ RPC mock_leaderboard(id, 20)     [network]
+   └─ rank by score, time, submitted-at; names only, never emails
+
+⟶ RPC mock_review(id)   after closes_at only: answers, explanations, own choices
 ```
 
-See D-029. Mock questions are saved locally with a TTL and cleared on successful submit, so a phone call or a 4G drop does not end the session; reopening resumes while the window is open. Mock questions are never written to the `questions` store, so they do not enter the offline practice bank.
-**Failure path:** answers are saved locally during the test; if submission fails, retry until the window closes. A session that never submits is graded as abandoned, not as zero.
+See D-029 and D-090. The session lives in the `mockSessions` table so a phone call, a 4G drop or a closed app does not end the test; reopening resumes from the phone while the deadline lasts. Mock questions never enter the `questions` store, and mock answers are not appended to the practice attempt log.
+**Failure path:** a submit that gets no response keeps every answer on the phone and shows "get online before <deadline + grace>"; the student taps Submit again. `too_late` deletes the local copy. A session never submitted shows as expired, not as zero. The list cannot load offline, but a started mock can be resumed and answered offline.
+**Not built yet:** the in-app answer review screen (the RPC exists), the correction re-grade of `mock_answers`, and an admin screen for creating mocks.
 **Offline edge:** if the network is down when the student opens a mock, the mock cannot start (questions live on the server). The UI says so before the tap, not after.
 
 ---

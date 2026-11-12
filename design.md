@@ -128,6 +128,7 @@ Every meaningful decision in CGL GK Master is recorded here with **why** it was 
 | D-087 | Production builds carry a strict CSP injected at build time | Security | Accepted |
 | D-088 | Sync is rate-limited per user in Postgres; replays always pass | Security | Accepted |
 | D-089 | Android backup and device transfer are off | Security | Accepted |
+| D-090 | Live mocks: private pool, per-student draw, server deadline with grace, answers after close | Content | Accepted |
 
 ---
 
@@ -1116,4 +1117,15 @@ All six entries below were **accepted on 2026-11-01**. They amend D-016 and D-02
 - **Why:** Sync already moves a signed-in student's progress between phones, so backup adds risk without adding a recovery path.
 - **Trade-off accepted:** A guest who changes phones without signing in loses their local progress.
 - **Revisit when:** Students ask to move progress without an account.
+
+## D-090: Live mocks: private pool, per-student draw, server deadline with grace, answers after close
+- **Date:** 2026-11-13
+- **Status:** Accepted
+- **Area:** Content
+- **Context:** D-012 makes live mocks the only source of ranks, and D-029 chose a 72-hour weekend window with resumable sessions. A window that long gives students time to share questions and answers, a phone clock cannot be trusted with a deadline, and a 4G drop at the last second must not cost the attempt. The spec named a `grade_mock()` function and a `MockRepository` but fixed none of these rules.
+- **Decision:** Questions live in `mock_pool`, which no student role can read. `start_mock` draws `question_count` questions at random per student, stores the draw and returns it without answers or explanations. A retry resumes the same draw. The deadline is `least(start + duration, closes_at)` on the server clock. `submit_mock` (the spec's `grade_mock`) accepts one submission up to 10 minutes after the deadline, validates every answer, grades +`mark_correct` / −`mark_wrong` (2 and 0.5 by default), stores the response for idempotent retries, and flags a session faster than 2 seconds per answered question. `mock_leaderboard` ranks unflagged sessions by score, then time taken, then submitted-at, and shows only a name the student chose (default "Student"), never an email. `mock_review` returns answers and explanations only after the mock closes. On the phone, `MockService` keeps the session (questions, choices, time per question, server clock offset) in a new `mockSessions` Dexie table, writes on every tap, resumes without a network, and deletes the row only once the server has graded it or refused it as too late. Mock answers are not written to the practice attempt log, because mock questions are not in the practice bank and replay would not find them. `delete_user()` now also removes mock sessions and answers. Mocks are created with SQL by an admin; there is no admin screen yet.
+- **Alternatives considered:** The same 25 questions for everyone (simpler, but one leak spoils the weekend); answers right after submit (instant learning, but early finishers could share the key); grading on the phone and uploading a score (trivially faked); a hard deadline with no grace (fair on paper, unfair on patchy 4G); hiding flagged results from the student too (punishes a false positive with no explanation).
+- **Why:** Every input to a rank is decided on the server, which is what D-012 promises. A per-student draw from a larger pool and late answers make sharing far less useful, and the grace period and local session make the test survive the devices and networks this app targets.
+- **Trade-off accepted:** Different draws mean slightly different difficulty between students. A student offline for more than 10 minutes after the deadline loses the attempt. The speed flag is a heuristic that can miss a careful cheat or flag a very fast student. The `question_corrections` re-grade of `mock_answers` (spec §8) is not built yet. The pool must be at least `question_count` questions or `start_mock` answers `unavailable`.
+- **Revisit when:** The admin site exists, pools are large enough to balance draws by difficulty, a correction hits a mock question, or flags produce complaints.
 

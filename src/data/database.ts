@@ -7,6 +7,8 @@ import type {
   Cursor,
   DailySummary,
   DeviceId,
+  MockQuestion,
+  OptionIndex,
   Question,
   QuestionCorrection,
   QuestionReport,
@@ -80,6 +82,27 @@ export interface PendingBatch {
   readonly reports: readonly QuestionReport[];
 }
 
+/**
+ * A live mock in progress (F8, D-029, D-090). The questions and every choice
+ * are kept here so a phone call, a 4G drop or a closed app does not end the
+ * test; the row is deleted after a successful submit or once it expires.
+ * Mock questions never enter `questions`, so they stay out of practice.
+ */
+export interface MockSessionRow {
+  readonly sessionId: string;
+  readonly mockId: string;
+  readonly questions: readonly MockQuestion[];
+  /** Server clock, epoch milliseconds. */
+  readonly startedAt: number;
+  readonly deadlineAt: number;
+  /** Server time minus phone time at start; the timer runs on server time. */
+  readonly clockOffsetMs: number;
+  readonly answers: Readonly<Record<string, { readonly chosen: OptionIndex | null; readonly ms: number }>>;
+  readonly current: number;
+  /** Phone time after which the row is useless and may be deleted. */
+  readonly expiresAt: number;
+}
+
 export interface SyncMetaRow {
   readonly id: 'device';
   readonly deviceId: DeviceId;
@@ -112,6 +135,7 @@ export class AppDatabase extends Dexie {
   settings!: EntityTable<SettingsRow, 'id'>;
   syncMeta!: EntityTable<SyncMetaRow, 'id'>;
   reports!: Table<ReportRow, [string, number, ReportReason]>;
+  mockSessions!: EntityTable<MockSessionRow, 'sessionId'>;
 
   constructor(name: string = DATABASE_NAME) {
     super(name);
@@ -137,6 +161,11 @@ export class AppDatabase extends Dexie {
     this.version(2).stores({
       reports: '[qid+qv+reason], sent, at',
     });
+
+    // Step 7E: live mock sessions in progress (F8). Additive.
+    this.version(3).stores({
+      mockSessions: 'sessionId, mockId, expiresAt',
+    });
   }
 }
 
@@ -153,6 +182,7 @@ export const PERSONAL_TABLES = [
   'bookmarks',
   'dailySummary',
   'reports',
+  'mockSessions',
   'settings',
   'syncMeta',
 ] as const;

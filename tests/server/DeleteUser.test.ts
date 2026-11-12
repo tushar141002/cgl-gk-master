@@ -19,6 +19,16 @@ let db: PGlite;
 beforeAll(async () => {
   harness = await createTestDatabase();
   db = harness.db;
+
+  // One open live mock with a one-question pool, so a student can sit it.
+  await db.query(
+    `insert into public.mock_tests (id, title_en, title_hi, opens_at, closes_at, question_count)
+     values ('delete-mock', 'Mock', 'मॉक', now() - interval '1 hour', now() + interval '1 day', 1)`,
+  );
+  await db.query(
+    `insert into public.mock_pool (mock_id, qid, en, answer)
+     values ('delete-mock', 'mock-q-1', '{"q":"Q","options":["a","b","c","d"],"explanation":"E"}', 0)`,
+  );
 });
 
 afterAll(async () => {
@@ -41,7 +51,7 @@ function attempt(qid: string, at: number): AttemptRecord {
   };
 }
 
-/** Gives a student a row in every table a sync, a report and a checkpoint touch. */
+/** Gives a student a row in every table a sync, a report, a checkpoint and a live mock touch. */
 async function seedStudent(email: string): Promise<string> {
   const userId = await createUser(db, email);
   const batch: SyncBatch = {
@@ -61,7 +71,27 @@ async function seedStudent(email: string): Promise<string> {
      values ($1, '1:a', '[]', '[]', '[]')`,
     [userId],
   );
+
+  await asUser(db, userId, async () => {
+    const { rows } = await db.query<{ result: { sessionId: string } }>(
+      "select public.start_mock('delete-mock') as result",
+    );
+    await db.query('select public.submit_mock($1::uuid, $2::jsonb)', [
+      rows[0]!.result.sessionId,
+      JSON.stringify([{ qid: 'mock-q-1', chosen: 0, ms: 5000 }]),
+    ]);
+  });
   return userId;
+}
+
+async function mockAnswerCount(userId: string): Promise<number> {
+  await actAsOwner(db);
+  const { rows } = await db.query<{ n: number }>(
+    `select count(*)::int as n from public.mock_answers a
+     join public.mock_sessions s on s.id = a.session_id where s.user_id = $1`,
+    [userId],
+  );
+  return rows[0]!.n;
 }
 
 async function deleteAs(userId: string | null): Promise<unknown> {
@@ -107,14 +137,16 @@ describe('delete_user', () => {
     const userId = await seedStudent('seed-check@example.test');
     const counts = await rowCounts(userId);
 
-    expect(Object.keys(counts).length).toBeGreaterThanOrEqual(7);
+    expect(Object.keys(counts).length).toBeGreaterThanOrEqual(8);
     for (const [table, n] of Object.entries(counts)) {
       expect(n, `expected seeded rows in ${table}`).toBeGreaterThan(0);
     }
+    expect(await mockAnswerCount(userId)).toBe(1);
   });
 
   it('removes every row the student owns and the auth user', async () => {
     const userId = await seedStudent('leaving@example.test');
+    const before = await mockAnswerCount(userId);
 
     expect(await deleteAs(userId)).toEqual({ ok: true });
 
@@ -124,6 +156,12 @@ describe('delete_user', () => {
       expect(n, `rows left in ${table}`).toBe(0);
     }
     expect(await authUserExists(userId)).toBe(false);
+    expect(before).toBe(1);
+    await actAsOwner(db);
+    const { rows: orphans } = await db.query<{ n: number }>(
+      'select count(*)::int as n from public.mock_answers a left join public.mock_sessions s on s.id = a.session_id where s.id is null',
+    );
+    expect(orphans[0]!.n).toBe(0);
   });
 
   it('leaves other students and anonymous question stats untouched', async () => {

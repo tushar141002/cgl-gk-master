@@ -11,7 +11,7 @@ export type RouteName = 'home' | 'practice' | 'mock' | 'progress' | 'settings' |
 export type Route =
   | { readonly name: 'home' }
   | { readonly name: 'practice'; readonly subtopic: string | null }
-  | { readonly name: 'mock'; readonly id: string }
+  | { readonly name: 'mock'; readonly id: string | null }
   | { readonly name: 'progress' }
   | { readonly name: 'settings' }
   | { readonly name: 'not-found'; readonly path: string };
@@ -42,6 +42,7 @@ export function matchPath(path: string): Route {
       break;
     }
     case 'mock': {
+      if (segments.length === 1) return { name: 'mock', id: null };
       if (segments.length === 2) return { name: 'mock', id: segments[1] ?? '' };
       break;
     }

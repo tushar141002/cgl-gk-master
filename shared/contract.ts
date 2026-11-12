@@ -302,6 +302,101 @@ export type PullResponse =
     };
 
 // ---------------------------------------------------------------------------
+// Live mocks (F8, D-029, D-090). Times are epoch milliseconds, server clock.
+// ---------------------------------------------------------------------------
+
+/** An RPC refusal; `error` is a stable code such as `closed` or `too_late`. */
+export interface MockFailure {
+  readonly ok: false;
+  readonly error: string;
+}
+
+export type MockSessionStatus = 'active' | 'submitted' | 'expired';
+
+/** One row of `list_mocks`, with the caller's own session if they started. */
+export interface MockSummary {
+  readonly id: MockId;
+  readonly titleEn: string;
+  readonly titleHi: string;
+  readonly opensAt: number;
+  readonly closesAt: number;
+  readonly durationSec: number;
+  readonly questionCount: number;
+  readonly markCorrect: number;
+  readonly markWrong: number;
+  readonly session: {
+    readonly id: string;
+    readonly status: MockSessionStatus;
+    readonly deadlineAt: number;
+    readonly score: number | null;
+    readonly correct: number | null;
+    readonly wrong: number | null;
+    readonly skipped: number | null;
+  } | null;
+}
+
+export type MockListResponse =
+  { readonly ok: true; readonly serverTime: number; readonly mocks: readonly MockSummary[] } | MockFailure;
+
+/** A mock question as a student sees it during the test: no key, no explanation. */
+export interface MockQuestion {
+  readonly qid: QuestionId;
+  readonly qv: number;
+  readonly en: { readonly q: string; readonly options: readonly string[] };
+  readonly hi: { readonly q: string; readonly options: readonly string[] } | null;
+}
+
+export type StartMockResponse =
+  | {
+      readonly ok: true;
+      readonly serverTime: number;
+      readonly sessionId: string;
+      readonly mockId: MockId;
+      readonly startedAt: number;
+      readonly deadlineAt: number;
+      readonly questions: readonly MockQuestion[];
+    }
+  | MockFailure;
+
+export interface MockAnswer {
+  readonly qid: QuestionId;
+  readonly chosen: OptionIndex | null;
+  /** Time spent on the question, summed across visits. */
+  readonly ms: number;
+}
+
+export interface MockResult {
+  readonly ok: true;
+  readonly sessionId: string;
+  readonly mockId: MockId;
+  readonly score: number;
+  readonly maxScore: number;
+  readonly correct: number;
+  readonly wrong: number;
+  readonly skipped: number;
+  readonly timeMs: number;
+}
+
+export type SubmitMockResponse = MockResult | MockFailure;
+
+export interface LeaderboardRow {
+  readonly rank: number;
+  readonly name: string;
+  readonly score: number;
+  readonly timeMs: number;
+  readonly isMe: boolean;
+}
+
+export type LeaderboardResponse =
+  | {
+      readonly ok: true;
+      readonly total: number;
+      readonly top: readonly LeaderboardRow[];
+      readonly me: LeaderboardRow | null;
+    }
+  | MockFailure;
+
+// ---------------------------------------------------------------------------
 // Local preferences (PROJECT_SPEC.md §6, `settings`)
 // ---------------------------------------------------------------------------
 

@@ -30,6 +30,10 @@
     <path
       d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
     />
+  {:else if name === 'timer'}
+    <line x1="10" x2="14" y1="2" y2="2" />
+    <line x1="12" x2="15" y1="14" y2="11" />
+    <circle cx="12" cy="14" r="8" />
   {:else if name === 'chart-column'}
     <path d="M3 3v16a2 2 0 0 0 2 2h16" />
     <path d="M18 17V9" />

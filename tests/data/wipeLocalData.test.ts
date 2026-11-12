@@ -34,6 +34,7 @@ async function fillEveryTable(): Promise<void> {
     bookmarks: { qid: 'q-1', createdAt: 1 },
     dailySummary: { date: '2026-11-12', attempted: 1, correct: 1, ms: 1 },
     reports: { qid: 'q-1', qv: 1, reason: 'typo', at: 1, sent: 0 },
+    mockSessions: { sessionId: 's-1', mockId: 'm-1', expiresAt: 1 },
     settings: { id: 'app', language: 'hi', updatedAt: 1 },
     syncMeta: { id: 'device', deviceId: 'd-1', cursor: null, lastSyncAt: null, accountId: 'u-1' },
   };

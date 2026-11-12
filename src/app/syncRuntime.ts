@@ -9,8 +9,10 @@ import { SyncRepository } from '../data/repositories/SyncRepository';
 import { AccountService } from '../services/AccountService';
 import { AuthService } from '../services/AuthService';
 import { HistoryService } from '../services/HistoryService';
+import { MockService } from '../services/MockService';
 import { SyncScheduler } from '../services/SyncScheduler';
 import { HttpAccountTransport } from '../sync/AccountTransport';
+import { HttpMockTransport } from '../sync/MockTransport';
 import { SyncManager } from '../sync/SyncManager';
 import { HttpPullTransport, HttpSyncTransport } from '../sync/SyncTransport';
 
@@ -20,6 +22,7 @@ export interface SyncRuntime {
   readonly history: HistoryService;
   readonly scheduler: SyncScheduler;
   readonly account: AccountService;
+  readonly mocks: MockService;
 }
 
 export interface SyncRuntimeOptions {
@@ -27,7 +30,7 @@ export interface SyncRuntimeOptions {
   readonly deviceId: DeviceId;
   readonly config: AppConfigState;
   /** Passed to every rebuild so FSRS due dates stay capped (D-037). */
-  readonly examDeadline?: number;
+  readonly examDeadline?: number | undefined;
   /** True on Android; selects the custom-tab browser over a page redirect. */
   readonly native?: boolean;
   readonly now?: () => number;
@@ -106,7 +109,16 @@ export function createSyncRuntime(options: SyncRuntimeOptions): SyncRuntime | nu
     wipeLocal: () => wipeLocalData(db),
   });
 
-  return { auth, sync, history, scheduler, account };
+  const mocks = new MockService(db, {
+    transport: new HttpMockTransport({
+      supabaseUrl: config.supabaseUrl,
+      anonKey: config.supabaseAnonKey,
+      getAccessToken,
+    }),
+    now,
+  });
+
+  return { auth, sync, history, scheduler, account, mocks };
 }
 
 /**

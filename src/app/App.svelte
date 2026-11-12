@@ -19,6 +19,7 @@
   import SettingsScreen, { type DataProblem } from '../ui/screens/Settings.svelte';
   import Placeholder from '../ui/screens/Placeholder.svelte';
   import HomeRoute from './HomeRoute.svelte';
+  import MockRoute from './MockRoute.svelte';
   import PracticeRoute from './PracticeRoute.svelte';
   import NavBar from './NavBar.svelte';
   import { currentPath, matchPath, subscribePath, type Route } from './router';
@@ -328,7 +329,14 @@
         />
       {/key}
     {:else if route.name === 'mock'}
-      <Placeholder titleKey="mock.title" />
+      {#key `mock:${route.id ?? ''}:${account.status}`}
+        <MockRoute
+          id={route.id}
+          mocks={runtime?.mocks ?? null}
+          signedIn={account.status === 'signed-in'}
+          {online}
+        />
+      {/key}
     {:else if route.name === 'progress'}
       <Placeholder titleKey="progress.title" />
     {:else if route.name === 'settings'}

@@ -17,6 +17,7 @@
   }[] = [
     { route: 'home', href: '#/home', labelKey: 'nav.home', icon: 'home' },
     { route: 'practice', href: '#/practice', labelKey: 'nav.practice', icon: 'book-open' },
+    { route: 'mock', href: '#/mock', labelKey: 'nav.mock', icon: 'timer' },
     { route: 'progress', href: '#/progress', labelKey: 'nav.progress', icon: 'chart-column' },
     { route: 'settings', href: '#/settings', labelKey: 'nav.settings', icon: 'settings' },
   ];

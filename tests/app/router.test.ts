@@ -54,6 +54,6 @@ describe('matchPath (D-056)', () => {
   it('falls back to a renderable 404 for anything else', () => {
     expect(matchPath('nope')).toEqual({ name: 'not-found', path: 'nope' });
     expect(matchPath('practice/a/b')).toEqual({ name: 'not-found', path: 'practice/a/b' });
-    expect(matchPath('mock')).toEqual({ name: 'not-found', path: 'mock' });
+    expect(matchPath('mock')).toEqual({ name: 'mock', id: null });
   });
 });
